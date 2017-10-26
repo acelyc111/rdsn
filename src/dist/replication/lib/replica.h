@@ -45,6 +45,7 @@
 #include <dsn/cpp/serverlet.h>
 #include "../client_lib/replication_common.h"
 #include "mutation.h"
+#include "mutation_log.h"
 #include "prepare_list.h"
 #include "replica_context.h"
 
@@ -127,7 +128,6 @@ public:
     gpid get_gpid() const { return _config.pid; }
     replication_app_base *get_app() { return _app.get(); }
     const app_info *get_app_info() const { return &_app_info; }
-    const dsn_app_callbacks &get_app_callbacks() const { return _app_callbacks; }
     decree max_prepared_decree() const { return _prepare_list->max_decree(); }
     decree last_committed_decree() const { return _prepare_list->last_committed_decree(); }
     decree last_prepared_decree() const;
@@ -275,7 +275,6 @@ private:
     char _name[256]; // app.index @ host:port
     replication_options *_options;
     const app_info _app_info;
-    dsn_app_callbacks _app_callbacks;
 
     // replica status specific states
     primary_context _primary_states;
@@ -287,5 +286,6 @@ private:
     // perf counters
     perf_counter_ _counter_private_log_size;
 };
+typedef dsn::ref_ptr<replica> replica_ptr;
 }
 } // namespace
