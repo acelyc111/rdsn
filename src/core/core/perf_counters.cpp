@@ -140,6 +140,16 @@ bool perf_counters::remove_counter(const char *full_name)
     return true;
 }
 
+void perf_counters::get_all_counters(std::vector<perf_counter_ptr> *counter_vec)
+{
+    counter_vec->clear();
+    utils::auto_read_lock l(_lock);
+    counter_vec->reserve(_counters.size());
+    for (auto &cp : _counters) {
+        counter_vec->push_back(cp.second);
+    }
+}
+
 void perf_counters::register_factory(perf_counter::factory factory)
 {
     utils::auto_write_lock l(_lock);

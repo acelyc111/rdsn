@@ -67,6 +67,7 @@ public:
     perf_counter_ptr get_counter(const char *full_name);
     bool remove_counter(const char *full_name);
 
+    void get_all_counters(/*out*/ std::vector<dsn::perf_counter_ptr> *counter_vec);
     void register_factory(perf_counter::factory factory);
     static std::string list_counter(const std::vector<std::string> &args);
     static std::string get_counter_value(const std::vector<std::string> &args);
