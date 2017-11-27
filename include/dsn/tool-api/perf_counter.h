@@ -84,16 +84,6 @@ public:
         const char *, const char *, const char *, dsn_perf_counter_type_t, const char *);
 
 public:
-    DSN_API static perf_counter_ptr get_counter(const char *app,
-                                                const char *section,
-                                                const char *name,
-                                                dsn_perf_counter_type_t flags,
-                                                const char *dsptr,
-                                                bool create_if_not_exist = false);
-
-    DSN_API static bool remove_counter(const char *full_name);
-
-public:
     perf_counter(const char *app,
                  const char *section,
                  const char *name,

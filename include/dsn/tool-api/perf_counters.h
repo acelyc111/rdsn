@@ -50,12 +50,18 @@ public:
     perf_counters(void);
     ~perf_counters(void);
 
-    perf_counter_ptr get_counter(const char *app,
-                                 const char *section,
-                                 const char *name,
-                                 dsn_perf_counter_type_t flags,
-                                 const char *dsptr,
-                                 bool create_if_not_exist = false);
+    perf_counter_ptr get_app_counter(const char *section,
+                                     const char *name,
+                                     dsn_perf_counter_type_t flags,
+                                     const char *dsptr,
+                                     bool create_if_not_exist);
+
+    perf_counter_ptr get_global_counter(const char *app,
+                                        const char *section,
+                                        const char *name,
+                                        dsn_perf_counter_type_t flags,
+                                        const char *dsptr,
+                                        bool create_if_not_exist);
 
     // full_name = perf_counter::build_full_name(...);
     perf_counter_ptr get_counter(const char *full_name);
@@ -66,12 +72,10 @@ public:
     static std::string get_counter_value(const std::vector<std::string> &args);
     static std::string get_counter_sample(const std::vector<std::string> &args);
 
-    typedef std::map<std::string, perf_counter_ptr> all_counters;
-
 private:
     std::string list_counter_internal(const std::vector<std::string> &args);
     mutable utils::rw_lock_nr _lock;
-    all_counters _counters;
+    std::map<std::string, perf_counter_ptr> _counters;
     perf_counter::factory _factory;
 };
 

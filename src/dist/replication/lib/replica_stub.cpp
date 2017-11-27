@@ -78,119 +78,124 @@ replica_stub::~replica_stub(void) { close(); }
 
 void replica_stub::install_perf_counters()
 {
-    _counter_replicas_count.init(
+    _counter_replicas_count.init_app_counter(
         "eon.replica_stub", "replica(Count)", COUNTER_TYPE_NUMBER, "# in replica_stub._replicas");
-    _counter_replicas_opening_count.init("eon.replica_stub",
-                                         "opening.replica(Count)",
-                                         COUNTER_TYPE_NUMBER,
-                                         "# in replica_stub._opening_replicas");
-    _counter_replicas_closing_count.init("eon.replica_stub",
-                                         "closing.replica(Count)",
-                                         COUNTER_TYPE_NUMBER,
-                                         "# in replica_stub._closing_replicas");
-    _counter_replicas_total_commit_throught.init("eon.replica_stub",
-                                                 "replicas.commit.qps",
-                                                 COUNTER_TYPE_RATE,
-                                                 "app commit throughput for all replicas");
+    _counter_replicas_opening_count.init_app_counter("eon.replica_stub",
+                                                     "opening.replica(Count)",
+                                                     COUNTER_TYPE_NUMBER,
+                                                     "# in replica_stub._opening_replicas");
+    _counter_replicas_closing_count.init_app_counter("eon.replica_stub",
+                                                     "closing.replica(Count)",
+                                                     COUNTER_TYPE_NUMBER,
+                                                     "# in replica_stub._closing_replicas");
+    _counter_replicas_total_commit_throught.init_app_counter(
+        "eon.replica_stub",
+        "replicas.commit.qps",
+        COUNTER_TYPE_RATE,
+        "app commit throughput for all replicas");
 
-    _counter_replicas_learning_count.init("eon.replica_stub",
-                                          "replicas.learning.count",
-                                          COUNTER_TYPE_NUMBER,
-                                          "current learning count");
-    _counter_replicas_learning_max_duration_time_ms.init("eon.replica_stub",
-                                                         "replicas.learning.max.duration.time(ms)",
-                                                         COUNTER_TYPE_NUMBER,
-                                                         "current learning max duration time(ms)");
-    _counter_replicas_learning_max_copy_file_size.init("eon.replica_stub",
-                                                       "replicas.learning.max.copy.file.size",
-                                                       COUNTER_TYPE_NUMBER,
-                                                       "current learning max copy file size");
-    _counter_replicas_learning_recent_start_count.init(
+    _counter_replicas_learning_count.init_app_counter("eon.replica_stub",
+                                                      "replicas.learning.count",
+                                                      COUNTER_TYPE_NUMBER,
+                                                      "current learning count");
+    _counter_replicas_learning_max_duration_time_ms.init_app_counter(
+        "eon.replica_stub",
+        "replicas.learning.max.duration.time(ms)",
+        COUNTER_TYPE_NUMBER,
+        "current learning max duration time(ms)");
+    _counter_replicas_learning_max_copy_file_size.init_app_counter(
+        "eon.replica_stub",
+        "replicas.learning.max.copy.file.size",
+        COUNTER_TYPE_NUMBER,
+        "current learning max copy file size");
+    _counter_replicas_learning_recent_start_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.start.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "current learning start count in the recent period");
-    _counter_replicas_learning_recent_round_start_count.init(
+    _counter_replicas_learning_recent_round_start_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.round.start.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning round start count in the recent period");
-    _counter_replicas_learning_recent_copy_file_count.init(
+    _counter_replicas_learning_recent_copy_file_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.copy.file.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning copy file count in the recent period");
-    _counter_replicas_learning_recent_copy_file_size.init(
+    _counter_replicas_learning_recent_copy_file_size.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.copy.file.size",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning copy file size in the recent period");
-    _counter_replicas_learning_recent_copy_buffer_size.init(
+    _counter_replicas_learning_recent_copy_buffer_size.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.copy.buffer.size",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning copy buffer size in the recent period");
-    _counter_replicas_learning_recent_learn_cache_count.init(
+    _counter_replicas_learning_recent_learn_cache_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.learn.cache.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning LT_CACHE count in the recent period");
-    _counter_replicas_learning_recent_learn_app_count.init(
+    _counter_replicas_learning_recent_learn_app_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.learn.app.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning LT_APP count in the recent period");
-    _counter_replicas_learning_recent_learn_log_count.init(
+    _counter_replicas_learning_recent_learn_log_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.learn.log.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning LT_LOG count in the recent period");
-    _counter_replicas_learning_recent_learn_reset_count.init(
+    _counter_replicas_learning_recent_learn_reset_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.learn.reset.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning reset count in the recent period"
         "for the reason of resp.last_committed_decree < _app->last_committed_decree()");
-    _counter_replicas_learning_recent_learn_fail_count.init(
+    _counter_replicas_learning_recent_learn_fail_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.learn.fail.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning fail count in the recent period");
-    _counter_replicas_learning_recent_learn_succ_count.init(
+    _counter_replicas_learning_recent_learn_succ_count.init_app_counter(
         "eon.replica_stub",
         "replicas.learning.recent.learn.succ.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "learning succeed count in the recent period");
 
-    _counter_replicas_recent_prepare_fail_count.init("eon.replica_stub",
-                                                     "replicas.recent.prepare.fail.count",
-                                                     COUNTER_TYPE_VOLATILE_NUMBER,
-                                                     "prepare fail count in the recent period");
-    _counter_replicas_recent_replica_move_error_count.init(
+    _counter_replicas_recent_prepare_fail_count.init_app_counter(
+        "eon.replica_stub",
+        "replicas.recent.prepare.fail.count",
+        COUNTER_TYPE_VOLATILE_NUMBER,
+        "prepare fail count in the recent period");
+    _counter_replicas_recent_replica_move_error_count.init_app_counter(
         "eon.replica_stub",
         "replicas.recent.replica.move.error.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "replica move to error count in the recent period");
-    _counter_replicas_recent_replica_move_garbage_count.init(
+    _counter_replicas_recent_replica_move_garbage_count.init_app_counter(
         "eon.replica_stub",
         "replicas.recent.replica.move.garbage.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "replica move to garbage count in the recent period");
-    _counter_replicas_recent_replica_remove_dir_count.init(
+    _counter_replicas_recent_replica_remove_dir_count.init_app_counter(
         "eon.replica_stub",
         "replicas.recent.replica.remove.dir.count",
         COUNTER_TYPE_VOLATILE_NUMBER,
         "replica directory remove count in the recent period");
-    _counter_replicas_error_replica_dir_count.init("eon.replica_stub",
-                                                   "replicas.error.replica.dir.count",
-                                                   COUNTER_TYPE_NUMBER,
-                                                   "error replica directory count");
-    _counter_replicas_garbage_replica_dir_count.init("eon.replica_stub",
-                                                     "replicas.garbage.replica.dir.count",
-                                                     COUNTER_TYPE_NUMBER,
-                                                     "garbage replica directory count");
+    _counter_replicas_error_replica_dir_count.init_app_counter("eon.replica_stub",
+                                                               "replicas.error.replica.dir.count",
+                                                               COUNTER_TYPE_NUMBER,
+                                                               "error replica directory count");
+    _counter_replicas_garbage_replica_dir_count.init_app_counter(
+        "eon.replica_stub",
+        "replicas.garbage.replica.dir.count",
+        COUNTER_TYPE_NUMBER,
+        "garbage replica directory count");
 
-    _counter_shared_log_size.init(
+    _counter_shared_log_size.init_app_counter(
         "eon.replica_stub", "shared.log.size(MB)", COUNTER_TYPE_NUMBER, "shared log size(MB)");
 }
 
@@ -379,7 +384,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
             dwarn("init_replica: {replica_dir_op} succeed to move directory '%s' to '%s'",
                   dir,
                   rename_dir);
-            _counter_replicas_recent_replica_move_error_count.increment();
+            _counter_replicas_recent_replica_move_error_count->increment();
         }
         rps.clear();
 
@@ -485,7 +490,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
 
     // attach rps
     _replicas = std::move(rps);
-    _counter_replicas_count.add((uint64_t)_replicas.size());
+    _counter_replicas_count->add((uint64_t)_replicas.size());
     for (const auto &kv : _replicas) {
         _fs_manager.add_replica(kv.first, kv.second->dir());
     }
@@ -1314,7 +1319,7 @@ void replica_stub::on_gc_replica(replica_stub_ptr this_, gpid pid)
         dwarn("gc_replica: {replica_dir_op} succeed to move directory '%s' to '%s'",
               replica_path.c_str(),
               rename_path);
-        _counter_replicas_recent_replica_move_garbage_count.increment();
+        _counter_replicas_recent_replica_move_garbage_count->increment();
     }
 }
 
@@ -1344,9 +1349,9 @@ void replica_stub::on_gc()
                          r->_potential_secondary_states.learning_copy_file_size);
         }
     }
-    _counter_replicas_learning_count.set(learning_count);
-    _counter_replicas_learning_max_duration_time_ms.set(learning_max_duration_time_ms);
-    _counter_replicas_learning_max_copy_file_size.set(learning_max_copy_file_size);
+    _counter_replicas_learning_count->set(learning_count);
+    _counter_replicas_learning_max_duration_time_ms->set(learning_max_duration_time_ms);
+    _counter_replicas_learning_max_copy_file_size->set(learning_max_copy_file_size);
 
     // gc shared prepare log
     //
@@ -1457,7 +1462,7 @@ void replica_stub::on_gc()
             }
         }
 
-        _counter_shared_log_size.set(_log->size() / (1024 * 1024));
+        _counter_shared_log_size->set(_log->size() / (1024 * 1024));
     }
 
     ddebug("finish to garbage collection, time_used_ns = %" PRIu64, dsn_now_ns() - start);
@@ -1512,13 +1517,13 @@ void replica_stub::on_disk_stat()
                           ", time_used_ms = %" PRIu64,
                           fpath.c_str(),
                           dsn_now_ms() - current_time_ms);
-                    _counter_replicas_recent_replica_remove_dir_count.increment();
+                    _counter_replicas_recent_replica_remove_dir_count->increment();
                 }
             }
         }
     }
-    _counter_replicas_error_replica_dir_count.set(error_replica_dir_count);
-    _counter_replicas_garbage_replica_dir_count.set(garbage_replica_dir_count);
+    _counter_replicas_error_replica_dir_count->set(error_replica_dir_count);
+    _counter_replicas_garbage_replica_dir_count->set(garbage_replica_dir_count);
 
     _fs_manager.update_disk_stat();
 
@@ -1547,7 +1552,7 @@ void replica_stub::on_disk_stat()
                 it2->second.first->cancel(false)) {
                 replica_ptr r = it2->second.second;
                 _closing_replicas.erase(it2);
-                _counter_replicas_closing_count.decrement();
+                _counter_replicas_closing_count->decrement();
 
                 add_replica(r);
 
@@ -1577,7 +1582,7 @@ void replica_stub::on_disk_stat()
                 this,
                 std::bind(&replica_stub::open_replica, this, app, gpid, req, req2));
 
-            _counter_replicas_opening_count.increment();
+            _counter_replicas_opening_count->increment();
             _opening_replicas[gpid] = task;
             _closed_replicas.erase(gpid);
             _replicas_lock.unlock();
@@ -1608,14 +1613,14 @@ void replica_stub::open_replica(const app_info &app,
     }
 
     if (rep == nullptr) {
-        _counter_replicas_opening_count.decrement();
+        _counter_replicas_opening_count->decrement();
         zauto_lock l(_replicas_lock);
         _opening_replicas.erase(gpid);
         return;
     }
 
     {
-        _counter_replicas_opening_count.decrement();
+        _counter_replicas_opening_count->decrement();
         zauto_lock l(_replicas_lock);
         auto it = _replicas.find(gpid);
         dassert(it == _replicas.end(), "");
@@ -1657,7 +1662,7 @@ void replica_stub::open_replica(const app_info &app,
                                          0,
                                          std::chrono::milliseconds(delay_ms));
         _closing_replicas[r->get_gpid()] = std::make_pair(task, r);
-        _counter_replicas_closing_count.increment();
+        _counter_replicas_closing_count->increment();
         return task;
     } else {
         return nullptr;
@@ -1674,7 +1679,7 @@ void replica_stub::close_replica(replica_ptr r)
     r->close();
 
     {
-        _counter_replicas_closing_count.decrement();
+        _counter_replicas_closing_count->decrement();
         zauto_lock l(_replicas_lock);
         _closing_replicas.erase(r->get_gpid());
         _closed_replicas.emplace(r_info.pid, std::make_pair(std::move(a_info), std::move(r_info)));
@@ -1685,7 +1690,7 @@ void replica_stub::close_replica(replica_ptr r)
 
 void replica_stub::add_replica(replica_ptr r)
 {
-    _counter_replicas_count.increment();
+    _counter_replicas_count->increment();
     zauto_lock l(_replicas_lock);
     auto pr = _replicas.insert(replicas::value_type(r->get_gpid(), r));
     dassert(pr.second, "replica %s is already in the collection", r->name());
@@ -1696,7 +1701,7 @@ bool replica_stub::remove_replica(replica_ptr r)
 {
     zauto_lock l(_replicas_lock);
     if (_replicas.erase(r->get_gpid()) > 0) {
-        _counter_replicas_count.decrement();
+        _counter_replicas_count->decrement();
         return true;
     } else {
         return false;
@@ -1950,7 +1955,7 @@ void replica_stub::close()
 
             task->cancel(true);
 
-            _counter_replicas_opening_count.decrement();
+            _counter_replicas_opening_count->decrement();
             _replicas_lock.lock();
             _opening_replicas.erase(_opening_replicas.begin());
         }
@@ -1958,7 +1963,7 @@ void replica_stub::close()
         while (_replicas.empty() == false) {
             _replicas.begin()->second->close();
 
-            _counter_replicas_count.decrement();
+            _counter_replicas_count->decrement();
             _replicas.erase(_replicas.begin());
         }
     }

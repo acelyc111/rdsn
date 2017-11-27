@@ -49,7 +49,8 @@ namespace dsn {
 namespace replication {
 
 replica::replica(replica_stub *stub, gpid gpid, const app_info &app, const char *dir)
-    : serverlet<replica>("replica"), _app_info(app),
+    : serverlet<replica>("replica"),
+      _app_info(app),
       _primary_states(
           gpid, stub->options().staleness_for_commit, stub->options().batch_write_disabled)
 {
@@ -69,7 +70,7 @@ replica::replica(replica_stub *stub, gpid gpid, const app_info &app, const char 
     std::stringstream ss;
     ss << "private.log.size(MB)"
        << "@" << gpid.get_app_id() << "." << gpid.get_partition_index();
-    _counter_private_log_size.init(
+    _counter_private_log_size.init_app_counter(
         "eon.replica", ss.str().c_str(), COUNTER_TYPE_NUMBER, "private log size(MB)");
 }
 
@@ -81,7 +82,7 @@ replica::replica(replica_stub *stub, gpid gpid, const app_info &app, const char 
 
 void replica::update_commit_statistics(int count)
 {
-    _stub->_counter_replicas_total_commit_throught.add((uint64_t)count);
+    _stub->_counter_replicas_total_commit_throught->add((uint64_t)count);
 }
 
 void replica::init_state()
