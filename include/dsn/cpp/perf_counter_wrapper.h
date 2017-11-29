@@ -70,7 +70,7 @@ public:
                           const char *dsptr)
     {
         dsn::perf_counter_ptr c =
-            dsn::perf_counters::instance().get_app_counter(section, name, type, dsptr, true);
+            dsn::perf_counters::instance().new_app_counter(section, name, type, dsptr);
         _counter = c.get();
     }
 
@@ -80,8 +80,8 @@ public:
                              dsn_perf_counter_type_t type,
                              const char *dsptr)
     {
-        dsn::perf_counter_ptr c = dsn::perf_counters::instance().get_global_counter(
-            app, section, name, type, dsptr, true);
+        dsn::perf_counter_ptr c =
+            dsn::perf_counters::instance().new_global_counter(app, section, name, type, dsptr);
         _counter = c.get();
     }
 

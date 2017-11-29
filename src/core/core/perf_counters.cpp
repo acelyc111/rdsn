@@ -63,6 +63,38 @@ perf_counters::perf_counters(void)
 
 perf_counters::~perf_counters(void) {}
 
+perf_counter_ptr perf_counters::new_app_counter(const char *section,
+                                                const char *name,
+                                                dsn_perf_counter_type_t flags,
+                                                const char *dsptr)
+{
+    dsn_app_info info;
+    dsn_get_current_app_info(&info);
+    return new_global_counter(info.name, section, name, flags, dsptr);
+}
+
+perf_counter_ptr perf_counters::new_global_counter(const char *app,
+                                                   const char *section,
+                                                   const char *name,
+                                                   dsn_perf_counter_type_t flags,
+                                                   const char *dsptr)
+{
+    std::string full_name;
+    perf_counter::build_full_name(app, section, name, full_name);
+    {
+        utils::auto_write_lock l(_lock);
+        auto it = _counters.find(full_name);
+        if (it == _counters.end()) {
+            perf_counter_ptr counter = _factory(app, section, name, flags, dsptr);
+            _counters.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(full_name),
+                              std::forward_as_tuple(counter));
+            return counter;
+        } else
+            return nullptr;
+    }
+}
+
 perf_counter_ptr perf_counters::get_app_counter(const char *section,
                                                 const char *name,
                                                 dsn_perf_counter_type_t flags,

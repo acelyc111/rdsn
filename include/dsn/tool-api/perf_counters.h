@@ -50,6 +50,17 @@ public:
     perf_counters(void);
     ~perf_counters(void);
 
+    perf_counter_ptr new_app_counter(const char *section,
+                                     const char *name,
+                                     dsn_perf_counter_type_t flags,
+                                     const char *dsptr);
+
+    perf_counter_ptr new_global_counter(const char *app,
+                                        const char *section,
+                                        const char *name,
+                                        dsn_perf_counter_type_t flags,
+                                        const char *dsptr);
+
     perf_counter_ptr get_app_counter(const char *section,
                                      const char *name,
                                      dsn_perf_counter_type_t flags,

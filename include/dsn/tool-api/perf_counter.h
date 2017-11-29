@@ -43,6 +43,26 @@
 #include <sstream>
 #include <vector>
 
+typedef enum dsn_perf_counter_type_t {
+    COUNTER_TYPE_NUMBER,
+    COUNTER_TYPE_VOLATILE_NUMBER, // special kind of NUMBER which will be reset on get
+    COUNTER_TYPE_RATE,
+    COUNTER_TYPE_NUMBER_PERCENTILES,
+    COUNTER_TYPE_INVALID,
+    COUNTER_TYPE_COUNT
+} dsn_perf_counter_type_t;
+
+typedef enum dsn_perf_counter_percentile_type_t {
+    COUNTER_PERCENTILE_50,
+    COUNTER_PERCENTILE_90,
+    COUNTER_PERCENTILE_95,
+    COUNTER_PERCENTILE_99,
+    COUNTER_PERCENTILE_999,
+
+    COUNTER_PERCENTILE_COUNT,
+    COUNTER_PERCENTILE_INVALID
+} dsn_perf_counter_percentile_type_t;
+
 namespace dsn {
 
 /*!

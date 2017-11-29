@@ -37,6 +37,7 @@
 #include <dsn/utility/factory_store.h>
 #include <dsn/cpp/clientlet.h>
 #include <dsn/tool-api/task.h>
+#include <dsn/tool-api/command.h>
 #include <sstream>
 #include <cinttypes>
 #include <string>

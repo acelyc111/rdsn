@@ -6,6 +6,7 @@
 #include <dsn/service_api_cpp.h>
 
 #include "dist/replication/meta_server/meta_data.h"
+
 #include "meta_service_test_app.h"
 
 int gtest_flags = 0;
@@ -71,7 +72,8 @@ dsn::error_code meta_service_test_app::start(int argc, char **argv)
 
 GTEST_API_ int main(int argc, char **argv)
 {
-    dsn::register_app<meta_service_test_app>("meta");
+    dsn::register_app<meta_service_test_app>("test_meta");
+    dsn_meta_server_bridge(0, nullptr);
     if (argc < 2)
         dassert(dsn_run_config("config-test.ini", false), "");
     else
