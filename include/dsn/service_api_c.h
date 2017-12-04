@@ -84,14 +84,7 @@
 // RPC, asynchronous file IO, environment, etc.
 #include <dsn/c/api_layer1.h>
 
-// application/framework model in rDSN
 #include <dsn/c/app_model.h>
-
-// while most development and operation tools
-// in rDSN are app transparent, some are app
-// specific, which requires developers write
-// certain app-specific logic to enable them.
-#include <dsn/c/app_tools.h>
 
 // some useful utility functions provided by rDSN,
 // such as logging, performance counter, checksum,
