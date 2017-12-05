@@ -37,6 +37,8 @@
 #include "mutation.h"
 #include <dsn/dist/replication/replication_app_base.h>
 #include <dsn/utility/factory_store.h>
+#include <dsn/utility/filesystem.h>
+#include <dsn/utility/crc.h>
 #include <dsn/service_api_c.h>
 #include <fstream>
 #include <sstream>
@@ -132,7 +134,7 @@ error_code replica_init_info::load_binary(const char *file)
 
     auto fcrc = crc;
     crc = 0; // set for crc computation
-    auto lcrc = dsn_crc32_compute((const void *)this, sizeof(*this), 0);
+    auto lcrc = dsn::utils::crc32_calc((const void *)this, sizeof(*this), 0);
     crc = fcrc; // recover
 
     if (lcrc != fcrc) {
@@ -157,7 +159,7 @@ error_code replica_init_info::store_binary(const char *file)
 
     // compute crc
     crc = 0;
-    crc = dsn_crc32_compute((const void *)this, sizeof(*this), 0);
+    crc = dsn::utils::crc32_calc((const void *)this, sizeof(*this), 0);
 
     os.write((const char *)this, sizeof(*this));
     os.close();

@@ -35,6 +35,7 @@
 #include "nfs_server_impl.h"
 #include <cstdlib>
 #include <sys/stat.h>
+#include <dsn/utility/filesystem.h>
 
 namespace dsn {
 namespace service {

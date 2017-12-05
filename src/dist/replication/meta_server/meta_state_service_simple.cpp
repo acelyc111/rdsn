@@ -36,6 +36,7 @@
 
 #include "meta_state_service_simple.h"
 #include <dsn/tool-api/task.h>
+#include <dsn/utility/filesystem.h>
 
 #include <stack>
 #include <utility>

@@ -35,6 +35,7 @@
 
 #include "message_parser_manager.h"
 #include <dsn/service_api_c.h>
+#include <dsn/utility/mm.h>
 
 #ifdef __TITLE__
 #undef __TITLE__

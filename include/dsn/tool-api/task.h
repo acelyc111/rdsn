@@ -44,6 +44,12 @@
 #include <dsn/cpp/callocator.h>
 #include <dsn/cpp/auto_codes.h>
 #include <dsn/utility/utils.h>
+#include <dsn/utility/mm.h>
+
+#ifdef __TITLE__
+#undef __TITLE__
+#endif
+#define __TITLE__ "task"
 
 namespace dsn {
 

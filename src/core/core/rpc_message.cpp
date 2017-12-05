@@ -34,10 +34,11 @@
  */
 
 #include <dsn/utility/ports.h>
+#include <dsn/utility/crc.h>
 #include <dsn/tool-api/rpc_message.h>
 #include <dsn/tool-api/network.h>
 #include <dsn/tool-api/message_parser.h>
-#include <cctype> // for isprint()
+#include <cctype>
 
 #include "task_engine.h"
 #include "transient_memory.h"
