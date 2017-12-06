@@ -1158,7 +1158,7 @@ void replica_stub::remove_replica_on_meta_server(const app_info &info,
     rpc::call(_failure_detector->get_servers(),
               msg,
               nullptr,
-              [](error_code err, dsn_message_t, dsn_message_t) { err.end_tracking(); });
+              [](error_code err, dsn_message_t, dsn_message_t) {});
 }
 
 void replica_stub::on_meta_server_disconnected()
@@ -1202,7 +1202,6 @@ void replica_stub::response_client_error(gpid gpid,
                                          error_code error)
 {
     if (nullptr == request) {
-        error.end_tracking();
         return;
     }
 
