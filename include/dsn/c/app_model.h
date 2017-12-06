@@ -37,10 +37,6 @@
 
 #include <dsn/c/api_common.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern DSN_API bool dsn_mimic_app(const char *app_role, int index);
 
 /*!
@@ -86,7 +82,3 @@ extern DSN_API void dsn_run(int argc, char **argv, bool sleep_after_init DEFAULT
  to exit the current process to avoid exceptions happending during normal exit.
  */
 NORETURN extern DSN_API void dsn_exit(int code);
-
-#ifdef __cplusplus
-}
-#endif

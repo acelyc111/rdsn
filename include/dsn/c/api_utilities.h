@@ -37,10 +37,6 @@
 
 #include <dsn/c/api_common.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*!
 @defgroup service-api-utilities Utility Service API
 @ingroup service-api
@@ -238,7 +234,3 @@ extern DSN_API void *dsn_transient_malloc(uint32_t size);
 extern DSN_API void dsn_transient_free(void *ptr);
 
 /*@}*/
-
-#ifdef __cplusplus
-}
-#endif
