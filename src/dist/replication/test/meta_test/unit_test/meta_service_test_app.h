@@ -72,8 +72,8 @@ public:
 
     template <typename TRequest>
     std::shared_ptr<reply_context>
-    fake_rpc_call(dsn_task_code_t rpc_code,
-                  dsn_task_code_t server_state_write_code,
+    fake_rpc_call(dsn::task_code rpc_code,
+                  dsn::task_code server_state_write_code,
                   dsn::replication::server_state *ss,
                   void (dsn::replication::server_state::*handle)(dsn_message_t request),
                   const TRequest &data,
