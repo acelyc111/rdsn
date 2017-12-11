@@ -339,9 +339,10 @@ inline void json_decode(dsn::json::string_tokenizer &in, dsn::gpid &pid)
 {
     std::string gpid_message;
     json_decode(in, gpid_message);
-    dsn_global_partition_id c_gpid;
-    sscanf(gpid_message.c_str(), "%d.%d", &c_gpid.u.app_id, &c_gpid.u.partition_index);
-    pid = dsn::gpid(c_gpid);
+    int32_t app_id, pidx;
+    sscanf(gpid_message.c_str(), "%d.%d", &app_id, &pidx);
+    pid.set_app_id(app_id);
+    pid.set_partition_index(pidx);
 }
 
 inline void json_encode(std::stringstream &out, const dsn::rpc_address &address)

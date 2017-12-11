@@ -119,16 +119,13 @@ error_code replica::initialize_on_load()
     }
 
     char app_type[128];
-    gpid gpid;
-    if (3 != sscanf(name.c_str(),
-                    "%d.%d.%s",
-                    &gpid.raw().u.app_id,
-                    &gpid.raw().u.partition_index,
-                    app_type)) {
+    int32_t app_id, pidx;
+    if (3 != sscanf(name.c_str(), "%d.%d.%s", &app_id, &pidx, app_type)) {
         derror("invalid replica dir %s", dir);
         return nullptr;
     }
 
+    gpid pid(app_id, pidx);
     if (!utils::filesystem::directory_exists(dir)) {
         derror("replica dir %s not exist", dir);
         return nullptr;
@@ -148,7 +145,7 @@ error_code replica::initialize_on_load()
         return nullptr;
     }
 
-    replica *rep = new replica(stub, gpid, info, dir);
+    replica *rep = new replica(stub, pid, info, dir);
 
     err = rep->initialize_on_load();
     if (err == ERR_OK) {
@@ -170,7 +167,7 @@ error_code replica::initialize_on_load()
                   dir,
                   rename_dir);
             stub->_counter_replicas_recent_replica_move_error_count->increment();
-            stub->_fs_manager.remove_replica(gpid);
+            stub->_fs_manager.remove_replica(pid);
         }
 
         return nullptr;
@@ -228,7 +225,7 @@ error_code replica::init_app_and_prepare_list(bool create_new)
                         tasking::enqueue(LPC_REPLICATION_ERROR,
                                          this,
                                          [this, err]() { handle_local_failure(err); },
-                                         gpid_to_thread_hash(get_gpid()));
+                                         get_gpid().thread_hash());
                     },
                     replay_condition);
 
@@ -312,7 +309,7 @@ error_code replica::init_app_and_prepare_list(bool create_new)
                 tasking::enqueue(LPC_REPLICATION_ERROR,
                                  this,
                                  [this, err]() { handle_local_failure(err); },
-                                 gpid_to_thread_hash(get_gpid()));
+                                 get_gpid().thread_hash());
             });
         }
 
@@ -322,7 +319,7 @@ error_code replica::init_app_and_prepare_list(bool create_new)
                                        this,
                                        [this] { on_checkpoint_timer(); },
                                        std::chrono::seconds(_options->checkpoint_interval_seconds),
-                                       gpid_to_thread_hash(get_gpid()));
+                                       get_gpid().thread_hash());
         }
     }
 

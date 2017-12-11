@@ -39,20 +39,3 @@
 #include <dsn/dist/replication/replication.types.h>
 #include <dsn/dist/replication/replication_other_types.h>
 #include <dsn/dist/replication/replication.codes.h>
-
-namespace dsn {
-namespace replication {
-inline int gpid_to_thread_hash(gpid gpid) { return dsn_gpid_to_thread_hash(gpid.raw()); }
-}
-}
-
-namespace std {
-template <>
-struct hash<::dsn::gpid>
-{
-    size_t operator()(const ::dsn::gpid &gpid) const
-    {
-        return static_cast<std::size_t>(::dsn::replication::gpid_to_thread_hash(gpid));
-    }
-};
-}

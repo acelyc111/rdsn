@@ -84,9 +84,9 @@ service_node::service_node(service_app_spec &app_spec)
     _intercepted_write.add_ref(); // release in handler::run
 }
 
-bool service_node::rpc_register_handler(rpc_handler_info *handler, dsn_gpid gpid)
+bool service_node::rpc_register_handler(rpc_handler_info *handler, dsn::gpid gpid)
 {
-    if (gpid.value == 0) {
+    if (gpid.value() == 0) {
         for (auto &io : _ios) {
             if (io.rpc) {
                 bool r = io.rpc->register_rpc_handler(handler);
@@ -100,9 +100,9 @@ bool service_node::rpc_register_handler(rpc_handler_info *handler, dsn_gpid gpid
     return true;
 }
 
-rpc_handler_info *service_node::rpc_unregister_handler(dsn::task_code rpc_code, dsn_gpid gpid)
+rpc_handler_info *service_node::rpc_unregister_handler(dsn::task_code rpc_code, dsn::gpid gpid)
 {
-    if (gpid.value == 0) {
+    if (gpid.value() == 0) {
         rpc_handler_info *ret = nullptr;
 
         for (auto &io : _ios) {
@@ -416,7 +416,7 @@ void service_node::get_queue_info(
     ss << "]}";
 }
 
-void service_node::handle_intercepted_request(dsn_gpid gpid, bool is_write, dsn_message_t req)
+void service_node::handle_intercepted_request(dsn::gpid gpid, bool is_write, dsn_message_t req)
 {
     _entity->on_intercepted_request(gpid, is_write, req);
 }
