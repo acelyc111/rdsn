@@ -469,8 +469,11 @@ DSN_API dsn_address_t dsn_primary_address()
     return ::dsn::task::get_current_rpc()->primary_address().c_addr();
 }
 
-DSN_API bool dsn_rpc_register_handler(
-    dsn::task_code code, const char *name, dsn_rpc_request_handler_t cb, void *param, dsn::gpid gpid)
+DSN_API bool dsn_rpc_register_handler(dsn::task_code code,
+                                      const char *name,
+                                      dsn_rpc_request_handler_t cb,
+                                      void *param,
+                                      dsn::gpid gpid)
 {
     ::dsn::rpc_handler_info *h(new ::dsn::rpc_handler_info(code));
     h->name = std::string(name);
@@ -1209,7 +1212,7 @@ service_app *service_app::new_service_app(const std::string &type,
         type.c_str(), dsn::PROVIDER_TYPE_MAIN, info);
 }
 
-service_app::service_app(const dsn::service_app_info *info) : _info(info) {}
+service_app::service_app(const dsn::service_app_info *info) : _info(info), _started(false) {}
 
 const service_app_info &service_app::info() const { return *_info; }
 
