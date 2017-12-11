@@ -33,6 +33,8 @@ public:
     void set_app_id(int32_t v) { _value.u.app_id = v; }
     void set_partition_index(int32_t v) { _value.u.partition_index = v; }
     void set_value(uint64_t v) { _value.value = v; }
+    bool parse_from(const char *str);
+    const char *to_string() const;
 
 #ifdef DSN_USE_THRIFT_SERIALIZATION
     uint32_t read(::apache::thrift::protocol::TProtocol *iprot);
