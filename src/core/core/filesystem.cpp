@@ -33,6 +33,7 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 
+#include <dsn/c/api_utilities.h>
 #include <dsn/utility/filesystem.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -494,8 +495,7 @@ static bool remove_directory(const std::string &npath)
         [](const char *fpath, int typeflag, struct FTW *ftwbuf) {
             bool succ;
 
-            dassert(
-                (typeflag == FTW_F) || (typeflag == FTW_DP), "Invalid typeflag = %d.", typeflag);
+            dassert((typeflag == FTW_F) || (typeflag == FTW_DP), "Invalid typeflag");
 #ifdef _WIN32
             if (typeflag != FTW_F) {
                 succ = (::RemoveDirectoryA(fpath) == TRUE);
