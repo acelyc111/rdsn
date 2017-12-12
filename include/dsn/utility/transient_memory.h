@@ -36,12 +36,10 @@
 #pragma once
 
 #include <dsn/utility/ports.h>
-#include <dsn/utility/utils.h>
 #include <dsn/utility/blob.h>
-#include <dsn/utility/mm.h>
-#include <dsn/service_api_c.h>
 
 namespace dsn {
+
 typedef struct tls_transient_memory_t
 {
     unsigned int magic;
@@ -53,14 +51,15 @@ typedef struct tls_transient_memory_t
 } tls_transient_memory_t;
 
 extern __thread tls_transient_memory_t tls_trans_memory;
-extern void tls_trans_mem_init(size_t default_per_block_bytes);
-extern void tls_trans_mem_alloc(size_t min_size);
 
-extern void tls_trans_mem_next(void **ptr, size_t *sz, size_t min_size);
-extern void tls_trans_mem_commit(size_t use_size);
+void tls_trans_mem_init(size_t default_per_block_bytes);
+void tls_trans_mem_alloc(size_t min_size);
 
-extern blob tls_trans_mem_alloc_blob(size_t sz);
+void tls_trans_mem_next(void **ptr, size_t *sz, size_t min_size);
+void tls_trans_mem_commit(size_t use_size);
 
-extern void *tls_trans_malloc(size_t sz);
-extern void tls_trans_free(void *ptr);
+blob tls_trans_mem_alloc_blob(size_t sz);
+
+void *tls_trans_malloc(size_t sz);
+void tls_trans_free(void *ptr);
 }

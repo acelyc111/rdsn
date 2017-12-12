@@ -33,7 +33,7 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 
-#include "../core/transient_memory.h"
+#include <dsn/utility/transient_memory.h>
 #include <gtest/gtest.h>
 
 using namespace ::dsn;

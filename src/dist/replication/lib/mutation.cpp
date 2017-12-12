@@ -203,8 +203,8 @@ void mutation::write_to(binary_writer &writer, dsn_message_t /*to*/) const
     }
     for (int i = 0; i < size; ++i) {
         int len = lengths[i];
-        std::shared_ptr<char> holder((char *)dsn_transient_malloc(len),
-                                     [](char *ptr) { dsn_transient_free((void *)ptr); });
+        std::shared_ptr<char> holder((char *)dsn::tls_trans_malloc(len),
+                                     [](char *ptr) { dsn::tls_trans_free((void *)ptr); });
         reader.read(holder.get(), len);
         mu->data.updates[i].data.assign(holder, 0, len);
     }
