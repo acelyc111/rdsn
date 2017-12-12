@@ -35,8 +35,10 @@
 
 #pragma once
 
-#include <dsn/service_api_cpp.h>
 #include <dsn/utility/autoref_ptr.h>
+#include <dsn/utility/error_code.h>
+#include <dsn/tool-api/gpid.h>
+#include <dsn/tool-api/rpc_address.h>
 
 namespace dsn {
 namespace dist {
@@ -53,7 +55,7 @@ public:
                              ///< ERR_IO_PENDING if resolve in is progress, callers
                              ///< should call resolve_async in this case
         rpc_address address; ///< IPv4 of the target to send request to
-        dsn::gpid pid;        ///< global partition indentity
+        dsn::gpid pid;       ///< global partition indentity
     };
 
 public:

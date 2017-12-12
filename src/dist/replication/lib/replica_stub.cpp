@@ -1211,7 +1211,7 @@ void replica_stub::response_client_error(gpid gpid,
               gpid.get_partition_index(),
               _primary_address.to_string(),
               is_read ? "read" : "write",
-              dsn_address_to_string(dsn_msg_from_address(request)),
+              dsn_msg_from_address(request).to_string(),
               error.to_string());
     } else {
         derror("%d.%d@%s: reply client %s to %s, err = %s",
@@ -1219,7 +1219,7 @@ void replica_stub::response_client_error(gpid gpid,
                gpid.get_partition_index(),
                _primary_address.to_string(),
                is_read ? "read" : "write",
-               dsn_address_to_string(dsn_msg_from_address(request)),
+               dsn_msg_from_address(request).to_string(),
                error.to_string());
     }
     dsn_rpc_reply(dsn_msg_create_response(request), error);

@@ -79,7 +79,7 @@ public:
     virtual void reply_message(dsn_message_t, dsn_message_t response) { dsn_rpc_reply(response); }
     virtual void send_message(const rpc_address &target, dsn_message_t request)
     {
-        dsn_rpc_call_one_way(target.c_addr(), request);
+        dsn_rpc_call_one_way(target, request);
     }
 
     // these two callbacks are running in fd's thread_pool, and in fd's lock

@@ -517,11 +517,11 @@ uint32_t network::get_local_ipv4()
     uint32_t ip = 0;
 
     if (strlen(explicit_host) > 0) {
-        ip = dsn_ipv4_from_host(explicit_host);
+        ip = rpc_address::ipv4_from_host(explicit_host);
     }
 
     if (0 == ip) {
-        ip = dsn_ipv4_local(inteface);
+        ip = rpc_address::ipv4_from_network_interface(inteface);
     }
 
     if (0 == ip) {
@@ -529,7 +529,7 @@ uint32_t network::get_local_ipv4()
         if (gethostname(name, sizeof(name)) != 0) {
             dassert(false, "gethostname failed, err = %s", strerror(errno));
         }
-        ip = dsn_ipv4_from_host(name);
+        ip = rpc_address::ipv4_from_host(name);
     }
 
     return ip;

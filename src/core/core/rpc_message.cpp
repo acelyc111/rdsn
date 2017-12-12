@@ -124,14 +124,14 @@ DSN_API void dsn_msg_add_ref(dsn_message_t msg) { ((::dsn::message_ex *)msg)->ad
 
 DSN_API void dsn_msg_release_ref(dsn_message_t msg) { ((::dsn::message_ex *)msg)->release_ref(); }
 
-DSN_API dsn_address_t dsn_msg_from_address(dsn_message_t msg)
+DSN_API dsn::rpc_address dsn_msg_from_address(dsn_message_t msg)
 {
-    return ((::dsn::message_ex *)msg)->header->from_address.c_addr();
+    return ((::dsn::message_ex *)msg)->header->from_address;
 }
 
-DSN_API dsn_address_t dsn_msg_to_address(dsn_message_t msg)
+DSN_API dsn::rpc_address dsn_msg_to_address(dsn_message_t msg)
 {
-    return ((::dsn::message_ex *)msg)->to_address.c_addr();
+    return ((::dsn::message_ex *)msg)->to_address;
 }
 
 DSN_API uint64_t dsn_msg_trace_id(dsn_message_t msg)
