@@ -50,6 +50,13 @@ public:
               dsn_task_type_t tt,
               dsn_task_priority_t pri,
               dsn::threadpool_code pool);
+    task_code(const char *name,
+              dsn_task_type_t tt,
+              dsn_task_priority_t pri,
+              dsn::threadpool_code pool,
+              bool is_storage_write,
+              bool allow_batch);
+
     task_code() { _internal_code = 0; }
     task_code(const task_code &r) { _internal_code = r._internal_code; }
     explicit task_code(int code) { _internal_code = code; }
@@ -93,6 +100,12 @@ private:
 #define DEFINE_TASK_CODE(x, pri, pool) DEFINE_NAMED_TASK_CODE(x, x, pri, pool)
 #define DEFINE_TASK_CODE_AIO(x, pri, pool) DEFINE_NAMED_TASK_CODE_AIO(x, x, pri, pool)
 #define DEFINE_TASK_CODE_RPC(x, pri, pool) DEFINE_NAMED_TASK_CODE_RPC(x, x, pri, pool)
+
+#define DEFINE_STORAGE_RPC_CODE(x, pri, pool, is_write, allow_batch)                               \
+    __selectany const ::dsn::task_code x(                                                          \
+        #x, TASK_TYPE_RPC_REQUEST, pri, pool, is_write, allow_batch);                              \
+    __selectany const ::dsn::task_code x##_ACK(                                                    \
+        #x "_ACK", TASK_TYPE_RPC_RESPONSE, pri, THREAD_POOL_DEFAULT, is_write, allow_batch);
 
 DEFINE_TASK_CODE(TASK_CODE_INVALID, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
 }
