@@ -106,7 +106,7 @@ template <typename T> // where T : serverlet<T>
 class serverlet : public virtual clientlet
 {
 public:
-    serverlet(const char *nm, int task_bucket_count = 8);
+    serverlet(const char *nm);
     virtual ~serverlet();
 
 protected:
@@ -143,8 +143,7 @@ private:
 
 // ------------- inline implementation ----------------
 template <typename T>
-inline serverlet<T>::serverlet(const char *nm, int task_bucket_count)
-    : clientlet(task_bucket_count), _name(nm)
+inline serverlet<T>::serverlet(const char *nm) : clientlet(), _name(nm)
 {
 }
 

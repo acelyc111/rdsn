@@ -182,7 +182,7 @@ DSN_API void dsn_coredump()
 }
 
 DSN_API dsn_task_t dsn_task_create(
-    dsn::task_code code, dsn_task_handler_t cb, void *context, int hash, dsn_task_tracker_t tracker)
+    dsn::task_code code, dsn_task_handler_t cb, void *context, int hash, dsn::task_tracker *tracker)
 {
     auto t = new ::dsn::task_c(code, cb, context, nullptr, hash);
     t->set_tracker((dsn::task_tracker *)tracker);
@@ -195,7 +195,7 @@ DSN_API dsn_task_t dsn_task_create_timer(dsn::task_code code,
                                          void *context,
                                          int hash,
                                          int interval_milliseconds,
-                                         dsn_task_tracker_t tracker)
+                                         dsn::task_tracker *tracker)
 {
     auto t = new ::dsn::timer_task(code, cb, context, nullptr, interval_milliseconds, hash);
     t->set_tracker((dsn::task_tracker *)tracker);
@@ -208,7 +208,7 @@ DSN_API dsn_task_t dsn_task_create_ex(dsn::task_code code,
                                       dsn_task_cancelled_handler_t on_cancel,
                                       void *context,
                                       int hash,
-                                      dsn_task_tracker_t tracker)
+                                      dsn::task_tracker *tracker)
 {
     auto t = new ::dsn::task_c(code, cb, context, on_cancel, hash);
     t->set_tracker((dsn::task_tracker *)tracker);
@@ -222,32 +222,12 @@ DSN_API dsn_task_t dsn_task_create_timer_ex(dsn::task_code code,
                                             void *context,
                                             int hash,
                                             int interval_milliseconds,
-                                            dsn_task_tracker_t tracker)
+                                            dsn::task_tracker *tracker)
 {
     auto t = new ::dsn::timer_task(code, cb, context, on_cancel, interval_milliseconds, hash);
     t->set_tracker((dsn::task_tracker *)tracker);
     t->spec().on_task_create.execute(::dsn::task::get_current_task(), t);
     return t;
-}
-
-DSN_API dsn_task_tracker_t dsn_task_tracker_create(int task_bucket_count)
-{
-    return (dsn_task_tracker_t)(new ::dsn::task_tracker(task_bucket_count));
-}
-
-DSN_API void dsn_task_tracker_destroy(dsn_task_tracker_t tracker)
-{
-    delete ((::dsn::task_tracker *)tracker);
-}
-
-DSN_API void dsn_task_tracker_cancel_all(dsn_task_tracker_t tracker)
-{
-    ((::dsn::task_tracker *)tracker)->cancel_outstanding_tasks();
-}
-
-DSN_API void dsn_task_tracker_wait_all(dsn_task_tracker_t tracker)
-{
-    ((::dsn::task_tracker *)tracker)->wait_outstanding_tasks();
 }
 
 DSN_API void dsn_task_call(dsn_task_t task, int delay_milliseconds)
@@ -485,7 +465,7 @@ DSN_API dsn_task_t dsn_rpc_create_response_task(dsn_message_t request,
                                                 dsn_rpc_response_handler_t cb,
                                                 void *context,
                                                 int reply_thread_hash,
-                                                dsn_task_tracker_t tracker)
+                                                dsn::task_tracker *tracker)
 {
     auto msg = ((::dsn::message_ex *)request);
     auto t = new ::dsn::rpc_response_task(msg, cb, context, nullptr, reply_thread_hash);
@@ -499,7 +479,7 @@ DSN_API dsn_task_t dsn_rpc_create_response_task_ex(dsn_message_t request,
                                                    dsn_task_cancelled_handler_t on_cancel,
                                                    void *context,
                                                    int reply_thread_hash,
-                                                   dsn_task_tracker_t tracker)
+                                                   dsn::task_tracker *tracker)
 {
     auto msg = ((::dsn::message_ex *)request);
     auto t = new ::dsn::rpc_response_task(msg, cb, context, on_cancel, reply_thread_hash);
@@ -614,7 +594,7 @@ DSN_API void *dsn_file_native_handle(dsn_handle_t file)
 }
 
 DSN_API dsn_task_t dsn_file_create_aio_task(
-    dsn::task_code code, dsn_aio_handler_t cb, void *context, int hash, dsn_task_tracker_t tracker)
+    dsn::task_code code, dsn_aio_handler_t cb, void *context, int hash, dsn::task_tracker *tracker)
 {
     auto t = new ::dsn::aio_task(code, cb, context, nullptr, hash);
     t->set_tracker((dsn::task_tracker *)tracker);
@@ -627,7 +607,7 @@ DSN_API dsn_task_t dsn_file_create_aio_task_ex(dsn::task_code code,
                                                dsn_task_cancelled_handler_t on_cancel,
                                                void *context,
                                                int hash,
-                                               dsn_task_tracker_t tracker)
+                                               dsn::task_tracker *tracker)
 {
     auto t = new ::dsn::aio_task(code, cb, context, on_cancel, hash);
     t->set_tracker((dsn::task_tracker *)tracker);

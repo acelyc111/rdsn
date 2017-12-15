@@ -144,7 +144,7 @@ void replica::init_learn(uint64_t signature)
                         _potential_secondary_states.learning_round_is_running = true;
                         _potential_secondary_states.catchup_with_private_log_task =
                             tasking::create_task(LPC_CATCHUP_WITH_PRIVATE_LOGS,
-                                                 this,
+                                                 &_tracker,
                                                  [this]() {
                                                      this->catch_up_with_private_logs(
                                                          partition_status::PS_POTENTIAL_SECONDARY);
@@ -226,7 +226,7 @@ void replica::init_learn(uint64_t signature)
         rpc::create_message(
             RPC_LEARN, request, std::chrono::milliseconds(0), get_gpid().thread_hash())
             .call(_config.primary,
-                  this,
+                  &_tracker,
                   [ this, req_cap = std::move(request) ](error_code err,
                                                          learn_response && resp) mutable {
                       on_learn_reply(err, std::move(req_cap), std::move(resp));
@@ -538,7 +538,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
             _potential_secondary_states.learning_round_is_running = false;
             _potential_secondary_states.delay_learning_task =
                 tasking::create_task(LPC_DELAY_LEARN,
-                                     this,
+                                     &_tracker,
                                      std::bind(&replica::init_learn, this, req.signature),
                                      get_gpid().thread_hash());
             _potential_secondary_states.delay_learning_task->enqueue(std::chrono::seconds(1));
@@ -639,7 +639,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
         if (err != ERR_OK) {
             _potential_secondary_states.learn_remote_files_task = tasking::create_task(
                 LPC_LEARN_REMOTE_DELTA_FILES,
-                this,
+                &_tracker,
                 [ this, err, req_cap = std::move(req), resp_cap = std::move(resp) ]() mutable {
                     on_copy_remote_state_completed(err, 0, std::move(req_cap), std::move(resp_cap));
                 });
@@ -736,12 +736,12 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
 
                 // write to shared log with no callback, the later 2pc ensures that logs
                 // are written to the disk
-                _stub->_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, this, nullptr);
+                _stub->_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, &_tracker, nullptr);
 
                 // because shared log are written without callback, need to manully
                 // set flag and write mutations to private log
                 mu->set_logged();
-                _private_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, this, nullptr);
+                _private_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, &_tracker, nullptr);
 
                 // then we prepare, it is possible that a committed mutation exists in learner's
                 // prepare log,
@@ -801,7 +801,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
         _potential_secondary_states.learning_status = learner_status::LearningWithPrepare;
         _potential_secondary_states.learn_remote_files_task = tasking::create_task(
             LPC_LEARN_REMOTE_DELTA_FILES,
-            this,
+            &_tracker,
             [ this, err, req_cap = std::move(req), resp_cap = std::move(resp) ]() mutable {
                 on_copy_remote_state_completed(err, 0, std::move(req_cap), std::move(resp_cap));
             });
@@ -823,7 +823,7 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
 
             _potential_secondary_states.learn_remote_files_task = tasking::create_task(
                 LPC_LEARN_REMOTE_DELTA_FILES,
-                this,
+                &_tracker,
                 [ this, err, req_cap = std::move(req), resp_cap = std::move(resp) ]() mutable {
                     on_copy_remote_state_completed(
                         ERR_FILE_OPERATION_FAILED, 0, std::move(req_cap), std::move(resp_cap));
@@ -850,14 +850,14 @@ void replica::on_learn_reply(error_code err, learn_request &&req, learn_response
             true, // overwrite
             high_priority,
             LPC_REPLICATION_COPY_REMOTE_FILES,
-            this,
+            &_tracker,
             [ this, req_cap = std::move(req), resp_copy = resp ](error_code err, int sz) mutable {
                 on_copy_remote_state_completed(err, sz, std::move(req_cap), std::move(resp_copy));
             });
     } else {
         _potential_secondary_states.learn_remote_files_task = tasking::create_task(
             LPC_LEARN_REMOTE_DELTA_FILES,
-            this,
+            &_tracker,
             [ this, req_cap = std::move(req), resp_cap = std::move(resp) ]() mutable {
                 on_copy_remote_state_completed(ERR_OK, 0, std::move(req_cap), std::move(resp_cap));
             });
@@ -1071,7 +1071,7 @@ void replica::on_copy_remote_state_completed(error_code err,
 
     _potential_secondary_states.learn_remote_files_completed_task =
         tasking::create_task(LPC_LEARN_REMOTE_DELTA_FILES_COMPLETED,
-                             this,
+                             &_tracker,
                              [this, err]() { on_learn_remote_state_completed(err); },
                              get_gpid().thread_hash());
     _potential_secondary_states.learn_remote_files_completed_task->enqueue();
@@ -1196,7 +1196,7 @@ void replica::notify_learn_completion()
                             report,
                             std::chrono::milliseconds(0),
                             get_gpid().thread_hash())
-            .call(_config.primary, this, [
+            .call(_config.primary, &_tracker, [
                 this,
                 report = std::move(report)
             ](error_code err, learn_notify_response && resp) mutable {
@@ -1303,7 +1303,7 @@ void replica::on_learn_completion_notification_reply(error_code err,
             _potential_secondary_states.learning_round_is_running = false;
             _potential_secondary_states.delay_learning_task = tasking::create_task(
                 LPC_DELAY_LEARN,
-                this,
+                &_tracker,
                 std::bind(&replica::init_learn, this, report.learner_signature),
                 get_gpid().thread_hash());
             _potential_secondary_states.delay_learning_task->enqueue(std::chrono::seconds(1));

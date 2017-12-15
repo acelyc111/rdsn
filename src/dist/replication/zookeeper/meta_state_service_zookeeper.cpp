@@ -147,10 +147,7 @@ error_code zoo_transaction::get_result(unsigned int entry_index)
     return from_zerror(_pkt->_results[entry_index].err);
 }
 
-meta_state_service_zookeeper::meta_state_service_zookeeper() : clientlet(), ref_counter()
-{
-    _first_call = true;
-}
+meta_state_service_zookeeper::meta_state_service_zookeeper() : ref_counter() { _first_call = true; }
 
 meta_state_service_zookeeper::~meta_state_service_zookeeper()
 {
@@ -208,7 +205,7 @@ task_ptr meta_state_service_zookeeper::create_node(const std::string &node,
                                                    task_code cb_code,
                                                    const err_callback &cb_create,
                                                    const blob &value,
-                                                   clientlet *tracker)
+                                                   dsn::task_tracker *tracker)
 {
     task_ptr tsk = tasking::create_late_task(cb_code, cb_create, 0, tracker);
     dinfo("call create, node(%s)", node.c_str());
@@ -224,7 +221,7 @@ task_ptr meta_state_service_zookeeper::submit_transaction(
     const std::shared_ptr<transaction_entries> &entries,
     task_code cb_code,
     const err_callback &cb_transaction,
-    clientlet *tracker)
+    dsn::task_tracker *tracker)
 {
     task_ptr tsk = tasking::create_late_task(cb_code, cb_transaction, 0, tracker);
     dinfo("call submit batch");
@@ -246,7 +243,7 @@ task_ptr meta_state_service_zookeeper::submit_transaction(
 task_ptr meta_state_service_zookeeper::delete_empty_node(const std::string &node,
                                                          task_code cb_code,
                                                          const err_callback &cb_delete,
-                                                         clientlet *tracker)
+                                                         dsn::task_tracker *tracker)
 {
     task_ptr tsk = tasking::create_late_task(cb_code, cb_delete, 0, tracker);
     dinfo("call delete, node(%s)", node.c_str());
@@ -265,7 +262,7 @@ task_ptr meta_state_service_zookeeper::delete_node(const std::string &node,
                                                    bool recursively_delete,
                                                    task_code cb_code,
                                                    const err_callback &cb_delete,
-                                                   clientlet *tracker)
+                                                   dsn::task_tracker *tracker)
 {
     task_ptr tsk = tasking::create_late_task(cb_code, cb_delete, 0, tracker);
     err_stringv_callback after_get_children = [node, recursively_delete, cb_code, tsk, this](
@@ -274,7 +271,7 @@ task_ptr meta_state_service_zookeeper::delete_node(const std::string &node,
             bind_and_enqueue(tsk, err);
         else if (children.empty())
             delete_empty_node(
-                node, cb_code, [tsk](error_code err) { bind_and_enqueue(tsk, err); }, this);
+                node, cb_code, [tsk](error_code err) { bind_and_enqueue(tsk, err); }, nullptr);
         else if (!recursively_delete)
             bind_and_enqueue(tsk, ERR_INVALID_PARAMETERS);
         else {
@@ -298,26 +295,26 @@ task_ptr meta_state_service_zookeeper::delete_node(const std::string &node,
                                             node,
                                             cb_code,
                                             [tsk](error_code err) { bind_and_enqueue(tsk, err); },
-                                            this);
+                                            nullptr);
                                     else
                                         bind_and_enqueue(tsk, ERR_FILE_OPERATION_FAILED);
                                     delete child_count;
                                     delete error_count;
                                 }
                             },
-                            this);
+                            nullptr);
             }
         }
     };
 
-    get_children(node, cb_code, after_get_children, this);
+    get_children(node, cb_code, after_get_children, nullptr);
     return tsk;
 }
 
 task_ptr meta_state_service_zookeeper::get_data(const std::string &node,
                                                 task_code cb_code,
                                                 const err_value_callback &cb_get_data,
-                                                clientlet *tracker)
+                                                dsn::task_tracker *tracker)
 {
     task_ptr tsk = tasking::create_late_task(cb_code, cb_get_data, 0, tracker);
     dinfo("call get, node(%s)", node.c_str());
@@ -331,7 +328,7 @@ task_ptr meta_state_service_zookeeper::set_data(const std::string &node,
                                                 const blob &value,
                                                 task_code cb_code,
                                                 const err_callback &cb_set_data,
-                                                clientlet *tracker)
+                                                dsn::task_tracker *tracker)
 {
     task_ptr tsk = tasking::create_late_task(cb_code, cb_set_data, 0, tracker);
     dinfo("call set, node(%s)", node.c_str());
@@ -345,7 +342,7 @@ task_ptr meta_state_service_zookeeper::set_data(const std::string &node,
 task_ptr meta_state_service_zookeeper::node_exist(const std::string &node,
                                                   task_code cb_code,
                                                   const err_callback &cb_exist,
-                                                  clientlet *tracker)
+                                                  dsn::task_tracker *tracker)
 {
     task_ptr tsk = tasking::create_late_task(cb_code, cb_exist, 0, tracker);
     dinfo("call node_exist, node(%s)", node.c_str());
@@ -358,7 +355,7 @@ task_ptr meta_state_service_zookeeper::node_exist(const std::string &node,
 task_ptr meta_state_service_zookeeper::get_children(const std::string &node,
                                                     task_code cb_code,
                                                     const err_stringv_callback &cb_get_children,
-                                                    clientlet *tracker)
+                                                    dsn::task_tracker *tracker)
 {
     task_ptr tsk = tasking::create_late_task(cb_code, cb_get_children, 0, tracker);
     dinfo("call get children, node(%s)", node.c_str());

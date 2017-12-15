@@ -218,6 +218,8 @@ protected:
     mutable service::zlock _lock;
     // subClass can rewrite these method.
     virtual void send_beacon(::dsn::rpc_address node, uint64_t time);
+
+    dsn::task_tracker _tracker;
 };
 }
 } // end namespace

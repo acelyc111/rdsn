@@ -918,7 +918,7 @@ void replication_ddl_client::end_meta_request(
     task_ptr callback, int retry_times, error_code err, dsn_message_t request, dsn_message_t resp)
 {
     if (err != dsn::ERR_OK && retry_times < 2) {
-        rpc::call(_meta_server, request, this, [
+        rpc::call(_meta_server, request, &_tracker, [
             =,
             callback_capture = std::move(callback)
         ](error_code err, dsn_message_t request, dsn_message_t response) {

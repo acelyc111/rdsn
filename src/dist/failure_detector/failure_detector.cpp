@@ -82,7 +82,7 @@ error_code failure_detector::start(uint32_t check_interval_seconds,
 
     // start periodically check job
     _check_task = tasking::enqueue_timer(LPC_BEACON_CHECK,
-                                         this,
+                                         &_tracker,
                                          [this] { check_all_records(); },
                                          std::chrono::milliseconds(_check_interval_milliseconds),
                                          -1,
@@ -147,7 +147,7 @@ void failure_detector::register_master(::dsn::rpc_address target)
         // last_beacon_send_time_with_ack
         ret.first->second.send_beacon_timer =
             tasking::enqueue_timer(LPC_BEACON_SEND,
-                                   this,
+                                   &_tracker,
                                    [this, target]() { this->send_beacon(target, now_ms()); },
                                    std::chrono::milliseconds(_beacon_interval_milliseconds),
                                    0,
@@ -175,7 +175,7 @@ bool failure_detector::switch_master(::dsn::rpc_address from,
         it->second.send_beacon_timer->cancel(true);
         it->second.send_beacon_timer =
             tasking::enqueue_timer(LPC_BEACON_SEND,
-                                   this,
+                                   &_tracker,
                                    [this, to]() { this->send_beacon(to, now_ms()); },
                                    std::chrono::milliseconds(_beacon_interval_milliseconds),
                                    0,
@@ -517,7 +517,7 @@ void failure_detector::send_beacon(::dsn::rpc_address target, uint64_t time)
     ::dsn::rpc::call(target,
                      RPC_FD_FAILURE_DETECTOR_PING,
                      beacon,
-                     this,
+                     &_tracker,
                      [=](error_code err, beacon_ack &&resp) {
                          if (err != ::dsn::ERR_OK) {
                              beacon_ack ack;

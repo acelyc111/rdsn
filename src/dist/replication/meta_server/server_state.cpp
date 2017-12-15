@@ -450,7 +450,7 @@ error_code server_state::sync_apps_to_remote_storage()
     }
 
     err = ERR_OK;
-    clientlet tracker(1);
+    dsn::task_tracker tracker(1);
     for (auto &kv : _all_apps) {
         std::shared_ptr<app_state> &app = kv.second;
         std::string path = get_app_path(*app);
@@ -474,7 +474,7 @@ error_code server_state::sync_apps_to_remote_storage()
                              value,
                              &tracker);
     }
-    dsn_task_tracker_wait_all(tracker.tracker());
+    tracker.wait_outstanding_tasks();
 
     if (err != ERR_OK) {
         _exist_apps.clear();
@@ -488,7 +488,7 @@ error_code server_state::sync_apps_to_remote_storage()
             init_app_partition_node(app, i, init_callback);
         }
     }
-    dsn_task_tracker_wait_all(tracker.tracker());
+    tracker.wait_outstanding_tasks();
     t = _meta_svc->get_remote_storage()->set_data(_apps_root,
                                                   blob(unlock_state, 0, strlen(unlock_state)),
                                                   LPC_META_STATE_HIGH,
@@ -508,7 +508,7 @@ error_code server_state::sync_apps_to_remote_storage()
 dsn::error_code server_state::sync_apps_from_remote_storage()
 {
     dsn::error_code err;
-    dsn::clientlet tracker(1);
+    dsn::task_tracker tracker(1);
 
     dist::meta_state_service *storage = _meta_svc->get_remote_storage();
     auto sync_partition = [this, storage, &err, &tracker](
@@ -633,7 +633,7 @@ dsn::error_code server_state::sync_apps_from_remote_storage()
             }
         },
         &tracker);
-    dsn_task_tracker_wait_all(tracker.tracker());
+    tracker.wait_outstanding_tasks();
     if (err == ERR_OK) {
         return _all_apps.empty() ? ERR_OBJECT_NOT_FOUND : ERR_OK;
     }
@@ -2069,7 +2069,7 @@ server_state::sync_apps_from_replica_nodes(const std::vector<dsn::rpc_address> &
     std::vector<dsn::error_code> query_app_errors(n_replicas);
     std::vector<dsn::error_code> query_replica_errors(n_replicas);
 
-    clientlet tracker(1);
+    dsn::task_tracker tracker(1);
     for (int i = 0; i < n_replicas; ++i) {
         ddebug("send query app and replica request to node(%s)", replica_nodes[i].to_string());
 
@@ -2112,7 +2112,7 @@ server_state::sync_apps_from_replica_nodes(const std::vector<dsn::rpc_address> &
             });
     }
 
-    dsn_task_tracker_wait_all(tracker.tracker());
+    tracker.wait_outstanding_tasks();
     int failed_count = 0;
     int succeed_count = 0;
     for (int i = 0; i < n_replicas; ++i) {
@@ -2416,8 +2416,9 @@ bool server_state::check_all_partitions()
         _meta_svc->get_balancer()->apply_balancer({&_all_apps, &_nodes}, _temporary_list);
         if (_replica_migration_subscriber)
             _replica_migration_subscriber(_temporary_list);
-        tasking::enqueue(
-            LPC_META_STATE_NORMAL, _meta_svc, std::bind(&meta_service::balancer_run, _meta_svc));
+        tasking::enqueue(LPC_META_STATE_NORMAL,
+                         _meta_svc->tracker(),
+                         std::bind(&meta_service::balancer_run, _meta_svc));
         return false;
     }
     return true;

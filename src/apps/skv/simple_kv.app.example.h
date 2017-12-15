@@ -49,7 +49,11 @@ class simple_kv_client_app : public ::dsn::service_app, public virtual ::dsn::cl
 public:
     simple_kv_client_app(const service_app_info *info) : ::dsn::service_app(info) {}
 
-    ~simple_kv_client_app() { stop(); }
+    virtual ~simple_kv_client_app() override
+    {
+        _tracker.cancel_outstanding_tasks();
+        stop();
+    }
 
     virtual ::dsn::error_code start(const std::vector<std::string> &args)
     {
@@ -60,8 +64,10 @@ public:
         _server.assign_uri(args[1].c_str());
         _simple_kv_client.reset(new simple_kv_client2(_server));
 
-        _timer = ::dsn::tasking::enqueue_timer(
-            LPC_SIMPLE_KV_TEST_TIMER, this, [this] { on_test_timer(); }, std::chrono::seconds(1));
+        _timer = ::dsn::tasking::enqueue_timer(LPC_SIMPLE_KV_TEST_TIMER,
+                                               &_tracker,
+                                               [this] { on_test_timer(); },
+                                               std::chrono::seconds(1));
         return ::dsn::ERR_OK;
     }
 
@@ -122,6 +128,7 @@ private:
     ::dsn::task_ptr _timer;
     ::dsn::rpc_address _server;
     std::unique_ptr<simple_kv_client2> _simple_kv_client;
+    dsn::task_tracker _tracker;
 };
 
 class simple_kv_perf_test_client_app : public ::dsn::service_app, public virtual ::dsn::clientlet

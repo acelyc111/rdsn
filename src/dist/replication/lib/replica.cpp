@@ -378,6 +378,8 @@ void replica::close()
             name(),
             enum_to_string(status()));
 
+    _tracker.cancel_outstanding_tasks();
+
     if (nullptr != _checkpoint_timer) {
         _checkpoint_timer->cancel(true);
         _checkpoint_timer = nullptr;

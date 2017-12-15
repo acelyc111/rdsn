@@ -53,7 +53,7 @@ using namespace ::dsn::service;
 
 ::dsn::task_ptr mutation_log_shared::append(mutation_ptr &mu,
                                             dsn::task_code callback_code,
-                                            clientlet *callback_host,
+                                            dsn::task_tracker *callback_host,
                                             aio_handler &&callback,
                                             int hash)
 {
@@ -106,7 +106,7 @@ void mutation_log_shared::flush_internal(int max_count)
     int count = 0;
     while (max_count <= 0 || count < max_count) {
         if (_is_writing.load(std::memory_order_acquire)) {
-            dsn_task_tracker_wait_all(tracker());
+            _tracker.wait_outstanding_tasks();
         } else {
             _slock.lock();
             if (_is_writing.load(std::memory_order_acquire)) {
@@ -153,7 +153,7 @@ void mutation_log_shared::write_pending_mutations(bool release_lock_required)
         *blk,
         start_offset,
         LPC_WRITE_REPLICATION_LOG_SHARED,
-        this,
+        &_tracker,
         [
           this,
           lf = pr.first,
@@ -217,7 +217,7 @@ void mutation_log_shared::write_pending_mutations(bool release_lock_required)
 
 ::dsn::task_ptr mutation_log_private::append(mutation_ptr &mu,
                                              dsn::task_code callback_code,
-                                             clientlet *callback_host,
+                                             dsn::task_tracker *callback_host,
                                              aio_handler &&callback,
                                              int hash)
 {
@@ -303,7 +303,7 @@ void mutation_log_private::flush_internal(int max_count)
     int count = 0;
     while (max_count <= 0 || count < max_count) {
         if (_is_writing.load(std::memory_order_acquire)) {
-            dsn_task_tracker_wait_all(tracker());
+            _tracker.wait_outstanding_tasks();
         } else {
             _plock.lock();
             if (_is_writing.load(std::memory_order_acquire)) {
@@ -370,7 +370,7 @@ void mutation_log_private::write_pending_mutations(bool release_lock_required)
         *blk,
         start_offset,
         LPC_WRITE_REPLICATION_LOG_PRIVATE,
-        this,
+        &_tracker,
         [ this, lf = pr.first, block = blk, mutations = std::move(pwu), max_commit ](
             error_code err, size_t sz) mutable {
             dassert(_is_writing.load(std::memory_order_relaxed), "");
@@ -747,7 +747,7 @@ error_code mutation_log::create_new_log_file()
     logf->commit_log_block(*blk,
                            _current_log_file->start_offset(),
                            LPC_WRITE_REPLICATION_LOG_COMMON,
-                           this,
+                           &_tracker,
                            [this, blk, logf](::dsn::error_code err, size_t sz) {
                                delete blk;
                                if (ERR_OK != err) {
@@ -2106,7 +2106,7 @@ log_block *log_file::prepare_log_block()
 ::dsn::task_ptr log_file::commit_log_block(log_block &block,
                                            int64_t offset,
                                            dsn::task_code evt,
-                                           clientlet *callback_host,
+                                           dsn::task_tracker *callback_host,
                                            aio_handler &&callback,
                                            int hash)
 {

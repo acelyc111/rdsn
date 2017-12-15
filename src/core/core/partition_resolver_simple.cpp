@@ -75,7 +75,7 @@ void partition_resolver_simple::resolve(uint64_t partition_hash,
     rc->partition_index = idx;
     rc->timeout_timer = nullptr;
     rc->timeout_ms = timeout_ms;
-    rc->timeout_ts_us = now_us() + timeout_ms * 1000;
+    rc->timeout_ts_us = dsn_now_us() + timeout_ms * 1000;
     rc->completed = false;
 
     call(std::move(rc), false);
@@ -175,7 +175,7 @@ void partition_resolver_simple::call(request_context_ptr &&request, bool from_me
     // delay 1 second for further config query
     if (from_meta_ack) {
         tasking::enqueue(LPC_REPLICATION_DELAY_QUERY_CONFIG,
-                         this,
+                         &_tracker,
                          [ =, req2 = request ]() mutable { call(std::move(req2), false); },
                          0,
                          std::chrono::seconds(1));
@@ -195,7 +195,7 @@ void partition_resolver_simple::call(request_context_ptr &&request, bool from_me
         if (request->timeout_timer == nullptr) {
             request->timeout_timer =
                 tasking::enqueue(LPC_REPLICATION_CLIENT_REQUEST_TIMEOUT,
-                                 this,
+                                 &_tracker,
                                  [ =, req2 = request ]() mutable { on_timeout(std::move(req2)); },
                                  0,
                                  std::chrono::milliseconds(timeout_ms));
@@ -247,7 +247,7 @@ task_ptr partition_resolver_simple::query_config(int partition_index)
     return rpc::call(
         _meta_server,
         msg,
-        this,
+        &_tracker,
         [this, partition_index](error_code err, dsn_message_t req, dsn_message_t resp) {
             query_config_reply(err, req, resp, partition_index);
         });

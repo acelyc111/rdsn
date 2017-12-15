@@ -36,6 +36,7 @@
 #include "nfs_client.h"
 #include <queue>
 #include <dsn/tool-api/nfs.h>
+#include <dsn/tool-api/task_tracker.h>
 #include <dsn/cpp/perf_counter_wrapper.h>
 
 namespace dsn {
@@ -220,6 +221,8 @@ private:
     perf_counter_wrapper _recent_copy_fail_count;
     perf_counter_wrapper _recent_write_data_size;
     perf_counter_wrapper _recent_write_fail_count;
+
+    dsn::task_tracker _tracker;
 };
 }
 }

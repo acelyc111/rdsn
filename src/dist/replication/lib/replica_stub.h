@@ -272,6 +272,8 @@ private:
 
     perf_counter_wrapper _counter_shared_log_size;
 
+    dsn::task_tracker _tracker;
+
 private:
     void response_client_error(gpid gpid, bool is_read, dsn_message_t request, error_code error);
 };

@@ -386,7 +386,7 @@ void nfs_client_impl::continue_write()
                                                  reqc->response.size,
                                                  reqc->response.offset,
                                                  LPC_NFS_WRITE,
-                                                 this,
+                                                 &_tracker,
                                                  [=](error_code err, int sz) {
                                                      local_write_callback(err, sz, reqc);
                                                      // reset task to release memory quickly.
