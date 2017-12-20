@@ -34,6 +34,7 @@
  */
 
 #pragma once
+#include <dsn/utility/optional.h>
 #include <dsn/tool/cli.h>
 #include <iostream>
 
@@ -59,7 +60,7 @@ public:
                              RPC_CLI_CLI_CALL,
                              args,
                              nullptr,
-                             empty_callback,
+                             empty_rpc_handler,
                              timeout,
                              thread_hash,
                              partition_hash));

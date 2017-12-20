@@ -102,7 +102,7 @@ void nfs_client_impl::end_get_file_size(::dsn::error_code err,
                ureq->file_size_req.source.to_string(),
                ureq->file_size_req.source_dir.c_str(),
                err.to_string());
-        ureq->nfs_task->enqueue(err, 0);
+        ureq->nfs_task->enqueue_aio(err, 0);
         delete ureq;
         return;
     }
@@ -113,7 +113,7 @@ void nfs_client_impl::end_get_file_size(::dsn::error_code err,
                ureq->file_size_req.source.to_string(),
                ureq->file_size_req.source_dir.c_str(),
                err.to_string());
-        ureq->nfs_task->enqueue(err, 0);
+        ureq->nfs_task->enqueue_aio(err, 0);
         delete ureq;
         return;
     }
@@ -502,7 +502,7 @@ void nfs_client_impl::handle_completion(user_request *req, error_code err)
     }
 
     req->file_context_vec.clear();
-    req->nfs_task->enqueue(err, err == ERR_OK ? total_size : 0);
+    req->nfs_task->enqueue_aio(err, err == ERR_OK ? total_size : 0);
 
     delete req;
 

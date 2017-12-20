@@ -51,14 +51,14 @@ namespace replication {
 
 using namespace ::dsn::service;
 
-::dsn::task_ptr mutation_log_shared::append(mutation_ptr &mu,
-                                            dsn::task_code callback_code,
-                                            dsn::task_tracker *callback_host,
-                                            aio_handler &&callback,
-                                            int hash)
+::dsn::aio_task_ptr mutation_log_shared::append(mutation_ptr &mu,
+                                                dsn::task_code callback_code,
+                                                dsn::task_tracker *callback_host,
+                                                aio_handler &&callback,
+                                                int hash)
 {
     auto d = mu->data.header.decree;
-    ::dsn::task_ptr cb =
+    ::dsn::aio_task_ptr cb =
         callback ? file::create_aio_task(
                        callback_code, callback_host, std::forward<aio_handler>(callback), hash)
                  : nullptr;
@@ -215,11 +215,11 @@ void mutation_log_shared::write_pending_mutations(bool release_lock_required)
 
 ////////////////////////////////////////////////////
 
-::dsn::task_ptr mutation_log_private::append(mutation_ptr &mu,
-                                             dsn::task_code callback_code,
-                                             dsn::task_tracker *callback_host,
-                                             aio_handler &&callback,
-                                             int hash)
+aio_task_ptr mutation_log_private::append(mutation_ptr &mu,
+                                          dsn::task_code callback_code,
+                                          dsn::task_tracker *callback_host,
+                                          aio_handler &&callback,
+                                          int hash)
 {
     dassert(nullptr == callback, "callback is not needed in private mutation log");
 
@@ -1800,10 +1800,10 @@ public:
                                    _file_dispatched_bytes,
                                    LPC_AIO_IMMEDIATE_CALLBACK,
                                    nullptr,
-                                   dsn::empty_callback);
+                                   nullptr);
                     task->wait();
-                    writer.write_empty(task->io_size());
-                    _file_dispatched_bytes += task->io_size();
+                    writer.write_empty(task->get_transferred_size());
+                    _file_dispatched_bytes += task->get_transferred_size();
                     TRY(task->error());
                 }
             }
@@ -1827,7 +1827,7 @@ private:
                                                 _file_dispatched_bytes,
                                                 LPC_AIO_IMMEDIATE_CALLBACK,
                                                 nullptr,
-                                                dsn::empty_callback);
+                                                nullptr);
             _file_dispatched_bytes += block_size_bytes;
             std::swap(_current_buffer, _next_buffer);
         }
@@ -1841,7 +1841,7 @@ private:
         size_t _begin, _end;             // [buffer[begin]..buffer[end]) contains unconsumed_data
         size_t _file_offset_of_buffer;   // file offset projected to buffer[0]
         bool _have_ongoing_task;
-        task_ptr _task;
+        aio_task_ptr _task;
 
         buffer_t()
             : _buffer(new char[block_size_bytes]),
@@ -1869,7 +1869,7 @@ private:
             if (_have_ongoing_task) {
                 _task->wait();
                 _have_ongoing_task = false;
-                _end += _task->io_size();
+                _end += _task->get_transferred_size();
                 dassert(_end <= block_size_bytes, "invalid io_size.");
                 return _task->error();
             } else {
@@ -2103,12 +2103,12 @@ log_block *log_file::prepare_log_block()
     return new log_block(temp_writer.get_buffer());
 }
 
-::dsn::task_ptr log_file::commit_log_block(log_block &block,
-                                           int64_t offset,
-                                           dsn::task_code evt,
-                                           dsn::task_tracker *callback_host,
-                                           aio_handler &&callback,
-                                           int hash)
+aio_task_ptr log_file::commit_log_block(log_block &block,
+                                        int64_t offset,
+                                        dsn::task_code evt,
+                                        dsn::task_tracker *callback_host,
+                                        aio_handler &&callback,
+                                        int hash)
 {
     dassert(!_is_read, "log file must be of write mode");
     dassert(block.size() > 0, "log_block can not be empty");
@@ -2139,7 +2139,7 @@ log_block *log_file::prepare_log_block()
     }
     _crc32 = hdr->body_crc;
 
-    task_ptr tsk;
+    aio_task_ptr tsk;
     if (callback) {
         tsk = file::write_vector(_handle,
                                  buffer_vector,
@@ -2156,7 +2156,7 @@ log_block *log_file::prepare_log_block()
                                  static_cast<uint64_t>(local_offset),
                                  evt,
                                  callback_host,
-                                 dsn::empty_callback,
+                                 nullptr,
                                  hash);
     }
 

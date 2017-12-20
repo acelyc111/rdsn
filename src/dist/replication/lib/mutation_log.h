@@ -132,11 +132,11 @@ public:
     // append a log mutation
     // return value: nullptr for error
     // thread safe
-    virtual ::dsn::task_ptr append(mutation_ptr &mu,
-                                   dsn::task_code callback_code,
-                                   dsn::task_tracker *callback_host,
-                                   aio_handler &&callback,
-                                   int hash = 0) = 0;
+    virtual ::dsn::aio_task_ptr append(mutation_ptr &mu,
+                                       dsn::task_code callback_code,
+                                       dsn::task_tracker *callback_host,
+                                       aio_handler &&callback,
+                                       int hash = 0) = 0;
 
     // get learn state in memory, including pending and writing mutations
     // return true if some data is filled into writer
@@ -385,11 +385,11 @@ public:
     }
 
     virtual ~mutation_log_shared() override { _tracker.cancel_outstanding_tasks(); }
-    virtual ::dsn::task_ptr append(mutation_ptr &mu,
-                                   dsn::task_code callback_code,
-                                   dsn::task_tracker *callback_host,
-                                   aio_handler &&callback,
-                                   int hash = 0) override;
+    virtual aio_task_ptr append(mutation_ptr &mu,
+                                dsn::task_code callback_code,
+                                dsn::task_tracker *callback_host,
+                                aio_handler &&callback,
+                                int hash = 0) override;
 
     virtual void flush() override;
     virtual void flush_once() override;
@@ -409,7 +409,7 @@ private:
 
 private:
     // bufferring - only one concurrent write is allowed
-    typedef std::vector<task_ptr> callbacks;
+    typedef std::vector<aio_task_ptr> callbacks;
     typedef std::vector<mutation_ptr> mutations;
     mutable zlock _slock;
     std::atomic_bool _is_writing;
@@ -440,11 +440,11 @@ public:
     }
 
     virtual ~mutation_log_private() override { _tracker.cancel_outstanding_tasks(); }
-    virtual ::dsn::task_ptr append(mutation_ptr &mu,
-                                   dsn::task_code callback_code,
-                                   dsn::task_tracker *callback_host,
-                                   aio_handler &&callback,
-                                   int hash = 0) override;
+    virtual ::dsn::aio_task_ptr append(mutation_ptr &mu,
+                                       dsn::task_code callback_code,
+                                       dsn::task_tracker *callback_host,
+                                       aio_handler &&callback,
+                                       int hash = 0) override;
 
     virtual bool get_learn_state_in_memory(decree start_decree,
                                            binary_writer &writer) const override;
@@ -561,12 +561,12 @@ public:
     // returns:
     //   - non-null if io task is in pending
     //   - null if error
-    ::dsn::task_ptr commit_log_block(log_block &block,
-                                     int64_t offset,
-                                     dsn::task_code evt,
-                                     dsn::task_tracker *callback_host,
-                                     aio_handler &&callback,
-                                     int hash);
+    ::dsn::aio_task_ptr commit_log_block(log_block &block,
+                                         int64_t offset,
+                                         dsn::task_code evt,
+                                         dsn::task_tracker *callback_host,
+                                         aio_handler &&callback,
+                                         int hash);
 
     //
     // others
