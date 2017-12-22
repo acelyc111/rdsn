@@ -35,7 +35,7 @@
 
 #pragma once
 
-#include <dsn/service_api_c.h>
+#include <dsn/utility/config_api.h>
 #include <dsn/utility/strings.h>
 
 #define CONFIG_BEGIN(t_struct)                                                                     \

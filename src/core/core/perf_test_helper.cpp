@@ -79,12 +79,10 @@ void perf_client_helper::start_test(const char *prefix, int max_request_kind_cou
     perf_test_suite s;
     std::vector<perf_test_suite> suits;
 
-    const char *sections[10240];
-    int scount, used_count = sizeof(sections) / sizeof(const char *);
-    scount = dsn_config_get_all_sections(sections, &used_count);
-    dassert(scount == used_count, "too many sections (>10240) defined in config files");
+    std::vector<const char *> sections;
+    dsn_config_get_all_sections(sections);
 
-    for (int i = 0; i < used_count; i++) {
+    for (int i = 0; i < sections.size(); i++) {
         if (strstr(sections[i], prefix) == sections[i]) {
             s.name = sections[i];
             s.config_section = sections[i];
@@ -285,7 +283,7 @@ void perf_client_helper::start_next_case()
                 result_f.close();
 
                 report += ".config.ini";
-                dsn_config_dump(report.c_str());
+                dsn_config_dump_to_file(report.c_str());
 
                 dsn_exit(0);
             }

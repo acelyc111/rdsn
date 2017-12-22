@@ -56,12 +56,10 @@ static bool build_client_network_confs(const char *section,
 {
     nss.clear();
 
-    const char *keys[128];
-    int kcapacity = 128;
-    int kcount = dsn_config_get_all_keys(section, keys, &kcapacity);
-    dassert(kcount <= 128, "kcount = %d", kcount);
+    std::vector<const char *> keys;
+    dsn_config_get_all_keys(section, keys);
 
-    for (int i = 0; i < kcapacity; i++) {
+    for (unsigned int i = 0; i < keys.size(); i++) {
         std::string k = keys[i];
         if (k.length() <= strlen("network.client."))
             continue;
@@ -130,12 +128,10 @@ static bool build_server_network_confs(const char *section,
 {
     nss.clear();
 
-    const char *keys[128];
-    int kcapacity = 128;
-    int kcount = dsn_config_get_all_keys(section, keys, &kcapacity);
-    dassert(kcount <= 128, "kcount = %d", kcount);
+    std::vector<const char *> keys;
+    dsn_config_get_all_keys(section, keys);
 
-    for (int i = 0; i < kcapacity; i++) {
+    for (unsigned int i = 0; i < keys.size(); i++) {
         std::string k = keys[i];
         if (k.length() <= strlen("network.server."))
             continue;
@@ -319,7 +315,7 @@ bool service_spec::init()
 bool service_spec::init_app_specs()
 {
     std::vector<std::string> all_section_names;
-    get_main_config()->get_all_sections(all_section_names);
+    dsn_config_get_all_sections(all_section_names);
 
     // check mimic app
     const char *mimic_app_role_name = "dsn.app.mimic";
@@ -328,8 +324,8 @@ bool service_spec::init_app_specs()
         std::string mimic_section_name("apps.mimic");
         if (std::find(all_section_names.begin(), all_section_names.end(), mimic_section_name) ==
             all_section_names.end()) {
-            get_main_config()->set("apps.mimic", "type", mimic_app_role_name, "");
-            get_main_config()->set("apps.mimic", "pools", "THREAD_POOL_DEFAULT", "");
+            dsn_config_set("apps.mimic", "type", mimic_app_role_name, "");
+            dsn_config_set("apps.mimic", "pools", "THREAD_POOL_DEFAULT", "");
             all_section_names.push_back("apps.mimic");
         } else {
             auto type = dsn_config_get_value_string("apps.mimic", "type", "", "");

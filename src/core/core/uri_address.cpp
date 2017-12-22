@@ -56,7 +56,7 @@ void uri_resolver_manager::setup_resolvers()
     // arguments = %uri-resolver-arguments%
 
     std::vector<std::string> sections;
-    get_main_config()->get_all_sections(sections);
+    dsn_config_get_all_sections(sections);
 
     const int prefix_len = (const int)strlen("uri-resolver.");
     for (auto &s : sections) {

@@ -282,7 +282,8 @@ public:
         if (0 == _enqueue_ts_ns ||
             dsn_now_ns() - _enqueue_ts_ns <
                 static_cast<uint64_t>(_request->header->client.timeout_ms) * 1000000ULL) {
-            _handler(_request);
+            if (_handler != nullptr)
+                _handler(_request);
         } else {
             dwarn("rpc_request_task(%s) from(%s) stop to execute due to timeout_ms(%d) exceed",
                   spec().name.c_str(),
@@ -421,6 +422,7 @@ public:
     {
         if (nullptr != _cb) {
             _cb(_error, _transferred_size);
+            _cb = nullptr;
         }
     }
 
