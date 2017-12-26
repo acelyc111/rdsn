@@ -37,7 +37,7 @@
 
 #include <dsn/tool-api/group_address.h>
 #include <dsn/dist/failure_detector.h>
-#include <dsn/cpp/zlocks.h>
+#include <dsn/tool-api/zlocks.h>
 
 namespace dsn {
 namespace dist {

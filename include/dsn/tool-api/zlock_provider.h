@@ -38,14 +38,6 @@
 #include <dsn/utility/extensible_object.h>
 
 namespace dsn {
-namespace service {
-class zlock;
-class zrwlock_nr;
-class zsemaphore;
-}
-}
-
-namespace dsn {
 
 /*!
 @addtogroup tool-api-providers
@@ -53,10 +45,10 @@ namespace dsn {
 */
 
 /*! lock interface */
-class ilock
+class mutex_base
 {
 public:
-    virtual ~ilock() {}
+    virtual ~mutex_base() {}
     virtual void lock() = 0;
     virtual bool try_lock() = 0;
     virtual void unlock() = 0;
@@ -65,7 +57,7 @@ public:
 /*!
  recursive exclusive lock
 */
-class lock_provider : public ilock, public extensible_object<lock_provider, 4>
+class lock_provider : public mutex_base, public extensible_object<lock_provider, 4>
 {
 public:
     template <typename T>
@@ -91,7 +83,7 @@ private:
 /*!
  non-recursive exclusive lock
 */
-class lock_nr_provider : public ilock, public extensible_object<lock_nr_provider, 4>
+class lock_nr_provider : public mutex_base, public extensible_object<lock_nr_provider, 4>
 {
 public:
     template <typename T>

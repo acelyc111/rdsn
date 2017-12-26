@@ -74,7 +74,6 @@ START<== queue(server) == ENQUEUE <===== net(reply) ======= REPLY <=============
 #undef __TITLE__
 #endif
 #define __TITLE__ "toollet.profiler"
-using namespace dsn::service;
 
 namespace dsn {
 namespace tools {

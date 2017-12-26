@@ -35,9 +35,9 @@
 
 #pragma once
 
-#include <dsn/service_api_c.h>
+#include <boost/noncopyable.hpp>
 #include <dsn/utility/utils.h>
-#include <atomic>
+#include <dsn/tool-api/zlock_provider.h>
 
 namespace dsn {
 namespace service {
@@ -46,23 +46,18 @@ namespace service {
 @addtogroup sync-exlock
 @{
 */
-class zlock
+class zlock : private boost::noncopyable
 {
 public:
-    zlock(bool recursive = false) { _h = dsn_exlock_create(recursive); }
-    ~zlock() { dsn_exlock_destroy(_h); }
+    zlock(bool recursive = false);
+    ~zlock();
 
-    void lock() { dsn_exlock_lock(_h); }
-    bool try_lock() { return dsn_exlock_try_lock(_h); }
-    void unlock() { dsn_exlock_unlock(_h); }
-
-private:
-    dsn_handle_t _h;
+    void lock();
+    bool try_lock();
+    void unlock();
 
 private:
-    // no assignment operator
-    zlock &operator=(const zlock &source);
-    zlock(const zlock &source);
+    mutex_base *_h;
 };
 /*@}*/
 
@@ -70,27 +65,22 @@ private:
 @addtogroup sync-rwlock
 @{
 */
-class zrwlock_nr
+class zrwlock_nr : private boost::noncopyable
 {
 public:
-    zrwlock_nr() { _h = dsn_rwlock_nr_create(); }
-    ~zrwlock_nr() { dsn_rwlock_nr_destroy(_h); }
+    zrwlock_nr();
+    ~zrwlock_nr();
 
-    void lock_read() { dsn_rwlock_nr_lock_read(_h); }
-    void unlock_read() { dsn_rwlock_nr_unlock_read(_h); }
-    bool try_lock_read() { return dsn_rwlock_nr_try_lock_read(_h); }
+    void lock_read();
+    void unlock_read();
+    bool try_lock_read();
 
-    void lock_write() { dsn_rwlock_nr_lock_write(_h); }
-    void unlock_write() { dsn_rwlock_nr_unlock_write(_h); }
-    bool try_lock_write() { return dsn_rwlock_nr_try_lock_write(_h); }
-
-private:
-    dsn_handle_t _h;
+    void lock_write();
+    void unlock_write();
+    bool try_lock_write();
 
 private:
-    // no assignment operator
-    zrwlock_nr &operator=(const zrwlock_nr &source);
-    zrwlock_nr(const zrwlock_nr &source);
+    rwlock_nr_provider *_h;
 };
 /*@}*/
 
@@ -98,35 +88,21 @@ private:
 @addtogroup sync-sema
 @{
 */
-class zsemaphore
+class zsemaphore : private boost::noncopyable
 {
 public:
-    zsemaphore(int initial_count = 0) { _h = dsn_semaphore_create(initial_count); }
-    ~zsemaphore() { dsn_semaphore_destroy(_h); }
+    zsemaphore(int initial_count = 0);
+    ~zsemaphore();
 
 public:
-    virtual void signal(int count = 1) { dsn_semaphore_signal(_h, count); }
-
-    virtual bool wait(int timeout_milliseconds = TIME_MS_MAX)
-    {
-        if (static_cast<unsigned int>(timeout_milliseconds) == TIME_MS_MAX) {
-            dsn_semaphore_wait(_h);
-            return true;
-        } else {
-            return dsn_semaphore_wait_timeout(_h, timeout_milliseconds);
-        }
-    }
+    void signal(int count = 1);
+    bool wait(int timeout_milliseconds = TIME_MS_MAX);
 
 private:
-    dsn_handle_t _h;
-
-private:
-    // no assignment operator
-    zsemaphore &operator=(const zsemaphore &source);
-    zsemaphore(const zsemaphore &source);
+    semaphore_provider *_h;
 };
 
-class zevent
+class zevent : private boost::noncopyable
 {
 public:
     zevent(bool manualReset, bool initState = false);
@@ -141,11 +117,6 @@ private:
     zsemaphore _sema;
     std::atomic<bool> _signaled;
     bool _manualReset;
-
-private:
-    // no assignment operator
-    zevent &operator=(const zevent &source);
-    zevent(const zevent &source);
 };
 /*@}*/
 

@@ -40,7 +40,7 @@
 #include <dsn/utility/synchronize.h>
 #include <dsn/tool-api/rpc_address.h>
 #include <dsn/tool-api/partition_resolver.h>
-#include <dsn/cpp/zlocks.h>
+#include <dsn/tool-api/zlocks.h>
 
 namespace dsn {
 /** A RPC URI address. */

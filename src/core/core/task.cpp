@@ -40,6 +40,7 @@
 #include <dsn/utility/utils.h>
 #include <dsn/utility/synchronize.h>
 #include <dsn/tool/node_scoper.h>
+#include <dsn/tool-api/lock_checker.h>
 
 #include "task_engine.h"
 #include "service_engine.h"

@@ -36,7 +36,6 @@
 #pragma once
 
 #include <dsn/tool_api.h>
-using namespace dsn::service;
 #include <dsn/dist/replication.h>
 
 namespace dsn {

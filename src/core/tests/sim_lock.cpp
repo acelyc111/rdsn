@@ -37,6 +37,7 @@
 #include <dsn/tool_api.h>
 #include <dsn/tool-api/task.h>
 #include <dsn/tool-api/auto_codes.h>
+#include <dsn/tool-api/zlocks.h>
 #include <dsn/utility/utils.h>
 #include <dsn/utility/synchronize.h>
 #include <gtest/gtest.h>
@@ -52,13 +53,15 @@ TEST(tools_simulator, dsn_semaphore)
     if (dsn::service_engine::fast_instance().spec().semaphore_factory_name !=
         "dsn::tools::sim_semaphore_provider")
         return;
-    dsn_handle_t s = dsn_semaphore_create(2);
-    dsn_semaphore_wait(s);
-    ASSERT_TRUE(dsn_semaphore_wait_timeout(s, 10));
-    ASSERT_FALSE(dsn_semaphore_wait_timeout(s, 0));
-    dsn_semaphore_signal(s, 1);
-    dsn_semaphore_wait(s);
-    dsn_semaphore_destroy(s);
+
+    dsn::service::zsemaphore s(2);
+    s.wait();
+
+    ASSERT_TRUE(s.wait(10));
+    ASSERT_FALSE(s.wait(0));
+
+    s.signal(1);
+    s.wait();
 }
 
 TEST(tools_simulator, dsn_lock_nr)
