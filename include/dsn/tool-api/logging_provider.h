@@ -35,7 +35,6 @@
 
 #pragma once
 
-#include <dsn/service_api_c.h>
 #include <stdarg.h>
 
 namespace dsn {

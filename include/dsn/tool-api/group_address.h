@@ -36,7 +36,7 @@
 #pragma once
 
 #include <algorithm>
-#include <dsn/c/api_utilities.h>
+#include <dsn/tool-api/logging.h>
 #include <dsn/c/api_layer1.h>
 #include <dsn/utility/synchronize.h>
 #include <dsn/utility/autoref_ptr.h>

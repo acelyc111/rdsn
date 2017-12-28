@@ -24,30 +24,9 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     useful utilities in rDSN exposed via C API
- *
- * Revision history:
- *     Feb., 2016, @imzhenyu (Zhenyu Guo), first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #pragma once
 
-#include <dsn/c/api_common.h>
-
-/*!
-@defgroup logging Logging Service
-@ingroup service-api-utilities
-
- Logging Service
-
- Note developers can plug into rDSN their own logging libraryS
- implementation, so as to integrate rDSN logs into
- their own cluster operation systems.
-@{
-*/
+#include <dsn/utility/enum_helper.h>
 
 typedef enum dsn_log_level_t {
     LOG_LEVEL_INFORMATION,
@@ -59,34 +38,40 @@ typedef enum dsn_log_level_t {
     LOG_LEVEL_INVALID
 } dsn_log_level_t;
 
-// logs with level smaller than this start_level will not be logged
-extern DSN_API dsn_log_level_t dsn_log_start_level;
-extern DSN_API dsn_log_level_t dsn_log_get_start_level();
-extern DSN_API void dsn_log_set_start_level(dsn_log_level_t level);
-extern DSN_API void dsn_logv(const char *file,
-                             const char *function,
-                             const int line,
-                             dsn_log_level_t log_level,
-                             const char *title,
-                             const char *fmt,
-                             va_list args);
-extern DSN_API void dsn_logf(const char *file,
-                             const char *function,
-                             const int line,
-                             dsn_log_level_t log_level,
-                             const char *title,
-                             const char *fmt,
-                             ...);
-extern DSN_API void dsn_log(const char *file,
-                            const char *function,
-                            const int line,
-                            dsn_log_level_t log_level,
-                            const char *title);
-extern DSN_API void dsn_coredump();
+ENUM_BEGIN(dsn_log_level_t, LOG_LEVEL_INVALID)
+ENUM_REG(LOG_LEVEL_INFORMATION)
+ENUM_REG(LOG_LEVEL_DEBUG)
+ENUM_REG(LOG_LEVEL_WARNING)
+ENUM_REG(LOG_LEVEL_ERROR)
+ENUM_REG(LOG_LEVEL_FATAL)
+ENUM_END(dsn_log_level_t)
+
+dsn_log_level_t dsn_log_get_start_level();
+void dsn_log_set_start_level(dsn_log_level_t level);
+void dsn_logv(const char *file,
+              const char *function,
+              const int line,
+              dsn_log_level_t log_level,
+              const char *title,
+              const char *fmt,
+              va_list args);
+void dsn_logf(const char *file,
+              const char *function,
+              const int line,
+              dsn_log_level_t log_level,
+              const char *title,
+              const char *fmt,
+              ...);
+void dsn_log(const char *file,
+             const char *function,
+             const int line,
+             dsn_log_level_t log_level,
+             const char *title);
+void dsn_coredump();
 
 #define dlog(level, title, ...)                                                                    \
     do {                                                                                           \
-        if (level >= dsn_log_start_level)                                                          \
+        if (level >= dsn_log_get_start_level())                                                    \
             dsn_logf(__FILE__, __FUNCTION__, __LINE__, level, title, __VA_ARGS__);                 \
     } while (false)
 #define dinfo(...) dlog(LOG_LEVEL_INFORMATION, __TITLE__, __VA_ARGS__)

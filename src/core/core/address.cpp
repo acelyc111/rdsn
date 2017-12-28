@@ -56,7 +56,7 @@
 #endif
 
 #include <dsn/utility/ports.h>
-#include <dsn/c/api_utilities.h>
+#include <dsn/tool-api/logging.h>
 #include <dsn/tool-api/rpc_address.h>
 #include <dsn/tool-api/uri_address.h>
 #include <dsn/tool-api/group_address.h>

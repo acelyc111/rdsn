@@ -85,9 +85,3 @@
 #include <dsn/c/api_layer1.h>
 
 #include <dsn/c/app_model.h>
-
-// some useful utility functions provided by rDSN,
-// such as logging, performance counter, checksum,
-// command line interface registration and invocation,
-// etc.
-#include <dsn/c/api_utilities.h>

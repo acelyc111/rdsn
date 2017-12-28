@@ -38,7 +38,7 @@
 
 #include <dsn/utility/link.h>
 #include <dsn/utility/synchronize.h>
-#include <dsn/c/api_utilities.h>
+#include <dsn/tool-api/logging.h>
 #include <atomic>
 
 namespace dsn {
