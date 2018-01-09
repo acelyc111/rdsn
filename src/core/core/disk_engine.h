@@ -62,11 +62,11 @@ class disk_file
 public:
     disk_file(dsn_handle_t handle);
     void ctrl(dsn_ctrl_code_t code, int param);
-    aio_task *read(aio_task *tsk);
-    aio_task *write(aio_task *tsk, void *ctx);
+    aio_task_ptr read(const aio_task_ptr &tsk);
+    aio_task_ptr write(const aio_task_ptr &tsk, /*out*/ uint32_t &sz);
 
-    aio_task *on_read_completed(aio_task *wk, error_code err, size_t size);
-    aio_task *on_write_completed(aio_task *wk, void *ctx, error_code err, size_t size);
+    aio_task_ptr on_read_completed(const aio_task_ptr &wk, error_code err, size_t size);
+    aio_task_ptr on_write_completed(const aio_task_ptr &wk, void *ctx, error_code err, size_t size);
 
     dsn_handle_t native_handle() const { return _handle; }
 
@@ -88,8 +88,8 @@ public:
     dsn_handle_t open(const char *file_name, int flag, int pmode);
     error_code close(dsn_handle_t fh);
     error_code flush(dsn_handle_t fh);
-    void read(aio_task *aio);
-    void write(aio_task *aio);
+    void read(const aio_task_ptr &aio);
+    void write(const aio_task_ptr &aio);
 
     void ctrl(dsn_handle_t fh, dsn_ctrl_code_t code, int param);
     disk_aio *prepare_aio_context(aio_task *tsk) { return _provider->prepare_aio_context(tsk); }
@@ -98,8 +98,11 @@ public:
 private:
     friend class aio_provider;
     friend class batch_write_io_task;
-    void process_write(aio_task *wk, uint32_t sz);
-    void complete_io(aio_task *aio, error_code err, uint32_t bytes, int delay_milliseconds = 0);
+    void process_write(const aio_task_ptr &wk, uint32_t sz);
+    void complete_io(const aio_task_ptr &aio,
+                     error_code err,
+                     uint32_t bytes,
+                     int delay_milliseconds = 0);
 
 private:
     volatile bool _is_running;

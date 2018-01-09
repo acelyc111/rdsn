@@ -54,7 +54,7 @@ nfs_node_simple::~nfs_node_simple(void)
     delete _opts;
 }
 
-void nfs_node_simple::call(std::shared_ptr<remote_copy_request> rci, aio_task *callback)
+void nfs_node_simple::call(std::shared_ptr<remote_copy_request> rci, const aio_task_ptr &callback)
 {
     _client->begin_remote_copy(rci, callback); // copy file request entry
 }

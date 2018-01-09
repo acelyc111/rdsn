@@ -50,7 +50,8 @@ public:
 
     virtual ~nfs_node_simple(void);
 
-    virtual void call(std::shared_ptr<remote_copy_request> rci, aio_task *callback) override;
+    virtual void call(std::shared_ptr<remote_copy_request> rci,
+                      const aio_task_ptr &callback) override;
 
     virtual ::dsn::error_code start() override;
 

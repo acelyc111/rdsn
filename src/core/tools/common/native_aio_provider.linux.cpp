@@ -109,7 +109,7 @@ disk_aio *native_linux_aio_provider::prepare_aio_context(aio_task *tsk)
     return r;
 }
 
-void native_linux_aio_provider::aio(aio_task *aio_tsk) { aio_internal(aio_tsk, true); }
+void native_linux_aio_provider::aio(const aio_task_ptr &aio_tsk) { aio_internal(aio_tsk, true); }
 
 void native_linux_aio_provider::get_event()
 {
@@ -157,7 +157,7 @@ void native_linux_aio_provider::complete_aio(struct iocb *io, int bytes, int err
     }
 }
 
-error_code native_linux_aio_provider::aio_internal(aio_task *aio_tsk,
+error_code native_linux_aio_provider::aio_internal(const aio_task_ptr &aio_tsk,
                                                    bool async,
                                                    /*out*/ uint32_t *pbytes /*= nullptr*/)
 {

@@ -52,7 +52,7 @@ sim_aio_provider::sim_aio_provider(disk_engine *disk, aio_provider *inner_provid
 
 sim_aio_provider::~sim_aio_provider(void) {}
 
-void sim_aio_provider::aio(aio_task *aio)
+void sim_aio_provider::aio(const aio_task_ptr &aio)
 {
     error_code err;
     uint32_t bytes;

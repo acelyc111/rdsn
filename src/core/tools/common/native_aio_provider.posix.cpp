@@ -89,6 +89,8 @@ error_code native_posix_aio_provider::flush(dsn_handle_t fh)
 struct posix_disk_aio_context : public disk_aio
 {
     struct aiocb cb;
+    // NOTICE: should not use aio_task_ptr, because disk_aio is holded by tsk(aio_task), so if
+    // use aio_task_ptr, tsk will not be released
     aio_task *tsk;
     native_posix_aio_provider *this_;
     utils::notify_event *evt;
@@ -105,7 +107,7 @@ disk_aio *native_posix_aio_provider::prepare_aio_context(aio_task *tsk)
     return r;
 }
 
-void native_posix_aio_provider::aio(aio_task *aio_tsk) { aio_internal(aio_tsk, true); }
+void native_posix_aio_provider::aio(const aio_task_ptr &aio_tsk) { aio_internal(aio_tsk, true); }
 
 void aio_completed(sigval sigval)
 {
@@ -136,7 +138,7 @@ void aio_completed(sigval sigval)
     }
 }
 
-error_code native_posix_aio_provider::aio_internal(aio_task *aio_tsk,
+error_code native_posix_aio_provider::aio_internal(const aio_task_ptr &aio_tsk,
                                                    bool async,
                                                    /*out*/ uint32_t *pbytes /*= nullptr*/)
 {

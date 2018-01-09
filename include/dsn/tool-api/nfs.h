@@ -89,7 +89,7 @@ public:
 
     virtual error_code stop() = 0;
 
-    virtual void call(std::shared_ptr<remote_copy_request> rci, aio_task *callback) = 0;
+    virtual void call(std::shared_ptr<remote_copy_request> rci, const aio_task_ptr &callback) = 0;
 
     service_node *node() { return _node; }
 

@@ -78,14 +78,16 @@ public:
     virtual dsn_handle_t open(const char *file_name, int flag, int pmode) = 0;
     virtual error_code close(dsn_handle_t fh) = 0;
     virtual error_code flush(dsn_handle_t fh) = 0;
-    virtual void aio(aio_task *aio) = 0;
+    virtual void aio(const aio_task_ptr &aio) = 0;
     virtual disk_aio *prepare_aio_context(aio_task *) = 0;
 
     virtual void start() = 0;
 
 protected:
-    DSN_API void
-    complete_io(aio_task *aio, error_code err, uint32_t bytes, int delay_milliseconds = 0);
+    DSN_API void complete_io(const aio_task_ptr &aio,
+                             error_code err,
+                             uint32_t bytes,
+                             int delay_milliseconds = 0);
 
 private:
     disk_engine *_engine;

@@ -304,7 +304,7 @@ inline aio_task_ptr read(dsn_handle_t fh,
                          aio_handler &&callback,
                          int hash = 0)
 {
-    auto tsk = create_aio_task(callback_code, tracker, std::move(callback), hash);
+    aio_task_ptr tsk = create_aio_task(callback_code, tracker, std::move(callback), hash);
     dsn_file_read(fh, buffer, count, offset, tsk);
     return tsk;
 }
@@ -318,7 +318,7 @@ inline aio_task_ptr write(dsn_handle_t fh,
                           aio_handler &&callback,
                           int hash = 0)
 {
-    auto tsk = create_aio_task(callback_code, tracker, std::move(callback), hash);
+    aio_task_ptr tsk = create_aio_task(callback_code, tracker, std::move(callback), hash);
     dsn_file_write(fh, buffer, count, offset, tsk);
     return tsk;
 }
@@ -332,7 +332,7 @@ inline aio_task_ptr write_vector(dsn_handle_t fh,
                                  aio_handler &&callback,
                                  int hash = 0)
 {
-    auto tsk = create_aio_task(callback_code, tracker, std::move(callback), hash);
+    aio_task_ptr tsk = create_aio_task(callback_code, tracker, std::move(callback), hash);
     dsn_file_write_vector(fh, buffers, buffer_count, offset, tsk.get());
     return tsk;
 }
@@ -343,7 +343,7 @@ void copy_remote_files_impl(::dsn::rpc_address remote,
                             const std::string &dest_dir,
                             bool overwrite,
                             bool high_priority,
-                            dsn::aio_task *tsk);
+                            const dsn::aio_task_ptr &tsk);
 
 inline aio_task_ptr copy_remote_files(::dsn::rpc_address remote,
                                       const std::string &source_dir,
@@ -356,9 +356,8 @@ inline aio_task_ptr copy_remote_files(::dsn::rpc_address remote,
                                       aio_handler &&callback,
                                       int hash = 0)
 {
-    auto tsk = create_aio_task(callback_code, tracker, std::move(callback), hash);
-    copy_remote_files_impl(
-        remote, source_dir, files, dest_dir, overwrite, high_priority, tsk.get());
+    aio_task_ptr tsk = create_aio_task(callback_code, tracker, std::move(callback), hash);
+    copy_remote_files_impl(remote, source_dir, files, dest_dir, overwrite, high_priority, tsk);
     return tsk;
 }
 

@@ -65,7 +65,7 @@ void copy_remote_files_impl(::dsn::rpc_address remote,
                             const std::string &dest_dir,
                             bool overwrite,
                             bool high_priority,
-                            aio_task *tsk)
+                            const aio_task_ptr &tsk)
 {
     if (files.empty()) {
         dsn_file_copy_remote_directory(

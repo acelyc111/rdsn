@@ -54,7 +54,7 @@ error_code empty_aio_provider::close(dsn_handle_t fh) { return ERR_OK; }
 
 error_code empty_aio_provider::flush(dsn_handle_t fh) { return ERR_OK; }
 
-void empty_aio_provider::aio(aio_task *aio)
+void empty_aio_provider::aio(const aio_task_ptr &aio)
 {
     complete_io(aio, ERR_OK, aio->aio()->buffer_size, 0);
 }

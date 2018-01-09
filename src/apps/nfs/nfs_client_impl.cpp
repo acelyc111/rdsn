@@ -68,7 +68,7 @@ nfs_client_impl::nfs_client_impl(nfs_opts &opts) : _opts(opts)
 }
 
 void nfs_client_impl::begin_remote_copy(std::shared_ptr<remote_copy_request> &rci,
-                                        aio_task *nfs_task)
+                                        const aio_task_ptr &nfs_task)
 {
     user_request *req = new user_request();
     req->high_priority = rci->high_priority;

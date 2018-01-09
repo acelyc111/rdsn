@@ -59,7 +59,7 @@ public:
     virtual dsn_handle_t open(const char *file_name, int flag, int pmode) override;
     virtual error_code close(dsn_handle_t fh) override;
     virtual error_code flush(dsn_handle_t fh) override;
-    virtual void aio(aio_task *aio) override;
+    virtual void aio(const aio_task_ptr &aio) override;
     virtual disk_aio *prepare_aio_context(aio_task *tsk) override;
 
     virtual void start() override;
@@ -67,6 +67,8 @@ public:
     struct linux_disk_aio_context : public disk_aio
     {
         struct iocb cb;
+        // NOTICE: should not use aio_task_ptr, because disk_aio is holded by tsk(aio_task), so if
+        // use aio_task_ptr, tsk will not be released
         aio_task *tsk;
         native_linux_aio_provider *this_;
         utils::notify_event *evt;
@@ -75,7 +77,8 @@ public:
     };
 
 protected:
-    error_code aio_internal(aio_task *aio, bool async, /*out*/ uint32_t *pbytes = nullptr);
+    error_code
+    aio_internal(const aio_task_ptr &aio, bool async, /*out*/ uint32_t *pbytes = nullptr);
     void complete_aio(struct iocb *io, int bytes, int err);
     void get_event();
 

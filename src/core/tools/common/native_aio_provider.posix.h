@@ -54,13 +54,14 @@ public:
     virtual dsn_handle_t open(const char *file_name, int flag, int pmode) override;
     virtual error_code close(dsn_handle_t fh) override;
     virtual error_code flush(dsn_handle_t fh) override;
-    virtual void aio(aio_task *aio) override;
+    virtual void aio(const aio_task_ptr &aio) override;
     virtual disk_aio *prepare_aio_context(aio_task *tsk) override;
 
     virtual void start() override {}
 
 protected:
-    error_code aio_internal(aio_task *aio, bool async, /*out*/ uint32_t *pbytes = nullptr);
+    error_code
+    aio_internal(const aio_task_ptr &aio, bool async, /*out*/ uint32_t *pbytes = nullptr);
 
 private:
     friend void aio_completed(sigval sigval);

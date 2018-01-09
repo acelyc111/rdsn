@@ -100,52 +100,62 @@ void disk_file::ctrl(dsn_ctrl_code_t code, int param)
     dassert(false, "NOT IMPLEMENTED");
 }
 
-aio_task *disk_file::read(aio_task *tsk)
+aio_task_ptr disk_file::read(const aio_task_ptr &tsk)
 {
-    tsk->add_ref(); // release on completion
-    return _read_queue.add_work(tsk, nullptr);
+    // because we use aio, so we must ensure that releasing the task after the aio-task is completed
+    // so, we should add_ref here and release_ref after completion
+    // if you want erase this model, you should modify the _read_queue, make it can hold the
+    // life-cycle of tsk(now, _read_queue is implemented through slist, it just a raw point and
+    // can't control life-cycle)
+    aio_task *raw_ptr = tsk.get();
+    raw_ptr->add_ref(); // release on completion
+    return _read_queue.add_work(raw_ptr, nullptr);
 }
 
-aio_task *disk_file::write(aio_task *tsk, void *ctx)
+aio_task_ptr disk_file::write(const aio_task_ptr &tsk, uint32_t &sz)
 {
-    tsk->add_ref(); // release on completion
-    return _write_queue.add_work(tsk, ctx);
+    aio_task *raw_ptr = tsk.get();
+    raw_ptr->add_ref(); // release on completion
+    return _write_queue.add_work(raw_ptr, (void *)&sz);
 }
 
-aio_task *disk_file::on_read_completed(aio_task *wk, error_code err, size_t size)
+aio_task_ptr disk_file::on_read_completed(const aio_task_ptr &wk, error_code err, size_t size)
 {
-    dassert(wk->next == nullptr, "");
-    auto ret = _read_queue.on_work_completed(wk, nullptr);
-    wk->enqueue_aio(err, size);
-    wk->release_ref(); // added in above read
+    aio_task *raw_ptr = wk.get();
+    dassert(raw_ptr->next == nullptr, "");
+    aio_task_ptr ret = _read_queue.on_work_completed(raw_ptr, nullptr);
+    raw_ptr->enqueue_aio(err, size);
+    raw_ptr->release_ref(); // added in above read
 
     return ret;
 }
 
-aio_task *disk_file::on_write_completed(aio_task *wk, void *ctx, error_code err, size_t size)
+aio_task_ptr
+disk_file::on_write_completed(const aio_task_ptr &wk, void *ctx, error_code err, size_t size)
 {
-    auto ret = _write_queue.on_work_completed(wk, ctx);
+    aio_task *raw_ptr = wk.get();
+    aio_task_ptr ret = _write_queue.on_work_completed(raw_ptr, ctx);
 
-    while (wk) {
-        aio_task *next = (aio_task *)wk->next;
-        wk->next = nullptr;
+    while (raw_ptr) {
+        aio_task *next = (aio_task *)raw_ptr->next;
+        raw_ptr->next = nullptr;
 
         if (err == ERR_OK) {
-            size_t this_size = (size_t)wk->aio()->buffer_size;
+            size_t this_size = (size_t)raw_ptr->aio()->buffer_size;
             dassert(size >= this_size,
                     "written buffer size does not equal to input buffer's size: %d vs %d",
                     (int)size,
                     (int)this_size);
 
-            wk->enqueue_aio(err, this_size);
+            raw_ptr->enqueue_aio(err, this_size);
             size -= this_size;
         } else {
-            wk->enqueue_aio(err, size);
+            raw_ptr->enqueue_aio(err, size);
         }
 
-        wk->release_ref(); // added in above write
+        raw_ptr->release_ref(); // added in above write
 
-        wk = next;
+        raw_ptr = next;
     }
 
     if (err == ERR_OK) {
@@ -216,7 +226,7 @@ error_code disk_engine::flush(dsn_handle_t fh)
     }
 }
 
-void disk_engine::read(aio_task *aio)
+void disk_engine::read(const aio_task_ptr &aio)
 {
     if (!_is_running) {
         aio->enqueue_aio(ERR_SERVICE_NOT_FOUND, 0);
@@ -235,9 +245,9 @@ void disk_engine::read(aio_task *aio)
     dio->engine = this;
     dio->type = AIO_Read;
 
-    auto wk = df->read(aio);
+    aio_task_ptr wk = df->read(aio);
     if (wk) {
-        return _provider->aio(wk);
+        _provider->aio(wk);
     }
 }
 
@@ -264,8 +274,9 @@ public:
     aio_task *_tasks;
     blob _buffer;
 };
+typedef ::dsn::ref_ptr<batch_write_io_task> batch_write_io_task_ptr;
 
-void disk_engine::write(aio_task *aio)
+void disk_engine::write(const aio_task_ptr &aio)
 {
     if (!_is_running) {
         aio->enqueue_aio(ERR_SERVICE_NOT_FOUND, 0);
@@ -284,14 +295,14 @@ void disk_engine::write(aio_task *aio)
     dio->engine = this;
     dio->type = AIO_Write;
 
-    uint32_t sz;
-    auto wk = df->write(aio, &sz);
+    uint32_t sz = 0;
+    aio_task_ptr wk = df->write(aio, sz);
     if (wk) {
         process_write(wk, sz);
     }
 }
 
-void disk_engine::process_write(aio_task *aio, uint32_t sz)
+void disk_engine::process_write(const aio_task_ptr &aio, uint32_t sz)
 {
     // no batching
     if (aio->aio()->buffer_size == sz) {
@@ -304,7 +315,7 @@ void disk_engine::process_write(aio_task *aio, uint32_t sz)
         // merge the buffers
         auto bb = tls_trans_mem_alloc_blob((size_t)sz);
         char *ptr = (char *)bb.data();
-        auto current_wk = aio;
+        auto current_wk = aio.get();
         do {
             current_wk->copy_to(ptr);
             ptr += current_wk->aio()->buffer_size;
@@ -318,7 +329,7 @@ void disk_engine::process_write(aio_task *aio, uint32_t sz)
                 bb.length());
 
         // setup io task
-        auto new_task = new batch_write_io_task(aio, bb);
+        batch_write_io_task_ptr new_task(new batch_write_io_task(aio, bb));
         auto dio = new_task->aio();
         dio->buffer = (void *)bb.data();
         dio->buffer_size = sz;
@@ -334,7 +345,10 @@ void disk_engine::process_write(aio_task *aio, uint32_t sz)
     }
 }
 
-void disk_engine::complete_io(aio_task *aio, error_code err, uint32_t bytes, int delay_milliseconds)
+void disk_engine::complete_io(const aio_task_ptr &aio,
+                              error_code err,
+                              uint32_t bytes,
+                              int delay_milliseconds)
 {
     if (err != ERR_OK) {
         dinfo("disk operation failure with code %s, err = %s, aio_task_id = %016" PRIx64,
@@ -362,7 +376,7 @@ void disk_engine::complete_io(aio_task *aio, error_code err, uint32_t bytes, int
         // write
         else {
             uint32_t sz;
-            auto wk = df->on_write_completed(aio, (void *)&sz, err, (size_t)bytes);
+            aio_task_ptr wk = df->on_write_completed(aio, (void *)&sz, err, (size_t)bytes);
             if (wk) {
                 process_write(wk, sz);
             }
