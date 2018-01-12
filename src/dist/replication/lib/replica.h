@@ -44,6 +44,8 @@
 
 #include <dsn/cpp/serverlet.h>
 #include <dsn/cpp/perf_counter_wrapper.h>
+#include <dsn/tool-api/thread_access_checker.h>
+
 #include "dist/replication/client_lib/replication_common.h"
 #include "mutation.h"
 #include "mutation_log.h"
@@ -289,6 +291,8 @@ private:
 
     // the task tracker
     dsn::task_tracker _tracker;
+    // the thread access checker
+    dsn::thread_access_checker _checker;
 };
 typedef dsn::ref_ptr<replica> replica_ptr;
 }

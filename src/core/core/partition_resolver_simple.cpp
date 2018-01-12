@@ -35,6 +35,7 @@
 
 #include "partition_resolver_simple.h"
 #include <dsn/utility/utils.h>
+#include <dsn/tool-api/async_calls.h>
 
 #ifdef __TITLE__
 #undef __TITLE__

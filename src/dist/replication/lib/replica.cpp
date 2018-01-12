@@ -99,7 +99,7 @@ void replica::init_state()
     _config.pid.set_partition_index(0);
     _config.status = partition_status::PS_INACTIVE;
     _primary_states.membership.ballot = 0;
-    _create_time_ms = now_ms();
+    _create_time_ms = dsn_now_ms();
     _last_config_change_time_ms = _create_time_ms;
     _last_checkpoint_generate_time_ms = _create_time_ms;
     _private_log = nullptr;

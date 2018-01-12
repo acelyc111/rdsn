@@ -40,6 +40,7 @@
 #include "replica.h"
 #include <dsn/utility/filesystem.h>
 #include <dsn/utility/crc.h>
+#include <dsn/tool-api/async_calls.h>
 
 #ifdef __TITLE__
 #undef __TITLE__

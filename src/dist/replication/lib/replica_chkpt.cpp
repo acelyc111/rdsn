@@ -51,9 +51,9 @@ namespace replication {
 // run in replica thread
 void replica::on_checkpoint_timer()
 {
-    check_hashed_access();
+    _checker.only_one_thread_access();
 
-    if (now_ms() - _last_checkpoint_generate_time_ms >
+    if (dsn_now_ms() - _last_checkpoint_generate_time_ms >
         _options->checkpoint_max_interval_hours * 3600 * 1000) {
         // we trigger emergency checkpoint if no checkpoint generated for a long time
         ddebug("%s: trigger emergency checkpoint by checkpoint_max_interval_hours, interval = %d",
@@ -171,7 +171,7 @@ void replica::init_checkpoint(bool is_emergency)
 void replica::on_copy_checkpoint(const replica_configuration &request,
                                  /*out*/ learn_response &response)
 {
-    check_hashed_access();
+    _checker.only_one_thread_access();
 
     if (request.ballot > get_ballot()) {
         if (!update_local_configuration(request)) {
@@ -214,7 +214,7 @@ void replica::on_copy_checkpoint_ack(error_code err,
                                      const std::shared_ptr<replica_configuration> &req,
                                      const std::shared_ptr<learn_response> &resp)
 {
-    check_hashed_access();
+    _checker.only_one_thread_access();
 
     if (partition_status::PS_PRIMARY != status()) {
         _primary_states.checkpoint_task = nullptr;
@@ -268,7 +268,7 @@ void replica::on_copy_checkpoint_file_completed(error_code err,
                                                 std::shared_ptr<learn_response> resp,
                                                 const std::string &chk_dir)
 {
-    check_hashed_access();
+    _checker.only_one_thread_access();
 
     if (ERR_OK != err) {
         dwarn("copy checkpoint failed, err(%s), remote_addr(%s)",
@@ -325,7 +325,7 @@ void replica::background_async_checkpoint(bool is_emergency)
                used_time,
                _app->last_committed_decree(),
                _app->last_durable_decree());
-        _last_checkpoint_generate_time_ms = now_ms();
+        _last_checkpoint_generate_time_ms = dsn_now_ms();
     } else if (err == ERR_TRY_AGAIN) {
         // already triggered memory flushing on async_checkpoint(), then try again later.
         ddebug("%s: call app.async_checkpoint() returns ERR_TRY_AGAIN, time_used_ns = %" PRIu64
@@ -393,7 +393,7 @@ void replica::catch_up_with_private_logs(partition_status::type s)
 
 void replica::on_checkpoint_completed(error_code err)
 {
-    check_hashed_access();
+    _checker.only_one_thread_access();
 
     // closing or wrong timing or no need operate
     if (partition_status::PS_SECONDARY != status() || err == ERR_WRONG_TIMING ||
@@ -429,7 +429,7 @@ void replica::on_checkpoint_completed(error_code err)
 
             // everything is ok now, done checkpointing
             _secondary_states.checkpoint_is_running = false;
-            _last_checkpoint_generate_time_ms = now_ms();
+            _last_checkpoint_generate_time_ms = dsn_now_ms();
         }
 
         // missed ones need to be loaded via private logs
@@ -447,7 +447,7 @@ void replica::on_checkpoint_completed(error_code err)
     else {
         // everything is ok now, done checkpointing
         _secondary_states.checkpoint_is_running = false;
-        _last_checkpoint_generate_time_ms = now_ms();
+        _last_checkpoint_generate_time_ms = dsn_now_ms();
     }
 }
 }

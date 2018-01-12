@@ -35,8 +35,8 @@
 
 #pragma once
 
-#include <dsn/cpp/clientlet.h>
 #include <dsn/cpp/service_app.h>
+#include <dsn/cpp/serialization.h>
 
 namespace dsn {
 /*!
@@ -103,7 +103,7 @@ private:
 };
 
 template <typename T> // where T : serverlet<T>
-class serverlet : public virtual clientlet
+class serverlet
 {
 public:
     serverlet(const char *nm);
@@ -143,7 +143,7 @@ private:
 
 // ------------- inline implementation ----------------
 template <typename T>
-inline serverlet<T>::serverlet(const char *nm) : clientlet(), _name(nm)
+inline serverlet<T>::serverlet(const char *nm) : _name(nm)
 {
 }
 
