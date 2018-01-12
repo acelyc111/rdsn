@@ -56,7 +56,9 @@ public:
     perf_counter_wrapper &operator=(perf_counter_wrapper &other) = delete;
     perf_counter_wrapper &operator=(perf_counter_wrapper &&other) = delete;
 
-    ~perf_counter_wrapper()
+    ~perf_counter_wrapper() { clear(); }
+
+    void clear()
     {
         if (nullptr != _counter) {
             dsn::perf_counters::instance().remove_counter(_counter->full_name());

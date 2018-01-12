@@ -408,11 +408,17 @@ void replica::close()
         _private_log = nullptr;
     }
 
+    // please make sure to clear all the perf-counters when close replica,
+    // because a perf-counter created by perf-counter-wrapper can't be shared among different
+    // objects
     if (_app != nullptr) {
         error_code err = _app->close(false);
         if (err != dsn::ERR_OK)
             ddebug("app close result: %s", err.to_string());
+        _app.reset();
     }
+
+    _counter_private_log_size.clear();
 }
 }
 } // namespace
