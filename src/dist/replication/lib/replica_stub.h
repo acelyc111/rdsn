@@ -46,6 +46,7 @@
 #include "replica.h"
 #include <dsn/cpp/perf_counter_wrapper.h>
 #include <dsn/dist/failure_detector_multimaster.h>
+#include <dsn/dist/nfs/nfs.h>
 
 namespace dsn {
 namespace replication {
@@ -142,6 +143,8 @@ public:
 
     std::string get_replica_dir(const char *app_type, gpid gpid, bool create_new = true);
 
+    ::dsn::nfs_node *get_nfs() { return _nfs.get(); }
+
 private:
     enum replica_node_state
     {
@@ -212,6 +215,8 @@ private:
 
     ::dsn::dist::slave_failure_detector_with_multimaster *_failure_detector;
     volatile replica_node_state _state;
+
+    std::unique_ptr<::dsn::nfs_node> _nfs;
 
     // constants
     replication_options _options;

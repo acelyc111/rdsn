@@ -1,5 +1,6 @@
 #pragma once
-#include <dsn/tool/nfs/nfs_types.h>
+
+#include <dsn/dist/nfs/nfs_types.h>
 #include <dsn/service_api_cpp.h>
 #include <dsn/cpp/serialization.h>
 

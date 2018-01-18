@@ -24,60 +24,9 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
-#include <dsn/tool/nfs.h>
-#include "nfs_client_impl.h"
-#include "nfs_server_impl.h"
+#include <dsn/dist/nfs/nfs_node.h>
+#include "nfs_node_simple.h"
 
 namespace dsn {
-namespace service {
-
-nfs_node_simple::nfs_node_simple(::dsn::service_node *node) : nfs_node(node)
-{
-    _opts = new nfs_opts();
-    _opts->init();
-    _server = nullptr;
-    _client = nullptr;
-}
-
-nfs_node_simple::~nfs_node_simple(void)
-{
-    stop();
-    delete _opts;
-}
-
-void nfs_node_simple::call(std::shared_ptr<remote_copy_request> rci, const aio_task_ptr &callback)
-{
-    _client->begin_remote_copy(rci, callback); // copy file request entry
-}
-
-error_code nfs_node_simple::start()
-{
-    _server = new nfs_service_impl(*_opts);
-    _server->open_service();
-
-    _client = new nfs_client_impl(*_opts);
-    return ERR_OK;
-}
-
-error_code nfs_node_simple::stop()
-{
-    _server->close_service();
-    delete _server;
-    _server = nullptr;
-
-    delete _client;
-    _client = nullptr;
-
-    return ERR_OK;
-}
-}
+nfs_node *nfs_node::create_new() { return new service::nfs_node_simple; }
 }

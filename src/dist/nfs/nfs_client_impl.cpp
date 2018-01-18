@@ -33,7 +33,6 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 #include "nfs_client_impl.h"
-#include <dsn/tool-api/nfs.h>
 #include <dsn/utility/filesystem.h>
 #include <queue>
 

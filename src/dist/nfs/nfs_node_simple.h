@@ -24,18 +24,9 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
 #pragma once
 
-#include <dsn/tool_api.h>
-#include <dsn/tool-api/nfs.h>
+#include <dsn/dist/nfs/nfs_node.h>
 
 namespace dsn {
 namespace service {
@@ -46,7 +37,7 @@ struct nfs_opts;
 class nfs_node_simple : public nfs_node
 {
 public:
-    nfs_node_simple(::dsn::service_node *node);
+    nfs_node_simple();
 
     virtual ~nfs_node_simple(void);
 

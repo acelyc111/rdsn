@@ -19,3 +19,5 @@ set(MY_PROJ_LIB_PATH "")
 set(MY_BINPLACES "")
 
 dsn_add_object()
+
+add_subdirectory(nfs_example)

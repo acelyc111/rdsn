@@ -32,16 +32,49 @@
  *     xxxx-xx-xx, author, first version
  *     xxxx-xx-xx, author, fix bug about xxx
  */
+#pragma once
 
-// apps
-#include "nfs_test.app.example.h"
+#include <dsn/dist/nfs/nfs.h>
 
-int main(int argc, char **argv)
+namespace dsn {
+namespace service {
+class nfs_service : public ::dsn::serverlet<nfs_service>
 {
-    dsn::service_app::register_factory<::dsn::replication::application::nfs_client_app>("client");
-    dsn::service_app::register_factory<::dsn::replication::application::nfs_server_app>("server");
+public:
+    nfs_service() : ::dsn::serverlet<nfs_service>("nfs") {}
+    virtual ~nfs_service() {}
 
-    // specify what services and tools will run in config file, then run
-    dsn_run_config("config.ini", true);
-    return 0;
+protected:
+    // all service handlers to be implemented further
+    // RPC_NFS_NFS_COPY
+    virtual void on_copy(const copy_request &request, ::dsn::rpc_replier<copy_response> &reply)
+    {
+        std::cout << "... exec RPC_NFS_NFS_COPY ... (not implemented) " << std::endl;
+        copy_response resp;
+        reply(resp);
+    }
+    // RPC_NFS_NFS_GET_FILE_SIZE
+    virtual void on_get_file_size(const get_file_size_request &request,
+                                  ::dsn::rpc_replier<get_file_size_response> &reply)
+    {
+        std::cout << "... exec RPC_NFS_NFS_GET_FILE_SIZE ... (not implemented) " << std::endl;
+        get_file_size_response resp;
+        reply(resp);
+    }
+
+public:
+    void open_service()
+    {
+        this->register_async_rpc_handler(RPC_NFS_COPY, "copy", &nfs_service::on_copy);
+        this->register_async_rpc_handler(
+            RPC_NFS_GET_FILE_SIZE, "get_file_size", &nfs_service::on_get_file_size);
+    }
+
+    void close_service()
+    {
+        this->unregister_rpc_handler(RPC_NFS_COPY);
+        this->unregister_rpc_handler(RPC_NFS_GET_FILE_SIZE);
+    }
+};
+}
 }

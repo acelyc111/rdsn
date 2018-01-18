@@ -52,7 +52,6 @@ class rpc_engine;
 class disk_engine;
 class env_provider;
 class logging_provider;
-class nfs_node;
 class task_queue;
 class task_worker_pool;
 class timer_service;
@@ -68,7 +67,6 @@ public:
     {
         rpc_engine *rpc;
         disk_engine *disk;
-        nfs_node *nfs;
         timer_service *tsvc;
         aio_provider *aio;
 
@@ -80,7 +78,6 @@ public:
 
     rpc_engine *rpc() const { return _node_io.rpc; }
     disk_engine *disk() const { return _node_io.disk; }
-    nfs_node *nfs() const { return _node_io.nfs; }
     timer_service *tsvc() const { return _node_io.tsvc; }
 
     task_engine *computation() const { return _computation; }
@@ -88,8 +85,6 @@ public:
                           const std::vector<std::string> &args,
                           /*out*/ std::stringstream &ss);
     void get_queue_info(/*out*/ std::stringstream &ss);
-
-    error_code start_io_engine_in_node_start_task();
 
     dsn::error_code start();
     dsn::error_code start_app();

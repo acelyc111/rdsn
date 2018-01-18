@@ -32,49 +32,52 @@
  *     xxxx-xx-xx, author, first version
  *     xxxx-xx-xx, author, fix bug about xxx
  */
-#pragma once
-#include <dsn/tool/nfs.h>
-#include <iostream>
+
+#include "nfs_node_simple.h"
+#include "nfs_client_impl.h"
+#include "nfs_server_impl.h"
 
 namespace dsn {
 namespace service {
-class nfs_service : public ::dsn::serverlet<nfs_service>
+
+nfs_node_simple::nfs_node_simple()
 {
-public:
-    nfs_service() : ::dsn::serverlet<nfs_service>("nfs") {}
-    virtual ~nfs_service() {}
+    _opts = new nfs_opts();
+    _opts->init();
+    _server = nullptr;
+    _client = nullptr;
+}
 
-protected:
-    // all service handlers to be implemented further
-    // RPC_NFS_NFS_COPY
-    virtual void on_copy(const copy_request &request, ::dsn::rpc_replier<copy_response> &reply)
-    {
-        std::cout << "... exec RPC_NFS_NFS_COPY ... (not implemented) " << std::endl;
-        copy_response resp;
-        reply(resp);
-    }
-    // RPC_NFS_NFS_GET_FILE_SIZE
-    virtual void on_get_file_size(const get_file_size_request &request,
-                                  ::dsn::rpc_replier<get_file_size_response> &reply)
-    {
-        std::cout << "... exec RPC_NFS_NFS_GET_FILE_SIZE ... (not implemented) " << std::endl;
-        get_file_size_response resp;
-        reply(resp);
-    }
+nfs_node_simple::~nfs_node_simple(void)
+{
+    stop();
+    delete _opts;
+}
 
-public:
-    void open_service()
-    {
-        this->register_async_rpc_handler(RPC_NFS_COPY, "copy", &nfs_service::on_copy);
-        this->register_async_rpc_handler(
-            RPC_NFS_GET_FILE_SIZE, "get_file_size", &nfs_service::on_get_file_size);
-    }
+void nfs_node_simple::call(std::shared_ptr<remote_copy_request> rci, const aio_task_ptr &callback)
+{
+    _client->begin_remote_copy(rci, callback); // copy file request entry
+}
 
-    void close_service()
-    {
-        this->unregister_rpc_handler(RPC_NFS_COPY);
-        this->unregister_rpc_handler(RPC_NFS_GET_FILE_SIZE);
-    }
-};
+error_code nfs_node_simple::start()
+{
+    _server = new nfs_service_impl(*_opts);
+    _server->open_service();
+
+    _client = new nfs_client_impl(*_opts);
+    return ERR_OK;
+}
+
+error_code nfs_node_simple::stop()
+{
+    _server->close_service();
+    delete _server;
+    _server = nullptr;
+
+    delete _client;
+    _client = nullptr;
+
+    return ERR_OK;
+}
 }
 }

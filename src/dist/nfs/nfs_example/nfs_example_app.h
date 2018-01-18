@@ -36,7 +36,7 @@
 #include <dsn/tool-api/task_tracker.h>
 #include <dsn/tool-api/async_calls.h>
 #include <dsn/dist/replication.h>
-#include <dsn/tool/nfs.h>
+#include <dsn/dist/nfs/nfs.h>
 
 namespace dsn {
 namespace replication {
@@ -46,15 +46,23 @@ namespace application {
 class nfs_server_app : public ::dsn::service_app
 {
 public:
-    nfs_server_app(const service_app_info *info) : ::dsn::service_app(info) {}
+    nfs_server_app(const service_app_info *info) : ::dsn::service_app(info)
+    {
+        _nfs.reset(nfs_node::create_new());
+    }
 
     virtual ::dsn::error_code start(const std::vector<std::string> &args)
     {
-        // use builtin nfs_service by set [core] start_nfs = true
+        // NOTICE: nfs->start will start a server on the specify ip:port and initialize a
+        // client-instance
+        _nfs->start();
         return ::dsn::ERR_OK;
     }
 
-    virtual ::dsn::error_code stop(bool cleanup = false) { return ::dsn::ERR_OK; }
+    virtual ::dsn::error_code stop(bool cleanup = false) { return _nfs->stop(); }
+
+private:
+    std::unique_ptr<::dsn::nfs_node> _nfs;
 };
 
 // client app example
@@ -65,12 +73,14 @@ public:
     {
         _req_index = 0;
         _is_copying = false;
+        _nfs.reset(nfs_node::create_new());
     }
 
     ~nfs_client_app() { stop(); }
 
     virtual ::dsn::error_code start(const std::vector<std::string> &args)
     {
+        _nfs->start();
         if (args.size() < 2)
             return ::dsn::ERR_INVALID_PARAMETERS;
 
@@ -88,7 +98,7 @@ public:
     virtual ::dsn::error_code stop(bool cleanup = false)
     {
         _request_timer->cancel(true);
-        return ::dsn::ERR_OK;
+        return _nfs->stop();
     }
 
     void on_request_timer()
@@ -104,7 +114,7 @@ public:
         files.push_back("dsn.nfs.test");
         bool overwrite = true;
         bool high_priority = false;
-        file::copy_remote_files(
+        _nfs->copy_remote_files(
             _server,
             source_dir,
             files,
@@ -136,6 +146,8 @@ private:
     ::dsn::rpc_address _server;
     std::atomic<int> _req_index;
     bool _is_copying;
+
+    std::unique_ptr<::dsn::nfs_node> _nfs;
 
     dsn::task_tracker _tracker;
 };

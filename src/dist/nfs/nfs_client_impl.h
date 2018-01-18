@@ -33,9 +33,9 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 #pragma once
-#include "nfs_client.h"
+#include <dsn/dist/nfs/nfs_client.h>
 #include <queue>
-#include <dsn/tool-api/nfs.h>
+#include <dsn/dist/nfs/nfs.h>
 #include <dsn/tool-api/task_tracker.h>
 #include <dsn/cpp/perf_counter_wrapper.h>
 

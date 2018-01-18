@@ -35,7 +35,7 @@
 #pragma once
 #include <dsn/utility/optional.h>
 #include <dsn/tool-api/async_calls.h>
-#include <dsn/tool/nfs.h>
+#include <dsn/dist/nfs/nfs.h>
 #include <iostream>
 
 namespace dsn {

@@ -48,6 +48,7 @@ int g_test_ret = 0;
 
 extern void lock_test_init();
 extern void fd_test_init();
+extern void nfs_init();
 
 class test_client : public ::dsn::service_app
 {
@@ -86,6 +87,7 @@ GTEST_API_ int main(int argc, char **argv)
     dsn::service_app::register_factory<test_client>("test");
     lock_test_init();
     fd_test_init();
+    nfs_init();
 
     // specify what services and tools will run in config file, then run
     dsn_run_config("config-test.ini", false);

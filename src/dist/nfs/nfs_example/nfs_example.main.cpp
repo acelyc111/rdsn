@@ -33,38 +33,15 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 
-#include <dsn/cpp/service_app.h>
-#include <dsn/utility/singleton.h>
-#include <dsn/tool-api/task.h>
-#include <dsn/tool-api/async_calls.h>
-#include <iostream>
-#include <map>
+// apps
+#include "nfs_example_app.h"
 
-namespace dsn {
-namespace file {
-
-void copy_remote_files_impl(::dsn::rpc_address remote,
-                            const std::string &source_dir,
-                            const std::vector<std::string> &files, // empty for all
-                            const std::string &dest_dir,
-                            bool overwrite,
-                            bool high_priority,
-                            const aio_task_ptr &tsk)
+int main(int argc, char **argv)
 {
-    if (files.empty()) {
-        dsn_file_copy_remote_directory(
-            remote, source_dir.c_str(), dest_dir.c_str(), overwrite, high_priority, tsk);
-    } else {
-        const char **ptr = (const char **)alloca(sizeof(const char *) * (files.size() + 1));
-        const char **ptr_base = ptr;
-        for (auto &f : files) {
-            *ptr++ = f.c_str();
-        }
-        *ptr = nullptr;
+    dsn::service_app::register_factory<::dsn::replication::application::nfs_client_app>("client");
+    dsn::service_app::register_factory<::dsn::replication::application::nfs_server_app>("server");
 
-        dsn_file_copy_remote_files(
-            remote, source_dir.c_str(), ptr_base, dest_dir.c_str(), overwrite, high_priority, tsk);
-    }
-}
-}
+    // specify what services and tools will run in config file, then run
+    dsn_run_config("config.ini", true);
+    return 0;
 }

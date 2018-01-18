@@ -81,7 +81,6 @@ __thread uint16_t tls_dsn_lower32_task_id_mask = 0;
         tls_dsn.rpc = node->rpc();
         tls_dsn.disk = node->disk();
         tls_dsn.env = service_engine::fast_instance().env();
-        tls_dsn.nfs = node->nfs();
         tls_dsn.tsvc = node->tsvc();
     }
 

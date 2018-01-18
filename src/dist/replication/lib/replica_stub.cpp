@@ -74,6 +74,7 @@ replica_stub::replica_stub(replica_state_subscriber subscriber /*= nullptr*/,
     _replica_state_subscriber = subscriber;
     _is_long_subscriber = is_long_subscriber;
     _failure_detector = nullptr;
+    _nfs = nullptr;
     _state = NS_Disconnected;
     _log = nullptr;
     install_perf_counters();
@@ -554,6 +555,10 @@ void replica_stub::initialize_start()
     } else {
         _state = NS_Connected;
     }
+
+    _nfs.reset(nfs_node::create_new());
+    error_code err = _nfs->start();
+    dassert(err == ERR_OK, "nfs start failed, err = %s", err.to_string());
 }
 
 dsn::error_code replica_stub::on_kill_replica(gpid pid)
@@ -1911,6 +1916,11 @@ void replica_stub::close()
     if (_log != nullptr) {
         _log->close();
         _log = nullptr;
+    }
+
+    if (_nfs != nullptr) {
+        _nfs->stop();
+        _nfs = nullptr;
     }
 }
 
