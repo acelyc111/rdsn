@@ -25,16 +25,16 @@ public:
 
 struct reply_context
 {
-    dsn_message_t response;
+    dsn::message_ex* response;
     spin_counter e;
 };
-dsn_message_t create_corresponding_receive(dsn_message_t req);
+dsn::message_ex* create_corresponding_receive(dsn::message_ex* req);
 
 // release the dsn_message who's reference is 0
-inline void destroy_message(dsn_message_t msg)
+inline void destroy_message(dsn::message_ex* msg)
 {
-    dsn_msg_add_ref(msg);
-    dsn_msg_release_ref(msg);
+    msg->add_ref();
+    msg->release_ref();
 }
 
 class meta_service_test_app : public dsn::service_app
@@ -76,11 +76,11 @@ public:
     fake_rpc_call(dsn::task_code rpc_code,
                   dsn::task_code server_state_write_code,
                   dsn::replication::server_state *ss,
-                  void (dsn::replication::server_state::*handle)(dsn_message_t request),
+                  void (dsn::replication::server_state::*handle)(dsn::message_ex* request),
                   const TRequest &data,
                   std::chrono::milliseconds delay = std::chrono::milliseconds(0))
     {
-        dsn_message_t msg = dsn_msg_create_request(rpc_code);
+        dsn::message_ex* msg = dsn::message_ex::create_request(rpc_code);
         dsn::marshall(msg, data);
 
         std::shared_ptr<reply_context> result = std::make_shared<reply_context>();
@@ -88,8 +88,8 @@ public:
         uint64_t ptr = reinterpret_cast<uint64_t>(result.get());
         dsn::marshall(msg, ptr);
 
-        dsn_message_t received = create_corresponding_receive(msg);
-        dsn_msg_add_ref(received);
+        dsn::message_ex* received = create_corresponding_receive(msg);
+        received->add_ref();
         dsn::tasking::enqueue(server_state_write_code,
                               nullptr,
                               std::bind(handle, ss, received),

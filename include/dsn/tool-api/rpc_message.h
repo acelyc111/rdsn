@@ -41,9 +41,9 @@
 #include <dsn/utility/dlib.h>
 #include <dsn/utility/blob.h>
 #include <dsn/utility/callocator.h>
+#include <dsn/utility/link.h>
 #include <dsn/tool-api/auto_codes.h>
 #include <dsn/tool-api/rpc_address.h>
-#include <dsn/utility/link.h>
 #include <dsn/tool-api/global_config.h>
 
 namespace dsn {
@@ -59,10 +59,26 @@ typedef struct dsn_buffer_t // binary compatible with WSABUF on windows
 struct fast_code
 {
     uint32_t local_code;
-    uint32_t local_hash; // same hash from two processes indicates that
-                         // the mapping of rpc string and id are consistent, which
-                         // we leverage for optimization (fast rpc handler lookup)
+
+    // same hash from two processes indicates that
+    // the mapping of rpc string and id are consistent, which
+    // we leverage for optimization (fast rpc handler lookup)
+    uint32_t local_hash;
 };
+
+typedef union msg_context
+{
+    struct
+    {
+        uint64_t is_request : 1;           ///< whether the RPC message is a request or response
+        uint64_t is_forwarded : 1;         ///< whether the msg is forwarded or not
+        uint64_t unused : 4;               ///< not used yet
+        uint64_t serialize_format : 4;     ///< dsn_msg_serialize_format
+        uint64_t is_forward_supported : 1; ///< whether support forwarding a message to real leader
+        uint64_t reserved : 53;
+    } u;
+    uint64_t context; ///< msg_context is of sizeof(uint64_t)
+} msg_context_t;
 
 typedef struct message_header
 {
@@ -77,7 +93,7 @@ typedef struct message_header
     char rpc_name[DSN_MAX_TASK_CODE_NAME_LENGTH];
     fast_code rpc_code; // dsn::task_code
     dsn::gpid gpid;     // global partition id
-    dsn_msg_context_t context;
+    msg_context_t context;
 
     // always ipv4/v6 address,
     // generally, it is the from_node's primary address, except the
@@ -141,6 +157,12 @@ public:
                                               int thread_hash = 0,
                                               uint64_t partition_hash = 0);
 
+    DSN_API static message_ex *create_received_request(dsn::task_code rpc_code,
+                                                       dsn_msg_serialize_format format,
+                                                       void *buffer,
+                                                       int size,
+                                                       int thread_hash = 0,
+                                                       uint64_t partition_hash = 0);
     DSN_API static message_ex *create_receive_message_with_standalone_header(const blob &data);
     DSN_API message_ex *create_response();
     DSN_API message_ex *copy(bool clone_content, bool copy_for_receive);

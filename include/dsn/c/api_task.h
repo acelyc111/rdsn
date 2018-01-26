@@ -45,9 +45,14 @@
 @{
  */
 
+namespace dsn {
+class message_ex;
+}
+
 typedef std::function<void()> task_handler;
-typedef std::function<void(dsn_message_t)> rpc_request_handler;
-typedef std::function<void(dsn::error_code, dsn_message_t, dsn_message_t)> rpc_response_handler;
+typedef std::function<void(dsn::message_ex *)> rpc_request_handler;
+typedef std::function<void(dsn::error_code, dsn::message_ex *, dsn::message_ex *)>
+    rpc_response_handler;
 typedef std::function<void(dsn::error_code, size_t)> aio_handler;
 
 namespace dsn {

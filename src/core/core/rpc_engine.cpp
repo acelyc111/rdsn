@@ -143,7 +143,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
     // in this case, the server will return ERR_FORWARD_TO_OTHERS
     if (err == ERR_FORWARD_TO_OTHERS) {
         rpc_address addr;
-        ::dsn::unmarshall((dsn_message_t)reply, addr);
+        ::dsn::unmarshall((dsn::message_ex*)reply, addr);
 
         // handle the case of forwarding to itself where addr == req->to_address.
         dbg_dassert(addr != req->to_address,
@@ -671,7 +671,7 @@ void rpc_engine::call_uri(rpc_address addr, message_ex *request, const rpc_respo
             auto old_callback = call->current_handler();
 
             auto new_callback = [deadline_ms, old_callback](
-                dsn::error_code err, dsn_message_t req, dsn_message_t resp) {
+                dsn::error_code err, dsn::message_ex* req, dsn::message_ex* resp) {
                 message_ex *req2 = (message_ex *)req;
                 if (req2->header->gpid.value() != 0 && err != ERR_OK &&
                     err != ERR_HANDLER_NOT_FOUND) {

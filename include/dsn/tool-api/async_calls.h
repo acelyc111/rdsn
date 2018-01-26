@@ -43,7 +43,7 @@
 
 namespace dsn {
 
-inline void empty_rpc_handler(dsn::error_code, dsn_message_t, dsn_message_t) {}
+inline void empty_rpc_handler(dsn::error_code, dsn::message_ex *, dsn::message_ex *) {}
 
 // callback(error_code, TResponse&& response)
 template <typename TFunction, class Enable = void>
@@ -136,7 +136,7 @@ inline dsn::ref_ptr<dsn::safe_late_task<TCallback>> create_late_task(
 */
 namespace rpc {
 
-inline rpc_response_task_ptr create_rpc_response_task(dsn_message_t req,
+inline rpc_response_task_ptr create_rpc_response_task(dsn::message_ex *req,
                                                       task_tracker *tracker,
                                                       rpc_response_handler &&callback,
                                                       int reply_thread_hash = 0)
@@ -150,7 +150,7 @@ inline rpc_response_task_ptr create_rpc_response_task(dsn_message_t req,
 
 template <typename TCallback>
 typename std::enable_if<is_typed_rpc_callback<TCallback>::value, rpc_response_task_ptr>::type
-create_rpc_response_task(dsn_message_t req,
+create_rpc_response_task(dsn::message_ex *req,
                          task_tracker *tracker,
                          TCallback &&cb,
                          int reply_thread_hash = 0)
@@ -158,7 +158,8 @@ create_rpc_response_task(dsn_message_t req,
     return create_rpc_response_task(
         req,
         tracker,
-        [cb_fwd = std::move(cb)](error_code err, dsn_message_t req, dsn_message_t resp) mutable {
+        [cb_fwd =
+             std::move(cb)](error_code err, dsn::message_ex * req, dsn::message_ex * resp) mutable {
             typename is_typed_rpc_callback<TCallback>::response_t response = {};
             if (err == dsn::ERR_OK) {
                 dsn::unmarshall(resp, response);
@@ -170,7 +171,7 @@ create_rpc_response_task(dsn_message_t req,
 
 template <typename TCallback>
 rpc_response_task_ptr call(::dsn::rpc_address server,
-                           dsn_message_t request,
+                           dsn::message_ex *request,
                            task_tracker *tracker,
                            TCallback &&callback,
                            int reply_thread_hash = 0)
@@ -203,7 +204,7 @@ call(dsn::rpc_address server,
      uint64_t partition_hash = 0,
      int reply_thread_hash = 0)
 {
-    dsn_message_t msg = dsn_msg_create_request(
+    dsn::message_ex *msg = dsn::message_ex::create_request(
         code, static_cast<int>(timeout.count()), thread_hash, partition_hash);
     ::dsn::marshall(msg, std::forward<TRequest>(req));
     return call(server, msg, owner, std::forward<TCallback>(callback), reply_thread_hash);
@@ -218,7 +219,7 @@ void call_one_way_typed(::dsn::rpc_address server,
                                              /// thread_hash is computed from partition_hash
                         uint64_t partition_hash = 0)
 {
-    dsn_message_t msg = dsn_msg_create_request(code, 0, thread_hash, partition_hash);
+    dsn::message_ex *msg = dsn::message_ex::create_request(code, 0, thread_hash, partition_hash);
     ::dsn::marshall(msg, req);
     dsn_rpc_call_one_way(server, msg);
 }
@@ -312,7 +313,6 @@ inline aio_task_ptr write_vector(dsn_handle_t fh,
     dsn_file_write_vector(fh, buffers, buffer_count, offset, tsk.get());
     return tsk;
 }
-
 }
 /*@}*/
 // ------------- inline implementation ----------------

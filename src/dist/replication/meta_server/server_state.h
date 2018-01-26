@@ -128,16 +128,16 @@ public:
     bool query_configuration_by_gpid(const dsn::gpid id, /*out*/ partition_configuration &config);
 
     // table options
-    void create_app(dsn_message_t msg);
-    void drop_app(dsn_message_t msg);
-    void recall_app(dsn_message_t msg);
+    void create_app(dsn::message_ex* msg);
+    void drop_app(dsn::message_ex* msg);
+    void recall_app(dsn::message_ex* msg);
     void list_apps(const configuration_list_apps_request &request,
                    configuration_list_apps_response &response);
 
     // update configuration
-    void on_config_sync(dsn_message_t msg);
+    void on_config_sync(dsn::message_ex* msg);
     void on_update_configuration(std::shared_ptr<configuration_update_request> &request,
-                                 dsn_message_t msg);
+                                 dsn::message_ex* msg);
 
     // dump & restore
     error_code dump_from_remote_storage(const char *local_path, bool sync_immediately);

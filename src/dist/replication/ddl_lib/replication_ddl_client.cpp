@@ -917,15 +917,15 @@ bool replication_ddl_client::valid_app_char(int c)
 void replication_ddl_client::end_meta_request(rpc_response_task_ptr &&callback,
                                               int retry_times,
                                               error_code err,
-                                              dsn_message_t request,
-                                              dsn_message_t resp)
+                                              dsn::message_ex* request,
+                                              dsn::message_ex* resp)
 {
     if (err != dsn::ERR_OK && retry_times < 2) {
         rpc::call(_meta_server, request, &_tracker, [
             this,
             retry_times,
             callback_capture = std::move(callback)
-        ](error_code err, dsn_message_t request, dsn_message_t response) mutable {
+        ](error_code err, dsn::message_ex* request, dsn::message_ex* response) mutable {
             end_meta_request(std::move(callback_capture), retry_times + 1, err, request, response);
         });
     } else {

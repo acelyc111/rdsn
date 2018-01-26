@@ -12,7 +12,7 @@ template <typename T>
 class storage_serverlet
 {
 protected:
-    typedef std::function<void(T *, dsn_message_t req)> rpc_handler;
+    typedef std::function<void(T *, dsn::message_ex *req)> rpc_handler;
     static std::unordered_map<std::string, rpc_handler> _handlers;
     static std::vector<rpc_handler> _vhandlers;
 
@@ -22,10 +22,10 @@ protected:
                                const char *name,
                                void (*handler)(T *svc, const TReq &req, rpc_replier<TResp> &resp))
     {
-        rpc_handler h = [handler](T *p, dsn_message_t r) {
+        rpc_handler h = [handler](T *p, dsn::message_ex *r) {
             TReq req;
             ::dsn::unmarshall(r, req);
-            rpc_replier<TResp> replier(dsn_msg_create_response(r));
+            rpc_replier<TResp> replier(r->create_response());
             handler(p, req, replier);
         };
 
@@ -37,7 +37,7 @@ protected:
                                            const char *name,
                                            void (*handler)(T *svc, const TReq &req))
     {
-        rpc_handler h = [handler](T *p, dsn_message_t r) {
+        rpc_handler h = [handler](T *p, dsn::message_ex *r) {
             TReq req;
             ::dsn::unmarshall(r, req);
             handler(p, req);
@@ -72,9 +72,9 @@ protected:
         return nullptr;
     }
 
-    int handle_request(dsn_message_t request)
+    int handle_request(dsn::message_ex *request)
     {
-        dsn::task_code t = dsn_msg_task_code(request);
+        dsn::task_code t = request->rpc_code();
         const rpc_handler *ptr = find_handler(t);
         if (ptr != nullptr) {
             (*ptr)(static_cast<T *>(this), request);
@@ -82,9 +82,9 @@ protected:
             dassert(false,
                     "recv message with unhandled rpc name %s from %s, trace_id = %016" PRIx64,
                     t.to_string(),
-                    dsn_msg_from_address(request).to_string(),
-                    dsn_msg_trace_id(request));
-            dsn_rpc_reply(dsn_msg_create_response(request), ::dsn::ERR_HANDLER_NOT_FOUND);
+                    request->header->from_address.to_string(),
+                    request->header->trace_id);
+            dsn_rpc_reply(request->create_response(), ::dsn::ERR_HANDLER_NOT_FOUND);
         }
         return 0;
     }

@@ -86,8 +86,8 @@ public:
     //
     //    requests from clients
     //
-    void on_client_write(gpid gpid, dsn_message_t request);
-    void on_client_read(gpid gpid, dsn_message_t request);
+    void on_client_write(gpid gpid, dsn::message_ex* request);
+    void on_client_read(gpid gpid, dsn::message_ex* request);
 
     //
     //    messages from meta server
@@ -106,8 +106,8 @@ public:
     //        - commit
     //        - learn
     //
-    void on_prepare(dsn_message_t request);
-    void on_learn(dsn_message_t msg);
+    void on_prepare(dsn::message_ex* request);
+    void on_learn(dsn::message_ex* msg);
     void on_learn_completion_notification(const group_check_response &report,
                                           /*out*/ learn_notify_response &response);
     void on_add_learner(const group_check_request &request);
@@ -165,7 +165,7 @@ private:
     void initialize_start();
     void query_configuration_by_node();
     void on_meta_server_disconnected_scatter(replica_stub_ptr this_, gpid gpid);
-    void on_node_query_reply(error_code err, dsn_message_t request, dsn_message_t response);
+    void on_node_query_reply(error_code err, dsn::message_ex* request, dsn::message_ex* response);
     void on_node_query_reply_scatter(replica_stub_ptr this_,
                                      const configuration_update_request &config);
     void on_node_query_reply_scatter2(replica_stub_ptr this_, gpid gpid);
@@ -280,7 +280,7 @@ private:
     dsn::task_tracker _tracker;
 
 private:
-    void response_client_error(gpid gpid, bool is_read, dsn_message_t request, error_code error);
+    void response_client_error(gpid gpid, bool is_read, dsn::message_ex* request, error_code error);
 };
 //------------ inline impl ----------------------
 }

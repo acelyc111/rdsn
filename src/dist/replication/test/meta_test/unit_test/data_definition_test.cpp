@@ -16,9 +16,9 @@
 using namespace dsn;
 using namespace dsn::replication;
 
-dsn_message_t create_corresponding_receive(dsn_message_t request_msg)
+dsn::message_ex *create_corresponding_receive(dsn::message_ex *request_msg)
 {
-    return dsn_msg_copy(request_msg, true, true);
+    return request_msg->copy(true, true);
 }
 
 class fake_receiver_meta_service : public meta_service
@@ -26,17 +26,17 @@ class fake_receiver_meta_service : public meta_service
 public:
     fake_receiver_meta_service() : meta_service() {}
     virtual ~fake_receiver_meta_service() {}
-    virtual void reply_message(dsn_message_t request, dsn_message_t response) override
+    virtual void reply_message(dsn::message_ex *request, dsn::message_ex *response) override
     {
         uint64_t ptr;
         dsn::unmarshall(request, ptr);
         reply_context *ctx = reinterpret_cast<reply_context *>(ptr);
         ctx->response = create_corresponding_receive(response);
-        dsn_msg_add_ref(ctx->response);
+        ctx->response->add_ref();
 
         // release the response
-        dsn_msg_add_ref(response);
-        dsn_msg_release_ref(response);
+        response->add_ref();
+        response->release_ref();
 
         ctx->e.notify();
     }
@@ -58,7 +58,7 @@ public:
     do {                                                                                           \
         context->e.wait();                                                                         \
         unmarshall(context->response, response_data);                                              \
-        dsn_msg_release_ref(context->response);                                                    \
+        context->response->release_ref();                                                          \
     } while (0)
 
 inline void test_logger(const char *str)

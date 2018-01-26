@@ -189,7 +189,7 @@ public:
     //[
     task_ptr pending_sync_task;
     std::shared_ptr<configuration_update_request> pending_sync_request;
-    dsn_message_t msg;
+    dsn::message_ex* msg;
     //]
 
     // for load balancer's decision
@@ -273,7 +273,7 @@ public:
     app_state *owner;
     std::atomic_int partitions_in_progress;
     std::vector<config_context> contexts;
-    dsn_message_t pending_response;
+    dsn::message_ex* pending_response;
 
 public:
     app_state_helper() : owner(nullptr), partitions_in_progress(0)
