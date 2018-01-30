@@ -39,7 +39,7 @@
 namespace dsn {
 namespace service {
 
-cli::cli(const service_app_info *info) : service_app(info)
+cli_client_app::cli_client_app(const service_app_info *info) : service_app(info)
 {
     _timeout = std::chrono::seconds(10); // 10 seconds by default
 }
@@ -56,7 +56,7 @@ void usage()
     std::cout << "---------------------------------" << std::endl;
 }
 
-error_code cli::start(const std::vector<std::string> &args)
+error_code cli_client_app::start(const std::vector<std::string> &args)
 {
 
     std::cout << "dsn remote cli begin ..." << std::endl;
@@ -126,6 +126,32 @@ error_code cli::start(const std::vector<std::string> &args)
     return ERR_OK;
 }
 
-error_code cli::stop(bool cleanup) { return ERR_OK; }
+error_code cli_client_app::stop(bool cleanup) { return ERR_OK; }
+
+cli_server_app::cli_server_app(const service_app_info *info) : service_app(info) {}
+
+error_code cli_server_app::start(const std::vector<std::string> &args)
+{
+    _server.open_service();
+    command_manager::instance().register_command(
+        {"echo"},
+        "echo - simple echo service",
+        "echo - implement simple echo service base on remote cli",
+        [](const std::vector<std::string> &args) {
+            std::string res;
+            for (const auto &str : args) {
+                res += str;
+                res += " ";
+            }
+            return res;
+        });
+    return ERR_OK;
+}
+
+error_code cli_server_app::stop(bool cleanup)
+{
+    _server.close_service();
+    return ERR_OK;
+}
 }
 }

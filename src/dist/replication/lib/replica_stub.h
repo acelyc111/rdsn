@@ -47,6 +47,7 @@
 #include <dsn/cpp/perf_counter_wrapper.h>
 #include <dsn/dist/failure_detector_multimaster.h>
 #include <dsn/dist/nfs/nfs.h>
+#include <dsn/dist/cli/cli.server.h>
 
 namespace dsn {
 namespace replication {
@@ -217,6 +218,7 @@ private:
     volatile replica_node_state _state;
 
     std::unique_ptr<::dsn::nfs_node> _nfs;
+    cli_server _cli_service;
 
     // constants
     replication_options _options;

@@ -281,27 +281,6 @@ void service_engine::init_after_toollets()
     tls_dsn.env = _env;
 }
 
-// port == -1 for all node
-void service_engine::register_system_rpc_handler(dsn::task_code code,
-                                                 const char *name,
-                                                 const rpc_request_handler &cb,
-                                                 int port /*= -1*/
-                                                 )
-{
-    if (port == -1) {
-        for (auto &n : _nodes_by_app_id) {
-            n.second->rpc_register_handler(code, name, cb);
-        }
-    } else {
-        auto it = _nodes_by_app_port.find(port);
-        if (it != _nodes_by_app_port.end()) {
-            it->second->rpc_register_handler(code, name, cb);
-        } else {
-            dwarn("cannot find service node with port %d", port);
-        }
-    }
-}
-
 service_node *service_engine::start_node(service_app_spec &app_spec)
 {
     auto it = _nodes_by_app_id.find(app_spec.id);

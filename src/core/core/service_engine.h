@@ -137,11 +137,6 @@ public:
 
     service_node *start_node(service_app_spec &app_spec);
 
-    // port == -1 for all nodes
-    void register_system_rpc_handler(dsn::task_code code,
-                                     const char *name,
-                                     const rpc_request_handler &cb,
-                                     int port = -1);
     const service_nodes_by_app_id &get_all_nodes() const { return _nodes_by_app_id; }
 
 private:

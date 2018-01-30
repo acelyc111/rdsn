@@ -283,6 +283,8 @@ void meta_service::register_rpc_handlers()
     register_rpc_handler(
         RPC_CM_CONTROL_META, "control_meta_level", &meta_service::on_control_meta_level);
     register_rpc_handler(RPC_CM_START_RECOVERY, "start_recovery", &meta_service::on_start_recovery);
+
+    _cli_service.open_service();
 }
 
 int meta_service::check_leader(dsn::message_ex *req)

@@ -1,4 +1,4 @@
-set(MY_PROJ_NAME dsn.cli.tool)
+set(MY_PROJ_NAME dsn.cli)
 
 # Source files under CURRENT project directory will be automatically included.
 # You can manually set MY_PROJ_SRC to include source files under other directories.
@@ -11,18 +11,8 @@ set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_INC_PATH "")
 
-if (UNIX)
-    set(MY_PROJ_LIBS pthread dsn.cli)
-else()
-    set(MY_PROJ_LIBS dsn.cli)
-endif()
-
 set(MY_PROJ_LIB_PATH "")
 
-set(MY_BOOST_PACKAGES system filesystem)
+dsn_add_static_library()
 
-# Extra files that will be installed
-set(MY_BINPLACES "${CMAKE_CURRENT_SOURCE_DIR}/config.ini")
-
-set(MY_DO_INSTALL TRUE)
-dsn_add_executable()
+add_subdirectory(cli_example)

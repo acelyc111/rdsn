@@ -1,4 +1,4 @@
-set(MY_PROJ_NAME dsn.nfs.test)
+set(MY_PROJ_NAME dsn.nfs.example)
 
 # Source files under CURRENT project directory will be automatically included.
 # You can manually set MY_PROJ_SRC to include source files under other directories.

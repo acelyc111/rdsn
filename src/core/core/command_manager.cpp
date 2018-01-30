@@ -43,7 +43,6 @@
 #include <dsn/tool-api/task.h>
 #include <dsn/tool-api/rpc_message.h>
 #include <dsn/tool-api/command_manager.h>
-#include <dsn/tool/cli.h>
 
 #include "service_engine.h"
 #include "rpc_engine.h"
@@ -113,94 +112,17 @@ void command_manager::deregister_command(dsn_handle_t handle)
     delete c;
 }
 
-bool command_manager::run_command(const std::string &cmdline, /*out*/ std::string &output)
+command_instance *command_manager::get_command_instance(const std::string &cmd)
 {
-    auto cnode = ::dsn::task::get_current_node2();
-    if (cnode == nullptr) {
-        auto &all_nodes = ::dsn::service_engine::fast_instance().get_all_nodes();
-        dassert(!all_nodes.empty(), "no node to mimic!");
-        dsn_mimic_app(all_nodes.begin()->second->spec().role_name.c_str(), 1);
-    }
-    std::string scmd = cmdline;
-    std::vector<std::string> args;
-
-    utils::split_args(scmd.c_str(), args, ' ');
-
-    if (args.size() < 1)
-        return false;
-
-    std::vector<std::string> args2;
-    for (size_t i = 1; i < args.size(); i++) {
-        args2.push_back(args[i]);
-    }
-
-    return run_command(args[0], args2, output);
-}
-
-bool command_manager::run_command(const std::string &cmd,
-                                  const std::vector<std::string> &args,
-                                  /*out*/ std::string &output)
-{
-    command_instance *h = nullptr;
+    command_instance *ptr = nullptr;
     {
         utils::auto_read_lock l(_lock);
         auto it = _handlers.find(cmd);
-        if (it != _handlers.end())
-            h = it->second;
-    }
-
-    if (h == nullptr) {
-        output = std::string("unknown command '") + cmd + "'";
-        return false;
-    } else {
-        if (h->address.is_invalid() ||
-            h->address == dsn::task::get_current_rpc()->primary_address()) {
-            output = h->handler(args);
-            return true;
-        } else {
-            ::dsn::rpc_read_stream response;
-
-            dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CLI_CLI_CALL);
-            ::dsn::command rcmd;
-            rcmd.cmd = cmd;
-            rcmd.arguments = args;
-            ::dsn::marshall(msg, rcmd);
-            auto resp = dsn_rpc_call_wait(h->address, msg);
-            if (resp != nullptr) {
-                ::dsn::unmarshall(resp, output);
-                return true;
-            } else {
-                dwarn("cli run for %s is too long, timeout", cmd.c_str());
-                return false;
-            }
+        if (it != _handlers.end()) {
+            ptr = it->second;
         }
     }
-}
-
-void command_manager::start_remote_cli()
-{
-    ::dsn::service_engine::fast_instance().register_system_rpc_handler(
-        RPC_CLI_CLI_CALL, "dsn.cli", [](dsn::message_ex *req) {
-            command_manager::instance().on_remote_cli(req);
-        });
-}
-
-void command_manager::on_remote_cli(dsn::message_ex *req)
-{
-    ::dsn::command cmd;
-    std::string result;
-
-    ::dsn::unmarshall(req, cmd);
-    run_command(cmd.cmd, cmd.arguments, result);
-
-    auto resp = req->create_response();
-    ::dsn::marshall(resp, result);
-    dsn_rpc_reply(resp);
-}
-
-void command_manager::set_cli_target_address(dsn_handle_t handle, dsn::rpc_address address)
-{
-    reinterpret_cast<command_instance *>(handle)->address = address;
+    return ptr;
 }
 
 command_manager::command_manager()
@@ -231,51 +153,5 @@ command_manager::command_manager()
 
                          return ss.str();
                      });
-
-    register_command(
-        {"repeat", "r", "R", "Repeat"},
-        "repeat|Repeat|r|R interval_seconds max_count command - execute command periodically",
-        "repeat|Repeat|r|R interval_seconds max_count command - execute command every interval "
-        "seconds, to the max count as max_count (0 for infinite)",
-        [this](const std::vector<std::string> &args) {
-            std::stringstream ss;
-
-            if (args.size() < 3) {
-                return "insufficient arguments";
-            }
-
-            int interval_seconds = atoi(args[0].c_str());
-            if (interval_seconds <= 0) {
-                return "invalid interval argument";
-            }
-
-            int max_count = atoi(args[1].c_str());
-            if (max_count < 0) {
-                return "invalid max count";
-            }
-
-            if (max_count == 0) {
-                max_count = std::numeric_limits<int>::max();
-            }
-
-            std::string cmd = args[2];
-            std::vector<std::string> largs;
-            for (int i = 3; i < (int)args.size(); i++) {
-                largs.push_back(args[i]);
-            }
-
-            for (int i = 0; i < max_count; i++) {
-                std::string output;
-                auto r = this->run_command(cmd, largs, output);
-
-                if (!r) {
-                    break;
-                }
-
-                std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
-            }
-
-            return "repeat command completed";
-        });
 }
 }

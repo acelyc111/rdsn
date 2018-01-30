@@ -526,32 +526,11 @@ toollets = profiler
 pause_on_start = false
 ```
 
-### STEP 10. Operate your system with local and remote cli
-
-The cli tool provides a console with which developers can get information from all tools (cli
-exposes API as part of the Tool API interface, so tools can register their commands), and possibly
-control their behavior (e.g., switch on/off). Both local and remote cli tools are enabled via
-configuration. Note we also need to ensure logs are dumped to files instead of on-screen to avoid
-interference with local cli console I/O.
-
-```
-[core]
-cli_local = true
-cli_remote = true
-;logging_factory_name = dsn::tools::screen_logger
-```
-
-// TODO: cli with fault injection, tracer, and profiler
-By using local or remote cli (via our bin tool ```dsn.cli```), you can get a console to query and/or
-control the local/remote processes. Note when using the remote cli, you need to use
-```[core]tool=nativerun``` so remote cli can connect to it. On both cases, simply type 'help' to
-start.
-
-### STEP 11. Check global correctness using global assertion across nodes
+### STEP 10. Check global correctness using global assertion across nodes
 
 // TODO:
 
-### STEP 12. Handle system overloading using admission controller
+### STEP 11. Handle system overloading using admission controller
 
 A simple approach is to limit the upper bound of the task queue size.
 
@@ -564,17 +543,17 @@ max_input_queue_length = 1024
 
 // TODO: You can also register your own admission controller and set it in the configuration file.
 
-### STEP 13. Plug-in your own low level components (optional)
+### STEP 12. Plug-in your own low level components (optional)
 You probably already notice that there is a configuration above like "[core] logging_factory_name =
 dsn::tools::screen_logger". In this case, we are specifying that we would like to use the
 **screen_logger** as our logging provider. You may also change it to "dsn::tools::simple_logger" as
 a file logger. Or even better, you may already have your own logging system already, and rDSN allows
 easy integration as follows.
 
-#### 13.1. Follow the example in **$(rDSN_DIR)/src/tools/common/simple_logger.h/.cpp** to implement
+#### 12.1. Follow the example in **$(rDSN_DIR)/src/tools/common/simple_logger.h/.cpp** to implement
 a new logging provider by wrapping your existing logger.
 
-#### 13.2. In counter.main.cpp, include the header file of what you just implemented, and register
+#### 12.2. In counter.main.cpp, include the header file of what you just implemented, and register
 the provider to rDSN.
 
 ```C++
@@ -604,7 +583,7 @@ the provider to rDSN.
  32 }
 ```
 
-#### 13.3. In config.ini, specify the logging provider, and it is done.
+#### 12.3. In config.ini, specify the logging provider, and it is done.
 
 ```
 [core]
@@ -616,7 +595,7 @@ rDSN is designed to be open, and many of its components can be replaced like thi
 to see a lot more and follow the examples under **$(rDSN_DIR)/src/tools/common/** to plug-in your
 own.
 
-### STEP 14. Connect the service with other languages (optional)
+### STEP 13. Connect the service with other languages (optional)
 
 Although the current rDSN only supports C++ to implement the service code, it allows clients to be
 in other languages such as Java, C#, Python, or even others. The way it implements those is to allow
@@ -643,7 +622,7 @@ accept Thrift network message headers (i.e., %message_format% = thrift).
 RPC_CHANNEL_TCP = NET_HDR_THRIFT,dsn::tools::asio_network_provider, 65536
 ```
 
-### STEP 15. Open service with multiple ports (optional)
+### STEP 14. Open service with multiple ports (optional)
 
 rDSN also supports opening multiple ports for the same services, and each port may allow different
 data transmission protocols. Specifically, the message headers can be different, but the data

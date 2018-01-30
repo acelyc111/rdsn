@@ -7,13 +7,14 @@ set(MY_SRC_SEARCH_MODE "GLOB")
 
 set(MY_PROJ_INC_PATH
     ${GTEST_INCLUDE_DIR} 
-    ../core ../tools/common ../tools/simulator ../tools/hpc ../tools/nfs 
+    ../core ../tools/common ../tools/simulator ../tools/hpc
     )
     
 set(MY_BOOST_PACKAGES system filesystem)
 
 set(MY_PROJ_LIBS gtest
                  dsn_runtime
+                 dsn.cli
                  )
 
 set(MY_PROJ_LIB_PATH "${GTEST_LIB_DIR}")
@@ -33,8 +34,6 @@ set(MY_BINPLACES "${CMAKE_CURRENT_SOURCE_DIR}/config-bad-section.ini"
                  "${CMAKE_CURRENT_SOURCE_DIR}/config-test-sim.ini"
                  "${CMAKE_CURRENT_SOURCE_DIR}/config-unmatch-section.ini"
                  "${CMAKE_CURRENT_SOURCE_DIR}/command.txt"
-                 "${CMAKE_CURRENT_SOURCE_DIR}/nfs_test_file1"
-                 "${CMAKE_CURRENT_SOURCE_DIR}/nfs_test_file2"
                  "${CMAKE_CURRENT_SOURCE_DIR}/run.sh"
                  "${CMAKE_CURRENT_SOURCE_DIR}/clear.sh"
                  "${CMAKE_CURRENT_SOURCE_DIR}/clear.cmd"

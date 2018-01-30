@@ -43,11 +43,12 @@
 #include <dsn/service_api_cpp.h>
 #include <dsn/utility/priority_queue.h>
 #include <dsn/tool-api/command_manager.h>
+#include <dsn/dist/cli/cli.server.h>
 
 #include <dsn/tool-api/group_address.h>
 #include "test_utils.h"
-#include "../core/service_engine.h"
-#include "../tools/hpc/hpc_tail_logger.h"
+#include "core/core/service_engine.h"
+#include "core/tools/hpc/hpc_tail_logger.h"
 
 TEST(tools_hpc, tail_logger)
 {
@@ -58,7 +59,8 @@ TEST(tools_hpc, tail_logger)
 TEST(tools_hpc, tail_logger_cb)
 {
     std::string output;
-    bool ret = dsn::command_manager::instance().run_command("tail-log", output);
+    ::dsn::service::cli_server cli_server;
+    bool ret = cli_server.run_command("tail-log", output);
     if (!ret)
         return;
 
@@ -71,9 +73,9 @@ TEST(tools_hpc, tail_logger_cb)
     std::this_thread::sleep_for(std::chrono::seconds(2));
     dwarn("key:12345");
     output.clear();
-    dsn::command_manager::instance().run_command(in.str().c_str(), output);
+    cli_server.run_command(in.str().c_str(), output);
     EXPECT_TRUE(strstr(output.c_str(), "In total (1) log entries are found between") != nullptr);
-    dsn::command_manager::instance().run_command("tail-log-dump", output);
+    cli_server.run_command("tail-log-dump", output);
 
     ::dsn::logging_provider *logger = ::dsn::service_engine::fast_instance().logging();
     if (logger != nullptr) {

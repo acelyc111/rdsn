@@ -1722,6 +1722,8 @@ void replica_stub::open_service()
 
     register_rpc_handler(RPC_QUERY_APP_INFO, "query_app_info", &replica_stub::on_query_app_info);
 
+    _cli_service.open_service();
+
     _kill_partition_command = ::dsn::command_manager::instance().register_app_command(
         {"kill_partition"},
         "kill_partition <app_id> <partition_index>",

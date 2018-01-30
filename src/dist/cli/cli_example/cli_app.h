@@ -35,43 +35,35 @@
 
 #pragma once
 
-#include <dsn/utility/synchronize.h>
-#include <dsn/utility/singleton.h>
-#include <dsn/tool-api/rpc_message.h>
-#include <map>
+#include <dsn/cpp/serverlet.h>
+#include <dsn/dist/cli/cli.client.h>
+#include <dsn/dist/cli/cli.server.h>
 
 namespace dsn {
+namespace service {
 
-typedef std::function<std::string(const std::vector<std::string> &)> command_handler;
-struct command_instance
-{
-    dsn::rpc_address address;
-    std::vector<std::string> commands;
-    std::string help_short;
-    std::string help_long;
-    command_handler handler;
-};
-
-class command_manager : public ::dsn::utils::singleton<command_manager>
+class cli_client_app : public service_app
 {
 public:
-    command_manager();
-
-    dsn_handle_t register_command(const std::vector<std::string> &commands,
-                                  const std::string &help_one_line,
-                                  const std::string &help_long,
-                                  command_handler handler);
-    dsn_handle_t register_app_command(const std::vector<std::string> &commands,
-                                      const std::string &help_one_line,
-                                      const std::string &help_long,
-                                      command_handler handler);
-    void deregister_command(dsn_handle_t handle);
-
-    command_instance *get_command_instance(const std::string &cmd);
+    cli_client_app(const service_app_info *info);
+    virtual ::dsn::error_code start(const std::vector<std::string> &args);
+    virtual ::dsn::error_code stop(bool cleanup = false);
 
 private:
-    ::dsn::utils::rw_lock_nr _lock;
-    std::map<std::string, command_instance *> _handlers;
-    std::vector<command_instance *> _commands;
+    cli_client _client;
+    ::dsn::rpc_address _target;
+    std::chrono::seconds _timeout;
 };
+
+class cli_server_app : public service_app
+{
+public:
+    cli_server_app(const service_app_info *info);
+    virtual ::dsn::error_code start(const std::vector<std::string> &args);
+    virtual ::dsn::error_code stop(bool cleanup = false);
+
+private:
+    cli_server _server;
+};
+}
 }

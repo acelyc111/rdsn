@@ -35,23 +35,33 @@
 
 #pragma once
 
+#include <dsn/tool-api/rpc_address.h>
+#include <dsn/tool-api/command_manager.h>
+#include <dsn/c/api_common.h>
 #include <dsn/cpp/serverlet.h>
-#include <dsn/tool/cli/cli.client.h>
 
 namespace dsn {
 namespace service {
-
-class cli : public service_app
+class cli_server : serverlet<cli_server>
 {
 public:
-    cli(const service_app_info *info);
-    virtual ::dsn::error_code start(const std::vector<std::string> &args);
-    virtual ::dsn::error_code stop(bool cleanup = false);
+    cli_server() : serverlet("cli_server"), _cmd_manager(command_manager::instance()) {}
+    void open_service();
+
+    void close_service();
+
+    void set_cli_target_address(dsn_handle_t handle, dsn::rpc_address target);
+
+    bool run_command(const std::string &cmdline, /*out*/ std::string &output);
+    bool run_command(const std::string &cmd,
+                     const std::vector<std::string> &args,
+                     /*out*/ std::string &output);
 
 private:
-    cli_client _client;
-    ::dsn::rpc_address _target;
-    std::chrono::seconds _timeout;
+    void on_remote_cli(message_ex *req);
+
+private:
+    command_manager &_cmd_manager;
 };
 }
 }

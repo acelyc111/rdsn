@@ -637,14 +637,6 @@ bool run(const char *config_file,
         exit(1);
     }
 
-    if (dsn_config_get_value_bool(
-            "core",
-            "cli_remote",
-            true,
-            "whether to enable remote command line interface (using dsn.cli)")) {
-        ::dsn::command_manager::instance().start_remote_cli();
-    }
-
     // register local cli commands
     ::dsn::command_manager::instance().register_command({"config-dump"},
                                                         "config-dump - dump configuration",

@@ -40,6 +40,7 @@
 #include <dsn/cpp/serverlet.h>
 #include <dsn/dist/meta_state_service.h>
 #include <dsn/cpp/perf_counter_wrapper.h>
+#include <dsn/dist/cli/cli.server.h>
 
 #include "dist/replication/client_lib/replication_common.h"
 #include "dist/replication/meta_server/meta_options.h"
@@ -141,6 +142,7 @@ private:
     std::shared_ptr<meta_server_failure_detector> _failure_detector;
     std::shared_ptr<dist::meta_state_service> _storage;
     std::shared_ptr<server_load_balancer> _balancer;
+    cli_server _cli_service;
 
     // [
     // this is protected by failure_detector::_lock

@@ -14,6 +14,7 @@ set(MY_PROJ_INC_PATH)
 set(MY_PROJ_LIBS
     dsn.replication.clientlib
     dsn.failure_detector
+    dsn.cli
     dsn.replication.zookeeper_provider
     zookeeper_mt
     )
