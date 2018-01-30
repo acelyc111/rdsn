@@ -35,7 +35,7 @@
 
 #include <dsn/tool-api/perf_counter.h>
 #include <dsn/tool-api/perf_counters.h>
-#include <dsn/cpp/service_app.h>
+#include <dsn/tool-api/service_app.h>
 #include <dsn/tool-api/command_manager.h>
 #include <dsn/tool-api/task.h>
 #include <dsn/cpp/json_helper.h>

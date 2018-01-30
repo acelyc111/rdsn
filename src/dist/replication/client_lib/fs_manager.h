@@ -36,7 +36,7 @@
 
 #include <dsn/service_api_cpp.h>
 #include <dsn/tool-api/zlocks.h>
-#include <dsn/cpp/perf_counter_wrapper.h>
+#include <dsn/tool-api/perf_counter_wrapper.h>
 #include <memory>
 #include "dist/replication/client_lib/replication_common.h"
 

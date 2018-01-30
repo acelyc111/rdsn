@@ -33,6 +33,7 @@
 #pragma once
 #include "echo.code.definition.h"
 #include <iostream>
+#include <dsn/dist/serverlet.h>
 
 namespace dsn {
 namespace example {

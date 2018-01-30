@@ -38,6 +38,8 @@
 #include <dsn/service_api_cpp.h>
 #include <dsn/tool-api/task.h>
 #include <dsn/tool-api/task_worker.h>
+#include <dsn/tool-api/service_app.h>
+#include <dsn/dist/serverlet.h>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -81,7 +83,7 @@ public:
         replier(r);
     }
 
-    void on_rpc_string_test(dsn::message_ex* message)
+    void on_rpc_string_test(dsn::message_ex *message)
     {
         std::string command;
         ::dsn::unmarshall(message, command);

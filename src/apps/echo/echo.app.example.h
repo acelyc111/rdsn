@@ -34,6 +34,7 @@
  */
 #pragma once
 #include <dsn/tool-api/task_tracker.h>
+#include <dsn/tool-api/service_app.h>
 #include "echo.client.h"
 #include "echo.server.h"
 

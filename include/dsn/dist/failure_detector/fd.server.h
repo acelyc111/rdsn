@@ -36,6 +36,7 @@
 #pragma once
 #include "fd.code.definition.h"
 #include <iostream>
+#include <dsn/dist/serverlet.h>
 
 namespace dsn {
 namespace fd {

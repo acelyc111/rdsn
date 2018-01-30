@@ -34,6 +34,7 @@
  */
 #pragma once
 
+#include <dsn/dist/serverlet.h>
 #include <dsn/dist/nfs/nfs.h>
 
 namespace dsn {

@@ -40,7 +40,6 @@
 // this library
 //
 
-#include <dsn/cpp/serverlet.h>
 #include <dsn/cpp/json_helper.h>
 #include <dsn/dist/replication/replication.types.h>
 #include <dsn/dist/replication/replication_other_types.h>

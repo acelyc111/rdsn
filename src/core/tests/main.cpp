@@ -34,6 +34,7 @@
  */
 
 #include <iostream>
+#include <dsn/tool-api/service_app.h>
 #include "gtest/gtest.h"
 #include "test_utils.h"
 

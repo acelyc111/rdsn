@@ -41,7 +41,7 @@
 #endif
 
 #include <gtest/gtest.h>
-#include <dsn/service_api_cpp.h>
+#include <dsn/tool-api/service_app.h>
 
 int g_test_count = 0;
 int g_test_ret = 0;

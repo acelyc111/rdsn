@@ -34,7 +34,7 @@
  */
 
 #include <dsn/utility/singleton_store.h>
-#include <dsn/service_api_cpp.h>
+#include <dsn/tool-api/service_app.h>
 #include <string>
 
 #pragma once

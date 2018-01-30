@@ -35,7 +35,7 @@
 
 #pragma once
 
-#include <dsn/cpp/service_app.h>
+#include <dsn/tool-api/service_app.h>
 #include <vector>
 
 extern bool g_done;

@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include <dsn/tool-api/service_app.h>
 #include "simple_kv.client.h"
 
 namespace dsn {

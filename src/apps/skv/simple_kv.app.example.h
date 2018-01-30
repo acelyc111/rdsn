@@ -34,6 +34,8 @@
  */
 
 #pragma once
+#include <dsn/tool-api/service_app.h>
+
 #include "simple_kv.client.2.h"
 #include "simple_kv.server.h"
 

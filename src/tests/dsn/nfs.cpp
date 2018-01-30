@@ -1,4 +1,6 @@
 #include <dsn/dist/nfs/nfs.h>
+#include <dsn/dist/serverlet.h>
+#include <dsn/tool-api/service_app.h>
 #include <dsn/utility/filesystem.h>
 #include <gtest/gtest.h>
 

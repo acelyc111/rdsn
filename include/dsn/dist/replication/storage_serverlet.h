@@ -4,7 +4,8 @@
 #include <unordered_map>
 #include <functional>
 
-#include <dsn/service_api_cpp.h>
+#include <dsn/tool-api/rpc_message.h>
+#include <dsn/dist/serverlet.h>
 
 namespace dsn {
 namespace replication {

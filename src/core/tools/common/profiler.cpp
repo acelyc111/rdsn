@@ -68,7 +68,7 @@ START<== queue(server) == ENQUEUE <===== net(reply) ======= REPLY <=============
 #include "shared_io_service.h"
 #include "profiler_header.h"
 #include <dsn/tool-api/command_manager.h>
-#include <dsn/cpp/perf_counter_wrapper.h>
+#include <dsn/tool-api/perf_counter_wrapper.h>
 
 #ifdef __TITLE__
 #undef __TITLE__

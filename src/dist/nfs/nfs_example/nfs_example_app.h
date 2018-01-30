@@ -35,6 +35,7 @@
 #pragma once
 #include <dsn/tool-api/task_tracker.h>
 #include <dsn/tool-api/async_calls.h>
+#include <dsn/tool-api/service_app.h>
 #include <dsn/dist/replication.h>
 #include <dsn/dist/nfs/nfs.h>
 

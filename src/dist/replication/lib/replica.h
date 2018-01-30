@@ -42,9 +42,10 @@
 // which is binded to this replication partition
 //
 
-#include <dsn/cpp/serverlet.h>
-#include <dsn/cpp/perf_counter_wrapper.h>
+#include <dsn/tool-api/perf_counter_wrapper.h>
 #include <dsn/tool-api/thread_access_checker.h>
+
+#include <dsn/dist/serverlet.h>
 
 #include "dist/replication/client_lib/replication_common.h"
 #include "mutation.h"

@@ -6,7 +6,7 @@
 #include <boost/lexical_cast.hpp>
 #include <gtest/gtest.h>
 
-#include <dsn/service_api_cpp.h>
+#include <dsn/tool-api/service_app.h>
 
 #include "dist/replication/zookeeper/distributed_lock_service_zookeeper.h"
 #include "dist/replication/zookeeper/lock_struct.h"

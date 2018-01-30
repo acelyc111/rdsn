@@ -36,7 +36,7 @@
 #pragma once
 
 #include <dsn/tool_api.h>
-#include <dsn/cpp/service_app.h>
+#include <dsn/tool-api/service_app.h>
 
 namespace dsn {
 namespace tools {

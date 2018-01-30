@@ -35,7 +35,7 @@
 
 #pragma once
 
-#include <dsn/cpp/serverlet.h>
+#include <dsn/tool-api/service_app.h>
 #include <dsn/dist/cli/cli.client.h>
 #include <dsn/dist/cli/cli.server.h>
 

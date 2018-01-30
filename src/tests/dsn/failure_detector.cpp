@@ -3,7 +3,8 @@
 #include "dist/replication/lib/replica_stub.h"
 
 #include <gtest/gtest.h>
-#include <dsn/service_api_cpp.h>
+#include <dsn/dist/serverlet.h>
+#include <dsn/tool-api/service_app.h>
 #include <vector>
 
 #ifdef __TITLE__

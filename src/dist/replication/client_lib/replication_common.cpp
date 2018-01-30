@@ -35,6 +35,7 @@
 
 #include "replication_common.h"
 #include <dsn/utility/filesystem.h>
+#include <dsn/tool-api/service_app.h>
 #include <fstream>
 
 #ifdef __TITLE__

@@ -35,7 +35,7 @@
 
 #pragma once
 
-#include <dsn/cpp/service_app.h>
+#include <dsn/tool-api/service_app.h>
 
 dsn::error_code dsn_meta_server_bridge(int argc, char **argv);
 void dsn_meta_sever_register_providers();

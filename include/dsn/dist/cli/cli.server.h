@@ -38,7 +38,7 @@
 #include <dsn/tool-api/rpc_address.h>
 #include <dsn/tool-api/command_manager.h>
 #include <dsn/c/api_common.h>
-#include <dsn/cpp/serverlet.h>
+#include <dsn/dist/serverlet.h>
 
 namespace dsn {
 namespace service {

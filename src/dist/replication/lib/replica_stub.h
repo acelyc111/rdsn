@@ -44,7 +44,7 @@
 #include "../client_lib/replication_common.h"
 #include "../client_lib/fs_manager.h"
 #include "replica.h"
-#include <dsn/cpp/perf_counter_wrapper.h>
+#include <dsn/tool-api/perf_counter_wrapper.h>
 #include <dsn/dist/failure_detector_multimaster.h>
 #include <dsn/dist/nfs/nfs.h>
 #include <dsn/dist/cli/cli.server.h>

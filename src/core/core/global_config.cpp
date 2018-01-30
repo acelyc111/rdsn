@@ -38,7 +38,7 @@
 #include <dsn/tool-api/global_config.h>
 #include <dsn/tool-api/task_spec.h>
 #include <dsn/tool-api/network.h>
-#include <dsn/cpp/service_app.h>
+#include <dsn/tool-api/service_app.h>
 #include <dsn/utility/singleton_store.h>
 #include <dsn/utility/configuration.h>
 #include <dsn/utility/filesystem.h>
