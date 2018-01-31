@@ -35,6 +35,7 @@
 #include "fs_manager.h"
 #include <dsn/utility/utils.h>
 #include <dsn/utility/filesystem.h>
+#include <dsn/tool-api/rpc_engine.h>
 #include <thread>
 
 #ifdef __TITLE__
@@ -148,13 +149,14 @@ dsn::error_code fs_manager::initialize(const std::vector<std::string> &data_dirs
             "data_dir size(%u) != tags size(%u)",
             data_dirs.size(),
             tags.size());
+    rpc_address local_address = ::dsn::task::get_current_rpc()->primary_address();
     for (unsigned i = 0; i < data_dirs.size(); ++i) {
         std::string norm_path;
         utils::filesystem::get_normalized_path(data_dirs[i], norm_path);
         dir_node *n = new dir_node(tags[i], norm_path);
         _dir_nodes.emplace_back(n);
         ddebug("%s: mark data dir(%s) as tag(%s)",
-               dsn_primary_address().to_string(),
+               local_address.to_string(),
                norm_path.c_str(),
                tags[i].c_str());
     }
@@ -179,9 +181,10 @@ dsn::error_code fs_manager::get_disk_tag(const std::string &dir, std::string &ta
 void fs_manager::add_replica(const gpid &pid, const std::string &pid_dir)
 {
     dir_node *n = get_dir_node(pid_dir);
+    rpc_address local_address = ::dsn::task::get_current_rpc()->primary_address();
     if (nullptr == n) {
         derror("%s: dir(%s) of gpid(%d.%d) haven't registered",
-               dsn_primary_address().to_string(),
+               local_address.to_string(),
                pid_dir.c_str(),
                pid.get_app_id(),
                pid.get_partition_index());
@@ -191,13 +194,13 @@ void fs_manager::add_replica(const gpid &pid, const std::string &pid_dir)
         auto result = replicas_for_app.emplace(pid);
         if (!result.second) {
             dwarn("%s: gpid(%d.%d) already in the dir_node(%s)",
-                  dsn_primary_address().to_string(),
+                  local_address.to_string(),
                   pid.get_app_id(),
                   pid.get_partition_index(),
                   n->tag.c_str());
         } else {
             ddebug("%s: add gpid(%d.%d) to dir_node(%s)",
-                   dsn_primary_address().to_string(),
+                   local_address.to_string(),
                    pid.get_app_id(),
                    pid.get_partition_index(),
                    n->tag.c_str());
@@ -210,6 +213,7 @@ void fs_manager::allocate_dir(const gpid &pid, const std::string &type, /*out*/ 
     char buffer[256];
     sprintf(buffer, "%d.%d.%s", pid.get_app_id(), pid.get_partition_index(), type.c_str());
 
+    rpc_address local_address = ::dsn::task::get_current_rpc()->primary_address();
     service::zauto_write_lock l(_lock);
 
     dir_node *selected = nullptr;
@@ -239,7 +243,7 @@ void fs_manager::allocate_dir(const gpid &pid, const std::string &type, /*out*/ 
 
     ddebug(
         "%s: put pid(%d.%d) to dir(%s), which has %u replicas of current app, %u replicas totally",
-        dsn_primary_address().to_string(),
+        local_address.to_string(),
         pid.get_app_id(),
         pid.get_partition_index(),
         selected->tag.c_str(),
@@ -252,7 +256,9 @@ void fs_manager::allocate_dir(const gpid &pid, const std::string &type, /*out*/ 
 
 void fs_manager::remove_replica(const gpid &pid)
 {
+    rpc_address local_address = ::dsn::task::get_current_rpc()->primary_address();
     service::zauto_write_lock l(_lock);
+
     unsigned remove_count = 0;
     for (auto &n : _dir_nodes) {
         unsigned r = n->remove(pid);
@@ -263,7 +269,7 @@ void fs_manager::remove_replica(const gpid &pid)
                 n->tag.c_str());
         if (r != 0) {
             ddebug("%s: remove gpid(%d.%d) from dir(%s)",
-                   dsn_primary_address().to_string(),
+                   local_address.to_string(),
                    pid.get_app_id(),
                    pid.get_partition_index(),
                    n->tag.c_str());

@@ -214,7 +214,7 @@ void replica_stub::initialize(bool clear /* = false*/)
 
 void replica_stub::initialize(const replication_options &opts, bool clear /* = false*/)
 {
-    _primary_address = dsn_primary_address();
+    _primary_address = ::dsn::task::get_current_rpc()->primary_address();
     ddebug("primary_address = %s", _primary_address.to_string());
 
     set_options(opts);
@@ -311,7 +311,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
                            ", %" PRId64 ">, last_prepared_decree = %" PRId64,
                            r->get_gpid().get_app_id(),
                            r->get_gpid().get_partition_index(),
-                           dsn_primary_address().to_string(),
+                           _primary_address.to_string(),
                            dir.c_str(),
                            r->last_durable_decree(),
                            r->last_committed_decree(),
@@ -1230,7 +1230,7 @@ void replica_stub::response_client_error(gpid gpid,
                request->header->from_address.to_string(),
                error.to_string());
     }
-    dsn_rpc_reply(request->create_response(), error);
+    task::get_current_rpc()->reply(request->create_response(), error);
 }
 
 void replica_stub::init_gc_for_test()

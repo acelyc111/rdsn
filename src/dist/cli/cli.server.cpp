@@ -26,9 +26,8 @@
 
 #include <dsn/dist/cli/cli.h>
 #include <dsn/dist/cli/cli.server.h>
-
-#include "core/core/service_engine.h"
-#include "core/core/rpc_engine.h"
+#include <dsn/tool-api/service_engine.h>
+#include <dsn/tool-api/rpc_engine.h>
 
 namespace dsn {
 namespace service {
@@ -104,7 +103,8 @@ bool cli_server::run_command(const std::string &cmd,
             rcmd.cmd = cmd;
             rcmd.arguments = args;
             ::dsn::marshall(msg, rcmd);
-            auto resp = dsn_rpc_call_wait(cmd_instance->address, msg);
+            message_ptr resp =
+                dsn::task::get_current_rpc()->call_and_wait(cmd_instance->address, msg);
             if (resp != nullptr) {
                 ::dsn::unmarshall(resp, output);
                 return true;

@@ -2071,7 +2071,7 @@ server_state::sync_apps_from_replica_nodes(const std::vector<dsn::rpc_address> &
         ddebug("send query app and replica request to node(%s)", replica_nodes[i].to_string());
 
         query_app_info_request app_query;
-        app_query.meta_server = dsn_primary_address();
+        app_query.meta_server = ::dsn::task::get_current_rpc()->primary_address();
 
         rpc::call(replica_nodes[i],
                   RPC_QUERY_APP_INFO,

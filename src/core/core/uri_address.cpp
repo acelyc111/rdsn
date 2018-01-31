@@ -33,7 +33,7 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 
-#include "rpc_engine.h"
+#include <dsn/tool-api/rpc_engine.h>
 #include <dsn/utility/singleton.h>
 #include <unordered_map>
 #include <dsn/utility/synchronize.h>

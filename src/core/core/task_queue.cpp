@@ -37,8 +37,8 @@
 #include "task_engine.h"
 #include <dsn/tool-api/perf_counters.h>
 #include <dsn/tool-api/network.h>
+#include <dsn/tool-api/rpc_engine.h>
 #include <cstdio>
-#include "rpc_engine.h"
 
 #ifdef __TITLE__
 #undef __TITLE__

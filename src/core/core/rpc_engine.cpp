@@ -43,8 +43,8 @@
 #include <arpa/inet.h>
 #endif
 
-#include "rpc_engine.h"
-#include "service_engine.h"
+#include <dsn/tool-api/rpc_engine.h>
+#include <dsn/tool-api/service_engine.h>
 #include <dsn/utility/factory_store.h>
 #include <dsn/tool-api/perf_counter.h>
 #include <dsn/tool-api/group_address.h>
@@ -143,7 +143,7 @@ bool rpc_client_matcher::on_recv_reply(network *net, uint64_t key, message_ex *r
     // in this case, the server will return ERR_FORWARD_TO_OTHERS
     if (err == ERR_FORWARD_TO_OTHERS) {
         rpc_address addr;
-        ::dsn::unmarshall((dsn::message_ex*)reply, addr);
+        ::dsn::unmarshall((dsn::message_ex *)reply, addr);
 
         // handle the case of forwarding to itself where addr == req->to_address.
         dbg_dassert(addr != req->to_address,
@@ -646,6 +646,37 @@ void rpc_engine::call(message_ex *request, const rpc_response_task_ptr &call)
     call_address(request->server_address, request, call);
 }
 
+message_ptr rpc_engine::call_and_wait(rpc_address server, message_ex *msg)
+{
+    msg->server_address = server;
+
+    ::dsn::rpc_response_task_ptr rtask = new ::dsn::rpc_response_task(msg, nullptr, 0);
+    call(msg, rtask);
+    rtask->wait();
+    if (rtask->error() == ::dsn::ERR_OK) {
+        return message_ptr(rtask->get_response());
+    } else {
+        return nullptr;
+    }
+}
+
+void rpc_engine::call_one_way(rpc_address server, message_ex *msg)
+{
+    msg->server_address = server;
+    call(msg, nullptr);
+}
+
+void rpc_engine::call(rpc_address server, const rpc_response_task_ptr &rpc_call)
+{
+    dassert(rpc_call->spec().type == TASK_TYPE_RPC_RESPONSE,
+            "invalid task_type, type = %s",
+            enum_to_string(rpc_call->spec().type));
+
+    auto msg = rpc_call->get_request();
+    msg->server_address = server;
+    call(msg, rpc_call);
+}
+
 DEFINE_TASK_CODE(LPC_RPC_DELAY_CALL, TASK_PRIORITY_COMMON, THREAD_POOL_DEFAULT)
 
 void rpc_engine::call_uri(rpc_address addr, message_ex *request, const rpc_response_task_ptr &call)
@@ -671,7 +702,7 @@ void rpc_engine::call_uri(rpc_address addr, message_ex *request, const rpc_respo
             auto old_callback = call->current_handler();
 
             auto new_callback = [deadline_ms, old_callback](
-                dsn::error_code err, dsn::message_ex* req, dsn::message_ex* resp) {
+                dsn::error_code err, dsn::message_ex *req, dsn::message_ex *resp) {
                 message_ex *req2 = (message_ex *)req;
                 if (req2->header->gpid.value() != 0 && err != ERR_OK &&
                     err != ERR_HANDLER_NOT_FOUND) {
@@ -697,7 +728,7 @@ void rpc_engine::call_uri(rpc_address addr, message_ex *request, const rpc_respo
                             tasking::enqueue(LPC_RPC_DELAY_CALL,
                                              nullptr,
                                              [ server = req2->server_address, ctask ]() {
-                                                 dsn_rpc_call(server, ctask.get());
+                                                 task::get_current_rpc()->call(server, ctask);
                                              },
                                              0,
                                              std::chrono::milliseconds(gap));

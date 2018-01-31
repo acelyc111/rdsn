@@ -42,11 +42,12 @@
 
 #include <dsn/tool-api/task.h>
 #include <dsn/tool-api/task_spec.h>
+#include <dsn/tool-api/service_engine.h>
+#include <dsn/tool-api/rpc_engine.h>
+#include <dsn/tool-api/service_engine.h>
 
 #include "../tools/common/asio_net_provider.h"
 #include "../tools/common/network.sim.h"
-#include "../core/service_engine.h"
-#include "../core/rpc_engine.h"
 #include "test_utils.h"
 
 using namespace dsn;
@@ -78,7 +79,7 @@ void rpc_server_response(dsn::message_ex *request)
     ::dsn::unmarshall(request, str_command);
     dsn::message_ex *response = request->create_response();
     ::dsn::marshall(response, str_command);
-    dsn_rpc_reply(response);
+    task::get_current_rpc()->reply(response);
 }
 
 void wait_response()
@@ -116,7 +117,7 @@ TEST(tools_common, asio_net_provider)
         "dsn::tools::sim_semaphore_provider")
         return;
 
-    ASSERT_TRUE(dsn_rpc_register_handler(
+    ASSERT_TRUE(::dsn::task::get_current_node()->rpc_register_handler(
         RPC_TEST_NETPROVIDER, "rpc.test.netprovider", rpc_server_response));
 
     asio_network_provider *asio_network =
@@ -152,7 +153,7 @@ TEST(tools_common, asio_net_provider)
 
     rpc_client_session_send(client_session);
 
-    ASSERT_TRUE(dsn_rpc_unregiser_handler(RPC_TEST_NETPROVIDER));
+    ASSERT_TRUE(::dsn::task::get_current_node()->rpc_unregister_handler(RPC_TEST_NETPROVIDER));
 
     TEST_PORT++;
 }
@@ -163,7 +164,7 @@ TEST(tools_common, asio_udp_provider)
         "dsn::tools::sim_semaphore_provider")
         return;
 
-    ASSERT_TRUE(dsn_rpc_register_handler(
+    ASSERT_TRUE(::dsn::task::get_current_node()->rpc_register_handler(
         RPC_TEST_NETPROVIDER, "rpc.test.netprovider", rpc_server_response));
 
     auto client = new asio_udp_provider(task::get_current_rpc(), nullptr);
@@ -195,7 +196,7 @@ TEST(tools_common, asio_udp_provider)
 
     wait_response();
 
-    ASSERT_TRUE(dsn_rpc_unregiser_handler(RPC_TEST_NETPROVIDER));
+    ASSERT_TRUE(::dsn::task::get_current_node()->rpc_unregister_handler(RPC_TEST_NETPROVIDER));
     TEST_PORT++;
 }
 
@@ -205,7 +206,7 @@ TEST(tools_common, sim_net_provider)
         "dsn::tools::sim_semaphore_provider")
         return;
 
-    ASSERT_TRUE(dsn_rpc_register_handler(
+    ASSERT_TRUE(::dsn::task::get_current_node()->rpc_register_handler(
         RPC_TEST_NETPROVIDER, "rpc.test.netprovider", rpc_server_response));
 
     sim_network_provider *sim_net = new sim_network_provider(task::get_current_rpc(), nullptr);
@@ -223,7 +224,7 @@ TEST(tools_common, sim_net_provider)
 
     rpc_client_session_send(client_session);
 
-    ASSERT_TRUE(dsn_rpc_unregiser_handler(RPC_TEST_NETPROVIDER));
+    ASSERT_TRUE(::dsn::task::get_current_node()->rpc_unregister_handler(RPC_TEST_NETPROVIDER));
 
     TEST_PORT++;
 }

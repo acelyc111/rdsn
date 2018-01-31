@@ -92,7 +92,7 @@ public:
             if (next_addr.port() != TEST_PORT_END) {
                 next_addr.assign_ipv4(next_addr.ip(), next_addr.port() + 1);
                 ddebug("test_client_server, talk_to_others: %s", next_addr.to_string());
-                dsn_rpc_forward(message, next_addr);
+                task::get_current_rpc()->forward(message, next_addr);
             } else {
                 ddebug("test_client_server, talk_to_me: %s", next_addr.to_string());
                 reply(message, next_addr.to_std_string());

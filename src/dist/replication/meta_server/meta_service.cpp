@@ -36,6 +36,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <dsn/tool-api/rpc_engine.h>
 #include <dsn/utility/factory_store.h>
 #include <dsn/dist/meta_state_service.h>
 #include <dsn/tool-api/command_manager.h>
@@ -81,6 +82,16 @@ meta_service::meta_service()
 }
 
 meta_service::~meta_service() {}
+
+void meta_service::reply_message(message_ex *, message_ex *response)
+{
+    task::get_current_rpc()->reply(response);
+}
+
+void meta_service::send_message(const rpc_address &target, message_ex *request)
+{
+    task::get_current_rpc()->call_one_way(target, request);
+}
 
 bool meta_service::check_freeze() const
 {
@@ -234,7 +245,7 @@ error_code meta_service::start()
     _failure_detector->acquire_leader_lock();
     dassert(_failure_detector->get_leader(nullptr), "must be primary at this point");
     ddebug("%s got the primary lock, start to recover server state from remote storage",
-           dsn_primary_address().to_string());
+           task::get_current_rpc()->primary_address().to_string());
 
     _state->initialize(this, meta_options::concat_path_unix_style(_cluster_root, "apps"));
     server_load_balancer *balancer = utils::factory_store<server_load_balancer>::create(
@@ -296,7 +307,7 @@ int meta_service::check_leader(dsn::message_ex *req)
 
         dinfo("leader address: %s", leader.to_string());
         if (!leader.is_invalid()) {
-            dsn_rpc_forward(req, leader);
+            task::get_current_rpc()->forward(req, leader);
             return 0;
         } else {
             return -1;
@@ -420,7 +431,7 @@ void meta_service::on_query_cluster_info(dsn::message_ex *req)
 
     response.values.push_back(oss.str());
     response.keys.push_back("primary_meta_server");
-    response.values.push_back(dsn_primary_address().to_std_string());
+    response.values.push_back(task::get_current_rpc()->primary_address().to_std_string());
     std::string zk_hosts =
         dsn_config_get_value_string("zookeeper", "hosts_list", "", "zookeeper_hosts");
     zk_hosts.erase(std::remove_if(zk_hosts.begin(), zk_hosts.end(), ::isspace), zk_hosts.end());
@@ -566,7 +577,7 @@ void meta_service::on_start_recovery(dsn::message_ex *req)
         service::zauto_write_lock l(_meta_lock);
         if (_started.load()) {
             ddebug("service(%s) is already started, ignore the recovery request",
-                   dsn_primary_address().to_string());
+                   task::get_current_rpc()->primary_address().to_string());
             response.err = ERR_SERVICE_ALREADY_RUNNING;
         } else {
             configuration_recovery_request request;

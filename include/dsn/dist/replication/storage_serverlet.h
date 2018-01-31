@@ -85,7 +85,8 @@ protected:
                     t.to_string(),
                     request->header->from_address.to_string(),
                     request->header->trace_id);
-            dsn_rpc_reply(request->create_response(), ::dsn::ERR_HANDLER_NOT_FOUND);
+            task::get_current_rpc()->reply(request->create_response(),
+                                           ::dsn::ERR_HANDLER_NOT_FOUND);
         }
         return 0;
     }

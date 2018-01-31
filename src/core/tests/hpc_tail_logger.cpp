@@ -43,10 +43,10 @@
 #include <dsn/utility/priority_queue.h>
 #include <dsn/tool-api/command_manager.h>
 #include <dsn/dist/cli/cli.server.h>
+#include <dsn/tool-api/service_engine.h>
 
 #include <dsn/tool-api/group_address.h>
 #include "test_utils.h"
-#include "core/core/service_engine.h"
 #include "core/tools/hpc/hpc_tail_logger.h"
 
 TEST(tools_hpc, tail_logger)

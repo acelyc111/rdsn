@@ -37,6 +37,8 @@
 
 #include <dsn/c/api_layer1.h>
 #include <dsn/serialization/serialization.h>
+#include <dsn/tool-api/rpc_engine.h>
+#include <dsn/tool-api/service_engine.h>
 
 namespace dsn {
 /*!
@@ -83,7 +85,7 @@ public:
     {
         if (_response != nullptr) {
             ::dsn::marshall(_response, resp);
-            dsn_rpc_reply(_response);
+            task::get_current_rpc()->reply(_response);
             _response = nullptr;
         }
     }
@@ -164,7 +166,7 @@ inline bool serverlet<T>::register_rpc_handler(task_code rpc_code,
         (((T *)this)->*(handler))(req);
     };
 
-    return dsn_rpc_register_handler(rpc_code, extra_name, cb);
+    return ::dsn::task::get_current_node()->rpc_register_handler(rpc_code, extra_name, cb);
 }
 
 template <typename T>
@@ -182,7 +184,7 @@ inline bool serverlet<T>::register_rpc_handler(task_code rpc_code,
         rpc_replier<TResponse> replier(request->create_response());
         replier(resp);
     };
-    return dsn_rpc_register_handler(rpc_code, extra_name, cb);
+    return ::dsn::task::get_current_node()->rpc_register_handler(rpc_code, extra_name, cb);
 }
 
 template <typename T>
@@ -198,7 +200,7 @@ inline bool serverlet<T>::register_async_rpc_handler(task_code rpc_code,
         rpc_replier<TResponse> replier(request->create_response());
         (((T *)this)->*(handler))(req, replier);
     };
-    return dsn_rpc_register_handler(rpc_code, extra_name, cb);
+    return ::dsn::task::get_current_node()->rpc_register_handler(rpc_code, extra_name, cb);
 }
 
 template <typename T>
@@ -210,13 +212,13 @@ inline bool serverlet<T>::register_rpc_handler(task_code rpc_code,
         (((T *)this)->*(handler))(request);
     };
 
-    return dsn_rpc_register_handler(rpc_code, extra_name, cb);
+    return ::dsn::task::get_current_node()->rpc_register_handler(rpc_code, extra_name, cb);
 }
 
 template <typename T>
 inline bool serverlet<T>::unregister_rpc_handler(task_code rpc_code)
 {
-    return dsn_rpc_unregiser_handler(rpc_code);
+    return task::get_current_node()->rpc_unregister_handler(rpc_code);
 }
 
 template <typename T>
@@ -225,7 +227,7 @@ inline void serverlet<T>::reply(dsn::message_ex *request, const TResponse &resp)
 {
     auto msg = request->create_response();
     ::dsn::marshall(msg, resp);
-    dsn_rpc_reply(msg);
+    task::get_current_rpc()->reply(msg);
 }
 /*@}*/
 } // end namespace

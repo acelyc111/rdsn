@@ -39,7 +39,7 @@
 #include <dsn/tool-api/command_manager.h>
 #include <dsn/tool-api/task.h>
 #include <dsn/serialization/json_helper.h>
-#include "service_engine.h"
+#include <dsn/tool-api/service_engine.h>
 
 namespace dsn {
 

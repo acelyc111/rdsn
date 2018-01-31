@@ -36,6 +36,7 @@
 #include "client.h"
 #include "case.h"
 #include <dsn/tool-api/group_address.h>
+#include <dsn/tool-api/rpc_engine.h>
 #include <dsn/dist/replication/replication_other_types.h>
 
 #include <sstream>
@@ -158,7 +159,7 @@ void simple_kv_client_app::send_config_to_meta(const rpc_address &receiver,
 
     dsn::marshall(req, request);
 
-    dsn_rpc_call_one_way(_meta_server_group, req);
+    task::get_current_rpc()->call_one_way(_meta_server_group, req);
 }
 
 struct read_context

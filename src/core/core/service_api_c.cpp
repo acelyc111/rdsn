@@ -50,8 +50,8 @@
 #include <dsn/utility/filesystem.h>
 #include <dsn/utility/transient_memory.h>
 #include <dsn/tool-api/command_manager.h>
-#include "service_engine.h"
-#include "rpc_engine.h"
+#include <dsn/tool-api/service_engine.h>
+#include <dsn/tool-api/rpc_engine.h>
 #include "disk_engine.h"
 #include "task_engine.h"
 #include "coredump.h"
@@ -102,91 +102,6 @@ DSN_API void dsn_coredump()
 {
     ::dsn::utils::coredump::write();
     ::abort();
-}
-
-//------------------------------------------------------------------------------
-//
-// rpc
-//
-//------------------------------------------------------------------------------
-
-// rpc calls
-DSN_API dsn::rpc_address dsn_primary_address()
-{
-    return ::dsn::task::get_current_rpc()->primary_address();
-}
-
-DSN_API bool
-dsn_rpc_register_handler(dsn::task_code code, const char *extra_name, const rpc_request_handler &cb)
-{
-    return ::dsn::task::get_current_node()->rpc_register_handler(code, extra_name, cb);
-}
-
-DSN_API bool dsn_rpc_unregiser_handler(dsn::task_code code)
-{
-    return ::dsn::task::get_current_node()->rpc_unregister_handler(code);
-}
-
-DSN_API void dsn_rpc_call(dsn::rpc_address server, dsn::rpc_response_task *rpc_call)
-{
-    dassert(rpc_call->spec().type == TASK_TYPE_RPC_RESPONSE,
-            "invalid task_type, type = %s",
-            enum_to_string(rpc_call->spec().type));
-
-    auto msg = rpc_call->get_request();
-    msg->server_address = server;
-    ::dsn::task::get_current_rpc()->call(msg, dsn::rpc_response_task_ptr(rpc_call));
-}
-
-DSN_API dsn::message_ex *dsn_rpc_call_wait(dsn::rpc_address server, dsn::message_ex *request)
-{
-    auto msg = ((::dsn::message_ex *)request);
-    msg->server_address = server;
-
-    ::dsn::rpc_response_task *rtask = new ::dsn::rpc_response_task(msg, nullptr, 0);
-    rtask->add_ref();
-    ::dsn::task::get_current_rpc()->call(msg, dsn::rpc_response_task_ptr(rtask));
-    rtask->wait();
-    if (rtask->error() == ::dsn::ERR_OK) {
-        auto msg = rtask->get_response();
-        msg->add_ref();       // released by callers
-        rtask->release_ref(); // added above
-        return msg;
-    } else {
-        rtask->release_ref(); // added above
-        return nullptr;
-    }
-}
-
-DSN_API void dsn_rpc_call_one_way(dsn::rpc_address server, dsn::message_ex *request)
-{
-    auto msg = ((::dsn::message_ex *)request);
-    msg->server_address = server;
-
-    ::dsn::task::get_current_rpc()->call(msg, nullptr);
-}
-
-DSN_API void dsn_rpc_reply(dsn::message_ex *response, dsn::error_code err)
-{
-    auto msg = ((::dsn::message_ex *)response);
-    ::dsn::task::get_current_rpc()->reply(msg, err);
-}
-
-DSN_API void dsn_rpc_forward(dsn::message_ex *request, dsn::rpc_address addr)
-{
-    ::dsn::task::get_current_rpc()->forward((::dsn::message_ex *)(request),
-                                            ::dsn::rpc_address(addr));
-}
-
-DSN_API void dsn_rpc_enqueue_response(dsn::rpc_response_task *rpc_call,
-                                      dsn::error_code err,
-                                      dsn::message_ex *response)
-{
-    dassert(rpc_call->spec().type == TASK_TYPE_RPC_RESPONSE,
-            "invalid task_type, type = %s",
-            enum_to_string(rpc_call->spec().type));
-    auto resp = ((::dsn::message_ex *)response);
-    rpc_call->enqueue(err, resp);
 }
 
 //------------------------------------------------------------------------------

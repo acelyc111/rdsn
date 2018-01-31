@@ -40,6 +40,7 @@
 #include <dsn/tool-api/task.h>
 #include <dsn/tool-api/task_tracker.h>
 #include <dsn/serialization/serialization.h>
+#include <dsn/tool-api/rpc_engine.h>
 
 namespace dsn {
 
@@ -178,7 +179,7 @@ rpc_response_task_ptr call(::dsn::rpc_address server,
 {
     rpc_response_task_ptr t = create_rpc_response_task(
         request, tracker, std::forward<TCallback>(callback), reply_thread_hash);
-    dsn_rpc_call(server, t.get());
+    task::get_current_rpc()->call(server, t);
     return t;
 }
 
@@ -221,7 +222,7 @@ void call_one_way_typed(::dsn::rpc_address server,
 {
     dsn::message_ex *msg = dsn::message_ex::create_request(code, 0, thread_hash, partition_hash);
     ::dsn::marshall(msg, req);
-    dsn_rpc_call_one_way(server, msg);
+    task::get_current_rpc()->call_one_way(server, msg);
 }
 
 template <typename TResponse>

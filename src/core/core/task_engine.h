@@ -35,7 +35,7 @@
 
 #pragma once
 
-#include "service_engine.h"
+#include <dsn/tool-api/service_engine.h>
 #include <dsn/tool-api/task_queue.h>
 #include <dsn/tool-api/admission_controller.h>
 #include <dsn/tool-api/perf_counter.h>

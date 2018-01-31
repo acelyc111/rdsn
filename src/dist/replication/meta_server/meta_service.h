@@ -79,14 +79,8 @@ public:
         return level;
     }
 
-    virtual void reply_message(dsn::message_ex *, dsn::message_ex *response)
-    {
-        dsn_rpc_reply(response);
-    }
-    virtual void send_message(const rpc_address &target, dsn::message_ex *request)
-    {
-        dsn_rpc_call_one_way(target, request);
-    }
+    virtual void reply_message(dsn::message_ex *, dsn::message_ex *response);
+    virtual void send_message(const rpc_address &target, dsn::message_ex *request);
 
     // these two callbacks are running in fd's thread_pool, and in fd's lock
     void set_node_state(const std::vector<rpc_address> &nodes_list, bool is_alive);

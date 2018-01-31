@@ -41,12 +41,11 @@
 #include <dsn/utility/synchronize.h>
 #include <dsn/tool/node_scoper.h>
 #include <dsn/tool-api/lock_checker.h>
+#include <dsn/tool-api/service_engine.h>
+#include <dsn/tool-api/rpc_engine.h>
 
 #include "task_engine.h"
-#include "service_engine.h"
-#include "service_engine.h"
 #include "disk_engine.h"
-#include "rpc_engine.h"
 
 #ifdef __TITLE__
 #undef __TITLE__

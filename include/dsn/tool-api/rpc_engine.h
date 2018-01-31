@@ -159,6 +159,10 @@ public:
     void reply(message_ex *response, error_code err = ERR_OK);
     void forward(message_ex *request, rpc_address address);
 
+    dsn::message_ptr call_and_wait(rpc_address server, message_ex *msg);
+    void call_one_way(rpc_address server, message_ex *msg);
+    void call(dsn::rpc_address server, const dsn::rpc_response_task_ptr &rpc_call);
+
     //
     // information inquery
     //

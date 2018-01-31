@@ -40,9 +40,9 @@
 #include <dsn/tool-api/zlocks.h>
 #include <dsn/utility/utils.h>
 #include <dsn/utility/filesystem.h>
+#include <dsn/tool-api/service_engine.h>
 #include <gtest/gtest.h>
 #include <thread>
-#include "../core/service_engine.h"
 
 using namespace dsn;
 

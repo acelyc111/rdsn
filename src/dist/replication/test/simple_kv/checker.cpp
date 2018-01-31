@@ -35,7 +35,9 @@
 
 #include "checker.h"
 #include "case.h"
-#include "dsn/utility/factory_store.h"
+#include <dsn/utility/factory_store.h>
+#include <dsn/tool-api/rpc_engine.h>
+#include <dsn/tool-api/service_engine.h>
 
 #include "../../lib/replica.h"
 #include "../../lib/replica_stub.h"
@@ -45,8 +47,6 @@
 #include "../../meta_server/server_state.h"
 #include "../../meta_server/server_load_balancer.h"
 #include "../../client_lib/replication_ds.h"
-#include "../../../../core/core/service_engine.h"
-#include "../../../../core/core/rpc_engine.h"
 
 #include <sstream>
 #include <boost/lexical_cast.hpp>

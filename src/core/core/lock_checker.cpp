@@ -1,6 +1,6 @@
 #include <dsn/tool-api/lock_checker.h>
 #include <dsn/tool-api/task.h>
-#include "service_engine.h"
+#include <dsn/tool-api/service_engine.h>
 #include "task_engine.h"
 
 namespace dsn {

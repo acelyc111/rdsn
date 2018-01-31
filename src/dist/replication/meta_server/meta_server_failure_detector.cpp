@@ -94,7 +94,7 @@ bool meta_server_failure_detector::get_leader(rpc_address *leader)
     }
 
     if (_is_leader.load()) {
-        *leader = dsn_primary_address();
+        *leader = ::dsn::task::get_current_rpc()->primary_address();
         return true;
     } else if (_lock_svc == nullptr) {
         leader->set_invalid();
@@ -104,7 +104,7 @@ bool meta_server_failure_detector::get_leader(rpc_address *leader)
         uint64_t version;
         error_code err = _lock_svc->query_cache(_primary_lock_id, lock_owner, version);
         if (err == dsn::ERR_OK && leader->from_string_ipv4(lock_owner.c_str())) {
-            return (*leader) == dsn_primary_address();
+            return (*leader) == ::dsn::task::get_current_rpc()->primary_address();
         } else {
             dwarn("query leader from cache got error(%s)", err.to_string());
             leader->set_invalid();
@@ -119,12 +119,13 @@ void meta_server_failure_detector::acquire_leader_lock()
     //
     // try to get the leader lock until it is done
     //
+    rpc_address local_address = ::dsn::task::get_current_rpc()->primary_address();
     dsn::dist::distributed_lock_service::lock_options opt = {true, true};
     while (true) {
         error_code err;
         auto tasks = _lock_svc->lock(
             _primary_lock_id,
-            dsn_primary_address().to_std_string(),
+            local_address.to_std_string(),
             // lock granted
             LPC_META_SERVER_LEADER_LOCK_CALLBACK,
             [this, &err](error_code ec, const std::string &owner, uint64_t version) {
@@ -182,13 +183,14 @@ void meta_server_failure_detector::reset_stability_stat(const rpc_address &node)
 void meta_server_failure_detector::leader_initialize(const std::string &lock_service_owner)
 {
     dsn::rpc_address addr;
+    rpc_address local_address = ::dsn::task::get_current_rpc()->primary_address();
     dassert(addr.from_string_ipv4(lock_service_owner.c_str()),
             "parse %s to rpc_address failed",
             lock_service_owner.c_str());
-    dassert(addr == dsn_primary_address(),
+    dassert(addr == local_address,
             "acquire leader return success, but owner not match: %s vs %s",
             addr.to_string(),
-            dsn_primary_address().to_string());
+            local_address.to_string());
     _is_leader.store(true);
     _election_moment.store(dsn_now_ms());
 }

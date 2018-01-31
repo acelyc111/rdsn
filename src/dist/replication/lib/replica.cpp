@@ -168,7 +168,7 @@ void replica::response_client_message(bool is_read, dsn::message_ex *request, er
          request->header->from_address.to_string(),
          error.to_string());
 
-    dsn_rpc_reply(request->create_response(), error);
+    task::get_current_rpc()->reply(request->create_response(), error);
 }
 
 // error_code replica::check_and_fix_private_log_completeness()

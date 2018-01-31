@@ -37,9 +37,9 @@
 #include <Winsock2.h>
 #endif
 #include <dsn/tool-api/network.h>
+#include <dsn/tool-api/rpc_engine.h>
 #include <dsn/utility/factory_store.h>
 #include "message_parser_manager.h"
-#include "rpc_engine.h"
 
 #ifdef __TITLE__
 #undef __TITLE__

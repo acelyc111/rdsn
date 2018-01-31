@@ -197,4 +197,6 @@ public:
     static uint32_t s_local_hash; // used by fast_rpc_name
 };
 
+typedef ref_ptr<message_ex> message_ptr;
+
 } // end namespace

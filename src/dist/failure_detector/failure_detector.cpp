@@ -302,7 +302,7 @@ void failure_detector::on_ping_internal(const beacon_msg &beacon, /*out*/ beacon
 {
     ack.time = beacon.time;
     ack.this_node = beacon.to_addr;
-    ack.primary_node = dsn_primary_address();
+    ack.primary_node = task::get_current_rpc()->primary_address();
     ack.is_master = true;
     ack.allowed = true;
 
@@ -371,11 +371,13 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
 
     master_map::iterator itr = _masters.find(node);
 
+    rpc_address local_address = ::dsn::task::get_current_rpc()->primary_address();
+
     if (itr == _masters.end()) {
         dwarn("received beacon ack without corresponding master, ignore it, "
               "remote_master[%s], local_worker[%s]",
               node.to_string(),
-              dsn_primary_address().to_string());
+              local_address.to_string());
         return false;
     }
 
@@ -384,7 +386,7 @@ bool failure_detector::end_ping_internal(::dsn::error_code err, const beacon_ack
         dwarn("worker rejected, stop sending beacon message, "
               "remote_master[%s], local_worker[%s]",
               node.to_string(),
-              dsn_primary_address().to_string());
+              local_address.to_string());
         record.rejected = true;
         record.send_beacon_timer->cancel(true);
         return false;
@@ -505,7 +507,7 @@ void failure_detector::send_beacon(::dsn::rpc_address target, uint64_t time)
 {
     beacon_msg beacon;
     beacon.time = time;
-    beacon.from_addr = dsn_primary_address();
+    beacon.from_addr = ::dsn::task::get_current_rpc()->primary_address();
     beacon.to_addr = target;
     beacon.__set_start_time(static_cast<int64_t>(dsn_runtime_init_time_ms()));
 

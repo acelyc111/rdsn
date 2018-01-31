@@ -43,9 +43,8 @@
 #include <dsn/tool-api/task.h>
 #include <dsn/tool-api/rpc_message.h>
 #include <dsn/tool-api/command_manager.h>
-
-#include "service_engine.h"
-#include "rpc_engine.h"
+#include <dsn/tool-api/service_engine.h>
+#include <dsn/tool-api/rpc_engine.h>
 
 #ifdef __TITLE__
 #undef __TITLE__

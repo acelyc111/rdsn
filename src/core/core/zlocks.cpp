@@ -36,9 +36,9 @@
 #include <dsn/tool-api/zlocks.h>
 #include <dsn/tool-api/task.h>
 #include <dsn/tool-api/lock_checker.h>
+#include <dsn/tool-api/service_engine.h>
 
 #include "task_engine.h"
-#include "service_engine.h"
 
 #ifdef __TITLE__
 #undef __TITLE__

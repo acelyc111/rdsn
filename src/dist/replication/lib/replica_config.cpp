@@ -39,6 +39,7 @@
 #include "mutation_log.h"
 #include "replica_stub.h"
 #include <dsn/dist/replication/replication_app_base.h>
+#include <dsn/tool-api/rpc_engine.h>
 
 #ifdef __TITLE__
 #undef __TITLE__
@@ -389,7 +390,7 @@ void replica::update_configuration_on_meta_server(config_type::type type,
     update_local_configuration_with_no_ballot_change(partition_status::PS_INACTIVE);
     set_inactive_state_transient(true);
 
-    dsn::message_ex* msg = dsn::message_ex::create_request(RPC_CM_UPDATE_PARTITION_CONFIGURATION);
+    dsn::message_ex *msg = dsn::message_ex::create_request(RPC_CM_UPDATE_PARTITION_CONFIGURATION);
 
     std::shared_ptr<configuration_update_request> request(new configuration_update_request);
     request->info = _app_info;
@@ -416,7 +417,7 @@ void replica::update_configuration_on_meta_server(config_type::type type,
         rpc::call(target,
                   msg,
                   &_tracker,
-                  [=](error_code err, dsn::message_ex* reqmsg, dsn::message_ex* response) {
+                  [=](error_code err, dsn::message_ex *reqmsg, dsn::message_ex *response) {
                       on_update_configuration_on_meta_server_reply(err, reqmsg, response, request);
                   },
                   get_gpid().thread_hash());
@@ -424,8 +425,8 @@ void replica::update_configuration_on_meta_server(config_type::type type,
 
 void replica::on_update_configuration_on_meta_server_reply(
     error_code err,
-    dsn::message_ex* request,
-    dsn::message_ex* response,
+    dsn::message_ex *request,
+    dsn::message_ex *response,
     std::shared_ptr<configuration_update_request> req)
 {
     _checker.only_one_thread_access();
@@ -458,13 +459,13 @@ void replica::on_update_configuration_on_meta_server_reply(
                     rpc_response_task_ptr t = rpc::create_rpc_response_task(
                         request,
                         &_tracker,
-                        [this,
-                         req2](error_code err, dsn::message_ex* request, dsn::message_ex* response) {
+                        [this, req2](
+                            error_code err, dsn::message_ex *request, dsn::message_ex *response) {
                             on_update_configuration_on_meta_server_reply(
                                 err, request, response, std::move(req2));
                         },
                         get_gpid().thread_hash());
-                    dsn_rpc_call(target, t.get());
+                    task::get_current_rpc()->call(target, t);
                     _primary_states.reconfiguration_task = t;
                     request->release_ref();
                 },

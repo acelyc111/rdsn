@@ -33,10 +33,11 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 
-#include "service_engine.h"
 #include "task_engine.h"
 #include "disk_engine.h"
-#include "rpc_engine.h"
+
+#include <dsn/tool-api/rpc_engine.h>
+#include <dsn/tool-api/service_engine.h>
 #include <dsn/tool-api/uri_address.h>
 #include <dsn/tool-api/env_provider.h>
 #include <dsn/utility/factory_store.h>
