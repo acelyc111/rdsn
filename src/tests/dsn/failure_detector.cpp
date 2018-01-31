@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <dsn/dist/serverlet.h>
 #include <dsn/tool-api/service_app.h>
+#include <dsn/tool-api/zlocks.h>
 #include <vector>
 
 #ifdef __TITLE__
@@ -116,7 +117,7 @@ public:
     }
     void test_register_worker(rpc_address node)
     {
-        zauto_lock l(failure_detector::_lock);
+        service::zauto_lock l(failure_detector::_lock);
         register_worker(node);
     }
     void clear()

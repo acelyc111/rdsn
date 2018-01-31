@@ -62,6 +62,15 @@
 #include <dsn/tool-api/group_address.h>
 #include <dsn/tool-api/task.h>
 
+#ifdef DSN_USE_THRIFT_SERIALIZATION
+#include <thrift/Thrift.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TJSONProtocol.h>
+#include <thrift/protocol/TVirtualProtocol.h>
+#include <thrift/transport/TVirtualTransport.h>
+#include <thrift/TApplicationException.h>
+#endif
+
 namespace dsn {
 const rpc_address rpc_address::sInvalid;
 
@@ -256,4 +265,103 @@ const char *rpc_address::to_string() const
 
     return (const char *)p;
 }
+
+#ifdef DSN_USE_THRIFT_SERIALIZATION
+uint32_t rpc_address::read(apache::thrift::protocol::TProtocol *iprot)
+{
+    apache::thrift::protocol::TBinaryProtocol *binary_proto =
+        dynamic_cast<apache::thrift::protocol::TBinaryProtocol *>(iprot);
+    if (binary_proto != nullptr) {
+        // the protocol is binary protocol
+        auto r = iprot->readI64(reinterpret_cast<int64_t &>(_addr.value));
+        dassert(_addr.v4.type == HOST_TYPE_INVALID || _addr.v4.type == HOST_TYPE_IPV4,
+                "only invalid or ipv4 can be deserialized from binary");
+        return r;
+    } else {
+        // the protocol is json protocol
+        std::string host;
+        int port;
+
+        uint32_t xfer = 0;
+        std::string fname;
+        ::apache::thrift::protocol::TType ftype;
+        int16_t fid;
+
+        xfer += iprot->readStructBegin(fname);
+
+        using ::apache::thrift::protocol::TProtocolException;
+
+        while (true) {
+            xfer += iprot->readFieldBegin(fname, ftype, fid);
+            if (ftype == ::apache::thrift::protocol::T_STOP) {
+                break;
+            }
+            switch (fid) {
+            case 1:
+                if (ftype == ::apache::thrift::protocol::T_STRING) {
+                    xfer += iprot->readString(host);
+                } else {
+                    xfer += iprot->skip(ftype);
+                }
+                break;
+            case 2:
+                if (ftype == ::apache::thrift::protocol::T_I32) {
+                    xfer += iprot->readI32(port);
+                } else {
+                    xfer += iprot->skip(ftype);
+                }
+                break;
+            default:
+                xfer += iprot->skip(ftype);
+                break;
+            }
+            xfer += iprot->readFieldEnd();
+        }
+
+        xfer += iprot->readStructEnd();
+
+        // currently only support ipv4 format
+        this->assign_ipv4(host.c_str(), port);
+
+        return xfer;
+    }
+}
+
+uint32_t rpc_address::write(apache::thrift::protocol::TProtocol *oprot) const
+{
+    apache::thrift::protocol::TBinaryProtocol *binary_proto =
+        dynamic_cast<apache::thrift::protocol::TBinaryProtocol *>(oprot);
+    if (binary_proto != nullptr) {
+        // the protocol is binary protocol
+        dassert(_addr.v4.type == HOST_TYPE_INVALID || _addr.v4.type == HOST_TYPE_IPV4,
+                "only invalid or ipv4 can be serialized to binary");
+        return oprot->writeI64((int64_t)_addr.value);
+    } else {
+        // the protocol is json protocol
+        std::string host(this->to_string());
+        int port = 0;
+        size_t sep_index = host.find(':');
+        if (sep_index != std::string::npos) {
+            port = std::stoi(host.substr(sep_index + 1));
+            host = host.substr(0, sep_index);
+        }
+
+        uint32_t xfer = 0;
+
+        xfer += oprot->writeStructBegin("rpc_address");
+
+        xfer += oprot->writeFieldBegin("host", ::apache::thrift::protocol::T_STRING, 1);
+        xfer += oprot->writeString(host);
+        xfer += oprot->writeFieldEnd();
+
+        xfer += oprot->writeFieldBegin("port", ::apache::thrift::protocol::T_I32, 2);
+        xfer += oprot->writeI32(port);
+        xfer += oprot->writeFieldEnd();
+
+        xfer += oprot->writeFieldStop();
+        xfer += oprot->writeStructEnd();
+        return xfer;
+    }
+}
+#endif
 }

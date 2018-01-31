@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <dsn/service_api_c.h>
-#include <dsn/service_api_cpp.h>
 #include <dsn/dist/replication/replication_types.h>
-#include <dsn/cpp/serialization_helper/dsn.layer2_types.h>
+#include <dsn/serialization/dsn.layer2_types.h>
 
 #include <fstream>
 

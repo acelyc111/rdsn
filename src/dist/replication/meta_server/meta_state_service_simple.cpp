@@ -121,7 +121,7 @@ error_code meta_state_service_simple::create_node_internal(const std::string &no
                                                            const blob &value)
 {
     auto path = normalize_path(node);
-    zauto_lock _(_state_lock);
+    service::zauto_lock _(_state_lock);
     auto me_it = _quick_map.find(path);
     if (me_it != _quick_map.end())
         return ERR_NODE_ALREADY_EXIST;
@@ -147,7 +147,7 @@ error_code meta_state_service_simple::delete_node_internal(const std::string &no
     auto path = normalize_path(node);
     if (path == "/")
         return ERR_INVALID_PARAMETERS; // cannot delete root
-    zauto_lock _(_state_lock);
+    service::zauto_lock _(_state_lock);
     auto me_it = _quick_map.find(path);
     if (me_it == _quick_map.end())
         return ERR_OBJECT_NOT_FOUND;
@@ -196,7 +196,7 @@ error_code meta_state_service_simple::delete_node_internal(const std::string &no
 error_code meta_state_service_simple::set_data_internal(const std::string &node, const blob &value)
 {
     auto path = normalize_path(node);
-    zauto_lock _(_state_lock);
+    service::zauto_lock _(_state_lock);
     auto it = _quick_map.find(path);
     if (it == _quick_map.end())
         return ERR_OBJECT_NOT_FOUND;
@@ -314,7 +314,7 @@ task_ptr meta_state_service_simple::submit_transaction(
     dsn::task_tracker *tracker)
 {
     // when checking the snapshot, we block all write operations which come later
-    zauto_lock l(_log_lock);
+    service::zauto_lock l(_log_lock);
     std::set<std::string> snapshot;
     for (const auto &kv : _quick_map)
         snapshot.insert(kv.first);
@@ -444,7 +444,7 @@ task_ptr meta_state_service_simple::node_exist(const std::string &node,
 {
     error_code err;
     {
-        zauto_lock _(_state_lock);
+        service::zauto_lock _(_state_lock);
         err =
             _quick_map.find(normalize_path(node)) != _quick_map.end() ? ERR_OK : ERR_PATH_NOT_FOUND;
     }
@@ -457,7 +457,7 @@ task_ptr meta_state_service_simple::get_data(const std::string &node,
                                              dsn::task_tracker *tracker)
 {
     auto path = normalize_path(node);
-    zauto_lock _(_state_lock);
+    service::zauto_lock _(_state_lock);
     auto me_it = _quick_map.find(path);
     if (me_it == _quick_map.end()) {
         return tasking::enqueue(cb_code, tracker, [=]() { cb_get_data(ERR_OBJECT_NOT_FOUND, {}); });
@@ -486,7 +486,7 @@ task_ptr meta_state_service_simple::get_children(const std::string &node,
                                                  dsn::task_tracker *tracker)
 {
     auto path = normalize_path(node);
-    zauto_lock _(_state_lock);
+    service::zauto_lock _(_state_lock);
     auto me_it = _quick_map.find(path);
     if (me_it == _quick_map.end()) {
         return tasking::enqueue(

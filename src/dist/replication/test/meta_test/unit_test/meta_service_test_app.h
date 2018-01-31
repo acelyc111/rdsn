@@ -1,7 +1,6 @@
 #ifndef META_SERVICE_TEST_APP_H
 #define META_SERVICE_TEST_APP_H
 
-#include <dsn/service_api_cpp.h>
 #include <dsn/tool-api/async_calls.h>
 #include <dsn/dist/replication/replication_types.h>
 #include <dsn/dist/replication/meta_service_app.h>

@@ -159,4 +159,6 @@ private:
     const char *_data;
     unsigned int _length; // data length
 };
+
+inline const char *to_string(const blob &blob) { return ""; }
 }

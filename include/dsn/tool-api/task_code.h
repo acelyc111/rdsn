@@ -86,6 +86,8 @@ private:
     int _internal_code;
 };
 
+inline const char *to_string(const task_code &code) { return code.to_string(); }
+
 #define DEFINE_NAMED_TASK_CODE(x, name, pri, pool)                                                 \
     __selectany const ::dsn::task_code x(#name, TASK_TYPE_COMPUTE, pri, pool);
 

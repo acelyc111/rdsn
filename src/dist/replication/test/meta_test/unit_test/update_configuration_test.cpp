@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <dsn/service_api_c.h>
-#include <dsn/service_api_cpp.h>
+#include <dsn/tool-api/zlocks.h>
 
 #include "dist/replication/meta_server/meta_service.h"
 #include "dist/replication/meta_server/server_state.h"
@@ -151,7 +150,7 @@ bool meta_service_test_app::wait_state(server_state *ss, const state_validator &
         t->wait();
 
         {
-            zauto_read_lock l(ss->_lock);
+            dsn::service::zauto_read_lock l(ss->_lock);
             if (validator(ss->_all_apps))
                 return true;
         }

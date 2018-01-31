@@ -33,7 +33,6 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 #include <boost/lexical_cast.hpp>
-#include <dsn/service_api_cpp.h>
 #include "dist/replication/meta_server/meta_data.h"
 
 namespace dsn {

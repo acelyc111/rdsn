@@ -35,11 +35,10 @@
 
 #pragma once
 
-#include <dsn/dist/replication.h>
 #include <string>
+#include <dsn/tool-api/task.h>
+#include <dsn/dist/replication.h>
 #include "dist/replication/client_lib/replication_ds.h"
-
-using namespace ::dsn::service;
 
 namespace dsn {
 namespace replication {

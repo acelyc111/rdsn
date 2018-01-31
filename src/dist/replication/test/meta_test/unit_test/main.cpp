@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include <gtest/gtest.h>
-#include <dsn/service_api_cpp.h>
 
 #include "dist/replication/meta_server/meta_data.h"
 

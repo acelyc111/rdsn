@@ -7,7 +7,7 @@
 #ifndef dsn_layer2_TYPES_H
 #define dsn_layer2_TYPES_H
 
-#include <dsn/cpp/serialization_helper/dsn_types.h>
+#include <dsn/serialization/dsn_types.h>
 #include <iosfwd>
 
 #include <thrift/Thrift.h>

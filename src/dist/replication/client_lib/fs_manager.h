@@ -34,7 +34,6 @@
 
 #pragma once
 
-#include <dsn/service_api_cpp.h>
 #include <dsn/tool-api/zlocks.h>
 #include <dsn/tool-api/perf_counter_wrapper.h>
 #include <memory>
@@ -95,7 +94,7 @@ private:
 
     // when visit the tag/storage of the _dir_nodes map, there's no need to protect by the lock.
     // but when visit the holding_replicas, you must take care.
-    mutable zrwlock_nr _lock;
+    mutable service::zrwlock_nr _lock;
     std::vector<std::unique_ptr<dir_node>> _dir_nodes;
 
     perf_counter_wrapper _counter_capacity_total_mb;

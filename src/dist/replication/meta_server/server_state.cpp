@@ -155,7 +155,7 @@ bool server_state::spin_wait_staging(int timeout_seconds)
     while ((timeout_seconds == -1 || timeout_seconds > 0)) {
         int c = 0;
         {
-            zauto_read_lock l(_lock);
+            service::zauto_read_lock l(_lock);
             c = count_staging_app();
         }
         if (c == 0) {
@@ -294,7 +294,7 @@ error_code server_state::dump_from_remote_storage(const char *local_path, bool s
     } else {
         std::vector<app_state> snapshots;
         {
-            zauto_read_lock l(_lock);
+            service::zauto_read_lock l(_lock);
             if (count_staging_app() != 0) {
                 ddebug("there are apps in staging, skip this dump");
                 return ERR_INVALID_STATE;
@@ -524,7 +524,7 @@ dsn::error_code server_state::sync_apps_from_remote_storage()
                                 pc.pid.get_partition_index() == partition_id,
                             "invalid partition config");
                     {
-                        zauto_write_lock l(_lock);
+                        service::zauto_write_lock l(_lock);
                         app->partitions[partition_id] = pc;
                         for (const dsn::rpc_address &addr : pc.last_drops) {
                             app->helpers->contexts[partition_id].record_drop_history(addr);
@@ -562,7 +562,7 @@ dsn::error_code server_state::sync_apps_from_remote_storage()
                             "invalid json data");
                     std::shared_ptr<app_state> app = app_state::create(info);
                     {
-                        zauto_write_lock l(_lock);
+                        service::zauto_write_lock l(_lock);
                         _all_apps.emplace(app->app_id, app);
                         if (app->status == app_status::AS_AVAILABLE) {
                             app->status = app_status::AS_CREATING;
@@ -639,7 +639,7 @@ dsn::error_code server_state::sync_apps_from_remote_storage()
 
 void server_state::initialize_node_state()
 {
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
     for (auto &app_pair : _all_apps) {
         app_state &app = *(app_pair.second);
         for (partition_configuration &pc : app.partitions) {
@@ -705,7 +705,7 @@ void server_state::query_configuration_by_node(
     const configuration_query_by_node_request &request,
     /*out*/ configuration_query_by_node_response &response)
 {
-    zauto_read_lock l(_lock);
+    service::zauto_read_lock l(_lock);
     node_state *ns = get_node_state(_nodes, request.node, false);
     if (ns == nullptr) {
         response.err = ERR_OBJECT_NOT_FOUND;
@@ -741,7 +741,7 @@ void server_state::on_config_sync(dsn::message_ex *msg)
            (int)request.stored_replicas.size());
 
     {
-        zauto_read_lock l(_lock);
+        service::zauto_read_lock l(_lock);
 
         // sync the partitions to the replica server
         node_state *ns = get_node_state(_nodes, request.node, false);
@@ -873,7 +873,7 @@ void server_state::on_config_sync(dsn::message_ex *msg)
 bool server_state::query_configuration_by_gpid(dsn::gpid id,
                                                /*out*/ partition_configuration &config)
 {
-    zauto_read_lock l(_lock);
+    service::zauto_read_lock l(_lock);
     const partition_configuration *pc = get_config(_all_apps, id);
     if (pc != nullptr) {
         config = *pc;
@@ -886,7 +886,7 @@ void server_state::query_configuration_by_index(
     const configuration_query_by_index_request &request,
     /*out*/ configuration_query_by_index_response &response)
 {
-    zauto_read_lock l(_lock);
+    service::zauto_read_lock l(_lock);
     auto iter = _exist_apps.find(request.app_name.c_str());
     if (iter == _exist_apps.end()) {
         response.err = ERR_OBJECT_NOT_FOUND;
@@ -923,7 +923,7 @@ void server_state::init_app_partition_node(std::shared_ptr<app_state> &app,
         dinfo("create partition node: gpid(%d.%d), result: %s", app->app_id, pidx, ec.to_string());
         if (ERR_OK == ec || ERR_NODE_ALREADY_EXIST == ec) {
             {
-                zauto_write_lock l(_lock);
+                service::zauto_write_lock l(_lock);
                 process_one_partition(app);
             }
             if (callback) {
@@ -1006,7 +1006,7 @@ void server_state::create_app(dsn::message_ex *msg)
         response.err = ERR_INVALID_PARAMETERS;
         will_create_app = false;
     } else {
-        zauto_write_lock l(_lock);
+        service::zauto_write_lock l(_lock);
         app = get_app(request.app_name);
         if (nullptr != app) {
             switch (app->status) {
@@ -1062,7 +1062,7 @@ void server_state::do_app_drop(std::shared_ptr<app_state> &app)
 {
     auto after_mark_app_dropped = [this, app](error_code ec) mutable {
         if (ERR_OK == ec) {
-            zauto_write_lock l(_lock);
+            service::zauto_write_lock l(_lock);
             _exist_apps.erase(app->app_name);
             for (int i = 0; i < app->partition_count; ++i) {
                 drop_partition(app, i);
@@ -1095,7 +1095,7 @@ void server_state::drop_app(dsn::message_ex *msg)
     dsn::unmarshall(msg, request);
     ddebug("drop app request, name(%s)", request.app_name.c_str());
     {
-        zauto_write_lock l(_lock);
+        service::zauto_write_lock l(_lock);
         app = get_app(request.app_name);
         if (nullptr == app) {
             response.err = request.options.success_if_not_exist ? ERR_OK : ERR_APP_NOT_EXIST;
@@ -1143,7 +1143,7 @@ void server_state::drop_app(dsn::message_ex *msg)
 void server_state::do_app_recall(std::shared_ptr<app_state> &app)
 {
     auto after_recall_app = [this, app](dsn::error_code ec) mutable {
-        zauto_write_lock l(_lock);
+        service::zauto_write_lock l(_lock);
         for (int i = 0; i < app->partition_count; ++i) {
             recall_partition(app, i);
         }
@@ -1166,7 +1166,7 @@ void server_state::recall_app(dsn::message_ex *msg)
 
     bool do_recalling = false;
     {
-        zauto_write_lock l(_lock);
+        service::zauto_write_lock l(_lock);
         target_app = get_app(request.app_id);
         if (target_app == nullptr) {
             response.err = ERR_APP_NOT_EXIST;
@@ -1214,7 +1214,7 @@ void server_state::list_apps(const configuration_list_apps_request &request,
                              configuration_list_apps_response &response)
 {
     dinfo("list app request, status(%d)", request.status);
-    zauto_read_lock l(_lock);
+    service::zauto_read_lock l(_lock);
     for (auto &kv : _all_apps) {
         app_state &app = *(kv.second);
         if (request.status == app_status::AS_INVALID || request.status == app.status) {
@@ -1480,7 +1480,7 @@ task_ptr server_state::update_configuration_on_remote(
 void server_state::on_update_configuration_on_remote_reply(
     error_code ec, std::shared_ptr<configuration_update_request> &config_request)
 {
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
     dsn::gpid &gpid = config_request->config.pid;
     std::shared_ptr<app_state> app = get_app(gpid.get_app_id());
     config_context &cc = app->helpers->contexts[gpid.get_partition_index()];
@@ -1540,7 +1540,7 @@ void server_state::recall_partition(std::shared_ptr<app_state> &app, int pidx)
 {
     auto on_recall_partition = [this, app, pidx](dsn::error_code error) mutable {
         if (error == dsn::ERR_OK) {
-            zauto_write_lock l(_lock);
+            service::zauto_write_lock l(_lock);
             app->partitions[pidx].partition_flags &= (~pc_flags::dropped);
             process_one_partition(app);
         } else if (error == dsn::ERR_TIMEOUT) {
@@ -1725,7 +1725,7 @@ void server_state::downgrade_stateless_nodes(std::shared_ptr<app_state> &app,
 void server_state::on_update_configuration(
     std::shared_ptr<configuration_update_request> &cfg_request, dsn::message_ex *msg)
 {
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
     dsn::gpid &gpid = cfg_request->config.pid;
     std::shared_ptr<app_state> app = get_app(gpid.get_app_id());
     partition_configuration &pc = app->partitions[gpid.get_partition_index()];
@@ -1826,7 +1826,7 @@ void server_state::on_partition_node_dead(std::shared_ptr<app_state> &app,
 void server_state::on_change_node_state(rpc_address node, bool is_alive)
 {
     dinfo("change node(%s) state to %s", node.to_string(), is_alive ? "alive" : "dead");
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
     if (!is_alive) {
         auto iter = _nodes.find(node);
         if (iter == _nodes.end()) {
@@ -1852,7 +1852,7 @@ void server_state::on_change_node_state(rpc_address node, bool is_alive)
 void server_state::on_propose_balancer(const configuration_balancer_request &request,
                                        configuration_balancer_response &response)
 {
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
     std::shared_ptr<app_state> app = get_app(request.gpid.get_app_id());
     if (app == nullptr || app->status != app_status::AS_AVAILABLE ||
         request.gpid.get_partition_index() < 0 ||
@@ -2156,7 +2156,7 @@ server_state::sync_apps_from_replica_nodes(const std::vector<dsn::rpc_address> &
         return dsn::ERR_TRY_AGAIN;
     }
 
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
 
     dsn::error_code err = construct_apps(query_app_responses, replica_nodes, hint_message);
     if (err != dsn::ERR_OK) {
@@ -2205,7 +2205,7 @@ void server_state::on_start_recovery(const configuration_recovery_request &req,
 void server_state::clear_proposals()
 {
     ddebug("clear all exist proposals");
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
     for (auto &kv : _exist_apps) {
         std::shared_ptr<app_state> &app = kv.second;
         app->helpers->clear_proposals();
@@ -2263,7 +2263,7 @@ bool server_state::check_all_partitions()
     int total_partitions = 0;
     meta_function_level::type level = _meta_svc->get_function_level();
 
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
 
     update_partition_perf_counter();
 

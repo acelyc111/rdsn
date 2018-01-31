@@ -35,9 +35,8 @@
 
 #pragma once
 
+#include <dsn/tool-api/zlocks.h>
 #include <dsn/dist/distributed_lock_service.h>
-
-using namespace ::dsn::service;
 
 namespace dsn {
 namespace dist {
@@ -96,7 +95,7 @@ private:
 
     typedef std::unordered_map<std::string, lock_info> locks;
 
-    zlock _lock;
+    service::zlock _lock;
     locks _dlocks; // lock -> owner
 
     dsn::task_tracker _tracker;

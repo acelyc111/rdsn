@@ -165,7 +165,7 @@ void meta_server_failure_detector::acquire_leader_lock()
 
 void meta_server_failure_detector::reset_stability_stat(const rpc_address &node)
 {
-    zauto_lock l(_map_lock);
+    service::zauto_lock l(_map_lock);
     auto iter = _stablity.find(node);
     if (iter == _stablity.end())
         return;
@@ -195,7 +195,7 @@ void meta_server_failure_detector::leader_initialize(const std::string &lock_ser
 
 bool meta_server_failure_detector::update_stability_stat(const fd::beacon_msg &beacon)
 {
-    zauto_lock l(_map_lock);
+    service::zauto_lock l(_map_lock);
     auto iter = _stablity.find(beacon.from_addr);
     if (iter == _stablity.end()) {
         _stablity.emplace(beacon.from_addr, worker_stability{beacon.start_time, 0});

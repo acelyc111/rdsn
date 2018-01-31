@@ -1,5 +1,4 @@
 #pragma once
-#include <dsn/service_api_cpp.h>
 
 namespace dsn {
 // define your own thread pool using DEFINE_THREAD_POOL_CODE(xxx)

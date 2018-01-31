@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <dsn/service_api_c.h>
-#include <dsn/service_api_cpp.h>
 
 #include "dist/replication/meta_server/meta_service.h"
 #include "dist/replication/meta_server/server_state.h"

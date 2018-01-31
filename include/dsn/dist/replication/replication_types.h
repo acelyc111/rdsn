@@ -7,7 +7,7 @@
 #ifndef replication_TYPES_H
 #define replication_TYPES_H
 
-#include <dsn/cpp/serialization_helper/dsn.layer2_types.h>
+#include <dsn/serialization/dsn.layer2_types.h>
 #include <iosfwd>
 
 #include <thrift/Thrift.h>

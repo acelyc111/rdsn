@@ -33,12 +33,11 @@
  *     2015-11-11, Tianyi WANG, first version done
  */
 
+#include <dsn/tool-api/zlocks.h>
 #include <dsn/dist/meta_state_service.h>
 #include "dist/replication/client_lib/replication_common.h"
 
 #include <queue>
-
-using namespace dsn::service;
 
 namespace dsn {
 namespace dist {
@@ -255,14 +254,14 @@ private:
 
     typedef std::unordered_map<std::string, state_node *> quick_map;
 
-    zlock _queue_lock;
+    service::zlock _queue_lock;
     std::queue<std::unique_ptr<operation>> _task_queue;
 
-    zlock _state_lock;
+    service::zlock _state_lock;
     state_node _root;     // tree
     quick_map _quick_map; // <path, node*>
 
-    zlock _log_lock;
+    service::zlock _log_lock;
     dsn_handle_t _log;
     uint64_t _offset;
 

@@ -36,7 +36,7 @@
 #pragma once
 
 #include <dsn/c/api_layer1.h>
-#include <dsn/cpp/serialization.h>
+#include <dsn/serialization/serialization.h>
 
 namespace dsn {
 /*!

@@ -53,6 +53,8 @@ private:
         uint64_t value;
     } _value;
 };
+
+inline const char *to_string(const gpid &id) { return id.to_string(); }
 }
 
 namespace std {

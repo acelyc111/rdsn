@@ -35,7 +35,6 @@
 
 #include <dsn/tool-api/aio_provider.h>
 #include <gtest/gtest.h>
-#include <dsn/service_api_cpp.h>
 #include "test_utils.h"
 
 DEFINE_TASK_CODE(LPC_TEST_HASH, TASK_PRIORITY_COMMON, THREAD_POOL_TEST_SERVER)

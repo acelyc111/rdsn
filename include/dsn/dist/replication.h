@@ -35,7 +35,6 @@
 
 #pragma once
 
-#include <dsn/service_api_cpp.h>
 #include <dsn/dist/replication/replication.types.h>
 #include <dsn/dist/replication/replication_other_types.h>
 #include <dsn/dist/replication/replication.codes.h>

@@ -33,7 +33,6 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 #pragma once
-#include <dsn/service_api_cpp.h>
 #include "echo.types.h"
 
 namespace dsn {

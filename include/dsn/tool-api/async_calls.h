@@ -39,7 +39,7 @@
 #include <dsn/utility/function_traits.h>
 #include <dsn/tool-api/task.h>
 #include <dsn/tool-api/task_tracker.h>
-#include <dsn/cpp/serialization.h>
+#include <dsn/serialization/serialization.h>
 
 namespace dsn {
 

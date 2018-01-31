@@ -7,7 +7,6 @@
 #ifndef nfs_TYPES_H
 #define nfs_TYPES_H
 
-#include <dsn/service_api_cpp.h>
 #include <iosfwd>
 
 #include <thrift/Thrift.h>

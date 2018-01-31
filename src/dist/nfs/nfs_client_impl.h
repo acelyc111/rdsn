@@ -33,11 +33,12 @@
  *     xxxx-xx-xx, author, fix bug about xxx
  */
 #pragma once
-#include <dsn/dist/nfs/nfs_client.h>
 #include <queue>
+#include <dsn/dist/nfs/nfs_client.h>
 #include <dsn/dist/nfs/nfs.h>
 #include <dsn/tool-api/task_tracker.h>
 #include <dsn/tool-api/perf_counter_wrapper.h>
+#include <dsn/tool-api/zlocks.h>
 
 namespace dsn {
 namespace service {

@@ -65,6 +65,7 @@
 #include <dsn/dist/failure_detector/fd.client.h>
 #include <dsn/dist/failure_detector/fd.server.h>
 #include <dsn/tool-api/perf_counter_wrapper.h>
+#include <dsn/tool-api/zlocks.h>
 
 namespace dsn {
 namespace fd {

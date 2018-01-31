@@ -35,11 +35,12 @@
 
 #pragma once
 
+#include <dsn/service_api_c.h>
 #include <dsn/tool-api/partition_resolver.h>
 #include <dsn/tool-api/task_tracker.h>
-#include <dsn/service_api_c.h>
 #include <dsn/tool-api/zlocks.h>
-#include <dsn/cpp/serialization_helper/dsn.layer2.types.h>
+#include <dsn/tool-api/task.h>
+#include <dsn/serialization/dsn.layer2.types.h>
 
 namespace dsn {
 namespace dist {
@@ -122,8 +123,8 @@ private:
     // with meta server
     task_ptr query_config(int partition_index);
     void query_config_reply(error_code err,
-                            dsn::message_ex* request,
-                            dsn::message_ex* response,
+                            dsn::message_ex *request,
+                            dsn::message_ex *response,
                             int partition_index);
 
     dsn::task_tracker _tracker;

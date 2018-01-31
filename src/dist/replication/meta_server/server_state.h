@@ -38,8 +38,9 @@
 #include <unordered_map>
 #include <boost/lexical_cast.hpp>
 
-#include <dsn/dist/replication/replication_other_types.h>
 #include <dsn/tool-api/perf_counter_wrapper.h>
+#include <dsn/tool-api/zlocks.h>
+#include <dsn/dist/replication/replication_other_types.h>
 
 #include "dist/replication/client_lib/replication_common.h"
 #include "dist/replication/meta_server/meta_data.h"
@@ -128,16 +129,16 @@ public:
     bool query_configuration_by_gpid(const dsn::gpid id, /*out*/ partition_configuration &config);
 
     // table options
-    void create_app(dsn::message_ex* msg);
-    void drop_app(dsn::message_ex* msg);
-    void recall_app(dsn::message_ex* msg);
+    void create_app(dsn::message_ex *msg);
+    void drop_app(dsn::message_ex *msg);
+    void recall_app(dsn::message_ex *msg);
     void list_apps(const configuration_list_apps_request &request,
                    configuration_list_apps_response &response);
 
     // update configuration
-    void on_config_sync(dsn::message_ex* msg);
+    void on_config_sync(dsn::message_ex *msg);
     void on_update_configuration(std::shared_ptr<configuration_update_request> &request,
-                                 dsn::message_ex* msg);
+                                 dsn::message_ex *msg);
 
     // dump & restore
     error_code dump_from_remote_storage(const char *local_path, bool sync_immediately);
@@ -274,7 +275,7 @@ private:
     meta_service *_meta_svc;
     std::string _apps_root;
 
-    mutable zrwlock_nr _lock;
+    mutable service::zrwlock_nr _lock;
     node_mapper _nodes;
 
     // available apps, dropping apps, creating apps: name -> app_state

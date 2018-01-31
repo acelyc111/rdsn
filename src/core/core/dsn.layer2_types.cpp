@@ -4,7 +4,7 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-#include <dsn/cpp/serialization_helper/dsn.layer2_types.h>
+#include <dsn/serialization/dsn.layer2_types.h>
 
 #include <algorithm>
 #include <ostream>

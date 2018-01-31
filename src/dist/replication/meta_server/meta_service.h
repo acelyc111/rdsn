@@ -38,6 +38,7 @@
 #include <memory>
 
 #include <dsn/tool-api/perf_counter_wrapper.h>
+#include <dsn/tool-api/zlocks.h>
 
 #include <dsn/dist/serverlet.h>
 #include <dsn/dist/meta_state_service.h>
@@ -146,14 +147,14 @@ private:
     std::shared_ptr<meta_server_failure_detector> _failure_detector;
     std::shared_ptr<dist::meta_state_service> _storage;
     std::shared_ptr<server_load_balancer> _balancer;
-    cli_server _cli_service;
+    service::cli_server _cli_service;
 
     // [
     // this is protected by failure_detector::_lock
     std::set<rpc_address> _alive_set;
     std::set<rpc_address> _dead_set;
     // ]
-    mutable zrwlock_nr _meta_lock;
+    mutable service::zrwlock_nr _meta_lock;
 
     std::atomic_bool _started;
     std::atomic_bool _recovering;

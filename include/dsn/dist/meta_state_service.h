@@ -43,8 +43,10 @@
 
 #pragma once
 
-#include <dsn/service_api_cpp.h>
 #include <dsn/utility/error_code.h>
+#include <dsn/utility/blob.h>
+#include <dsn/tool-api/task_code.h>
+#include <dsn/tool-api/task.h>
 #include <string>
 #include <functional>
 

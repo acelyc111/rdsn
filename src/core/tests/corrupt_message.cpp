@@ -2,7 +2,6 @@
 #include <string>
 
 #include <gtest/gtest.h>
-#include <dsn/service_api_cpp.h>
 #include <dsn/tool-api/async_calls.h>
 
 #include <boost/lexical_cast.hpp>

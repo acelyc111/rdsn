@@ -51,7 +51,7 @@
 #include <dsn/tool-api/uri_address.h>
 #include <dsn/tool-api/task_queue.h>
 #include <dsn/tool-api/async_calls.h>
-#include <dsn/cpp/serialization.h>
+#include <dsn/serialization/serialization.h>
 #include <set>
 
 #ifdef __TITLE__

@@ -186,7 +186,7 @@ void fs_manager::add_replica(const gpid &pid, const std::string &pid_dir)
                pid.get_app_id(),
                pid.get_partition_index());
     } else {
-        zauto_write_lock l(_lock);
+        service::zauto_write_lock l(_lock);
         std::set<dsn::gpid> &replicas_for_app = n->holding_replicas[pid.get_app_id()];
         auto result = replicas_for_app.emplace(pid);
         if (!result.second) {
@@ -210,7 +210,7 @@ void fs_manager::allocate_dir(const gpid &pid, const std::string &type, /*out*/ 
     char buffer[256];
     sprintf(buffer, "%d.%d.%s", pid.get_app_id(), pid.get_partition_index(), type.c_str());
 
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
 
     dir_node *selected = nullptr;
 
@@ -252,7 +252,7 @@ void fs_manager::allocate_dir(const gpid &pid, const std::string &type, /*out*/ 
 
 void fs_manager::remove_replica(const gpid &pid)
 {
-    zauto_write_lock l(_lock);
+    service::zauto_write_lock l(_lock);
     unsigned remove_count = 0;
     for (auto &n : _dir_nodes) {
         unsigned r = n->remove(pid);
@@ -274,7 +274,7 @@ void fs_manager::remove_replica(const gpid &pid)
 
 bool fs_manager::for_each_dir_node(const std::function<bool(const dir_node &)> &func) const
 {
-    zauto_read_lock l(_lock);
+    service::zauto_read_lock l(_lock);
     for (auto &n : _dir_nodes) {
         if (!func(*n))
             return false;

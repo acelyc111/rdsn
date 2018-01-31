@@ -37,7 +37,7 @@
 #include <dsn/tool_api.h>
 #include <dsn/utility/enum_helper.h>
 #include <dsn/tool-api/auto_codes.h>
-#include <dsn/cpp/serialization.h>
+#include <dsn/serialization/serialization.h>
 #include <dsn/tool-api/task_spec.h>
 #include <dsn/tool-api/zlock_provider.h>
 #include <dsn/tool-api/env_provider.h>

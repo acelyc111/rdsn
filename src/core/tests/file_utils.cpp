@@ -34,7 +34,6 @@
  */
 
 #include <gtest/gtest.h>
-#include <dsn/service_api_cpp.h>
 #include <dsn/utility/utils.h>
 #include <dsn/utility/filesystem.h>
 #include <fstream>

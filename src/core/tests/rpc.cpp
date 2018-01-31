@@ -39,7 +39,6 @@
 
 #include <dsn/tool-api/aio_provider.h>
 #include <gtest/gtest.h>
-#include <dsn/service_api_cpp.h>
 #include <dsn/utility/priority_queue.h>
 #include <dsn/tool-api/group_address.h>
 #include <dsn/tool-api/async_calls.h>

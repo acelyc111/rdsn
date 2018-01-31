@@ -84,7 +84,7 @@ meta_service::~meta_service() {}
 
 bool meta_service::check_freeze() const
 {
-    zauto_lock l(_failure_detector->_lock);
+    service::zauto_lock l(_failure_detector->_lock);
     if (_alive_set.size() < _meta_opts.min_live_node_count_for_unfreeze)
         return true;
     int total = _alive_set.size() + _dead_set.size();
@@ -154,7 +154,7 @@ void meta_service::set_node_state(const std::vector<rpc_address> &nodes, bool is
 
 void meta_service::get_node_state(/*out*/ std::map<rpc_address, bool> &all_nodes)
 {
-    zauto_lock l(_failure_detector->_lock);
+    service::zauto_lock l(_failure_detector->_lock);
     for (auto &node : _alive_set)
         all_nodes[node] = true;
     for (auto &node : _dead_set)
@@ -165,7 +165,7 @@ void meta_service::balancer_run() { _state->check_all_partitions(); }
 
 void meta_service::start_service()
 {
-    zauto_lock l(_failure_detector->_lock);
+    service::zauto_lock l(_failure_detector->_lock);
 
     const meta_view view = _state->get_meta_view();
     for (auto &kv : *view.nodes) {
@@ -379,7 +379,7 @@ void meta_service::on_list_nodes(dsn::message_ex *req)
     dsn::unmarshall(req, request);
 
     {
-        zauto_lock l(_failure_detector->_lock);
+        service::zauto_lock l(_failure_detector->_lock);
         dsn::replication::node_info info;
         if (request.status == node_status::NS_INVALID || request.status == node_status::NS_ALIVE) {
             info.status = node_status::NS_ALIVE;
@@ -474,7 +474,7 @@ void meta_service::on_config_sync(dsn::message_ex *req)
         // of failure_detector::_lock. Here we use this lock again, to make sure the config_sync rpc
         // AFTER the node dead is dispatch
         // AFTER the node dead event
-        zauto_lock l(_failure_detector->_lock);
+        service::zauto_lock l(_failure_detector->_lock);
         req->add_ref();
         tasking::enqueue(LPC_META_STATE_HIGH,
                          nullptr,
@@ -563,7 +563,7 @@ void meta_service::on_start_recovery(dsn::message_ex *req)
     if (result == -1) {
         response.err = ERR_FORWARD_TO_OTHERS;
     } else {
-        zauto_write_lock l(_meta_lock);
+        service::zauto_write_lock l(_meta_lock);
         if (_started.load()) {
             ddebug("service(%s) is already started, ignore the recovery request",
                    dsn_primary_address().to_string());

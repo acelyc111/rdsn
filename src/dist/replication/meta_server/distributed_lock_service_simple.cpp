@@ -69,7 +69,7 @@ void distributed_lock_service_simple::random_lock_lease_expire(const std::string
     task_ptr lease_callback;
 
     {
-        zauto_lock l(_lock);
+        service::zauto_lock l(_lock);
         auto it = _dlocks.find(lock_id);
         if (it != _dlocks.end()) {
             if (it->second.owner != "") {
@@ -132,7 +132,7 @@ distributed_lock_service_simple::lock(const std::string &lock_id,
     bool is_new = false;
 
     {
-        zauto_lock l(_lock);
+        service::zauto_lock l(_lock);
         auto it = _dlocks.find(lock_id);
         if (it == _dlocks.end()) {
             if (!opt.create_if_not_exist)
@@ -202,7 +202,7 @@ task_ptr distributed_lock_service_simple::cancel_pending_lock(const std::string 
     uint64_t version;
 
     {
-        zauto_lock l(_lock);
+        service::zauto_lock l(_lock);
         auto it = _dlocks.find(lock_id);
         if (it == _dlocks.end()) {
             err = ERR_OBJECT_NOT_FOUND;
@@ -238,7 +238,7 @@ task_ptr distributed_lock_service_simple::unlock(const std::string &lock_id,
     uint64_t next_version;
 
     {
-        zauto_lock l(_lock);
+        service::zauto_lock l(_lock);
         auto it = _dlocks.find(lock_id);
         if (it == _dlocks.end()) {
             err = ERR_OBJECT_NOT_FOUND;
@@ -283,7 +283,7 @@ task_ptr distributed_lock_service_simple::query_lock(const std::string &lock_id,
     uint64_t version;
 
     {
-        zauto_lock l(_lock);
+        service::zauto_lock l(_lock);
         auto it = _dlocks.find(lock_id);
         if (it == _dlocks.end()) {
             err = ERR_OBJECT_NOT_FOUND;
@@ -303,7 +303,7 @@ error_code distributed_lock_service_simple::query_cache(const std::string &lock_
 {
     error_code err;
     {
-        zauto_lock l(_lock);
+        service::zauto_lock l(_lock);
         auto it = _dlocks.find(lock_id);
         if (it == _dlocks.end()) {
             err = ERR_OBJECT_NOT_FOUND;

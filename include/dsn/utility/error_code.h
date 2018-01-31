@@ -1,10 +1,7 @@
 #pragma once
 
 #include <dsn/utility/customizable_id.h>
-
-#ifdef DSN_USE_THRIFT_SERIALIZATION
 #include <thrift/protocol/TProtocol.h>
-#endif
 
 namespace dsn {
 class error_code
@@ -25,10 +22,8 @@ public:
     bool operator!=(const error_code &r) { return !(*this == r); }
     operator int() const { return _internal_code; }
 
-#ifdef DSN_USE_THRIFT_SERIALIZATION
     uint32_t read(::apache::thrift::protocol::TProtocol *iprot);
     uint32_t write(::apache::thrift::protocol::TProtocol *oprot) const;
-#endif
 
     static int max();
     static bool is_exist(const char *name);
@@ -37,6 +32,8 @@ public:
 private:
     int _internal_code;
 };
+
+inline const char *to_string(const error_code &ec) { return ec.to_string(); }
 
 #define DEFINE_ERR_CODE(x) __selectany const dsn::error_code x(#x);
 

@@ -220,6 +220,8 @@ private:
         uint64_t value;
     } _addr;
 };
+
+inline const char *to_string(const rpc_address &addr) { return addr.to_string(); }
 }
 
 namespace std {

@@ -7,7 +7,7 @@
 #ifndef fd_TYPES_H
 #define fd_TYPES_H
 
-#include <dsn/service_api_cpp.h>
+#include <dsn/serialization/dsn_types.h>
 #include <iosfwd>
 
 #include <thrift/Thrift.h>

@@ -44,8 +44,8 @@
 #include <type_traits>
 #include <cctype>
 #include <dsn/utility/autoref_ptr.h>
-#include <dsn/tool-api/auto_codes.h>
 #include <dsn/utility/utils.h>
+#include <dsn/tool-api/auto_codes.h>
 #include <dsn/dist/replication/replication_types.h>
 #include <dsn/dist/replication/replication_enums.h>
 
@@ -195,7 +195,7 @@ public:
     string_tokenizer(const char *b, unsigned offset, unsigned len)
         : buffer(b), pos(offset), length(len)
     {
-        dassert(pos < length, "%u vs %u", pos, length);
+        assert(pos < length);
     }
     string_tokenizer(const dsn::blob &source, unsigned from)
         : string_tokenizer(source.data(), from, source.length())
@@ -220,7 +220,7 @@ public:
         while (pos < length && token[j] != 0 && buffer[pos] == token[j])
             ++pos, ++j;
         if (token[j] != 0) {
-            dassert(false, "invalid buffer:%s at pos %u", buffer, pos);
+            assert(false);
         }
     }
     void expect_token(char token)
@@ -230,7 +230,7 @@ public:
         if (pos < length && buffer[pos] == token)
             ++pos;
         else {
-            dassert(false, "invalid buffer:%s at pos %u", buffer, pos);
+            assert(false);
         }
     }
     bool verify_token(char token)
@@ -257,7 +257,7 @@ public:
         if (pos < length && buffer[pos] == token)
             return;
         else {
-            dassert(false, "invalid buffer:%s at pos %u", buffer, pos);
+            assert(false);
         }
     }
     void walk_until_json_splitter()

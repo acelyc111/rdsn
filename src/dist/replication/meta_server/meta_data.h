@@ -43,9 +43,10 @@
 #include <functional>
 #include <dsn/utility/utils.h>
 #include <dsn/utility/extensible_object.h>
+#include <dsn/tool-api/task.h>
 #include <dsn/dist/replication/replication_types.h>
 #include <dsn/dist/replication/replication_other_types.h>
-#include <dsn/cpp/json_helper.h>
+#include <dsn/serialization/json_helper.h>
 
 namespace dsn {
 namespace replication {
@@ -189,7 +190,7 @@ public:
     //[
     task_ptr pending_sync_task;
     std::shared_ptr<configuration_update_request> pending_sync_request;
-    dsn::message_ex* msg;
+    dsn::message_ex *msg;
     //]
 
     // for load balancer's decision
@@ -273,7 +274,7 @@ public:
     app_state *owner;
     std::atomic_int partitions_in_progress;
     std::vector<config_context> contexts;
-    dsn::message_ex* pending_response;
+    dsn::message_ex *pending_response;
 
 public:
     app_state_helper() : owner(nullptr), partitions_in_progress(0)

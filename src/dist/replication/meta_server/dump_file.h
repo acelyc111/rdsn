@@ -36,9 +36,11 @@
 #ifndef DUMP_FILE_H
 #define DUMP_FILE_H
 
-#include <dsn/service_api_c.h>
-#include <dsn/service_api_cpp.h>
 #include <dsn/utility/crc.h>
+#include <dsn/utility/blob.h>
+#include <dsn/utility/mm.h>
+#include <dsn/tool-api/logging.h>
+#include <memory>
 #include <cstdio>
 #include <cerrno>
 #include <iostream>

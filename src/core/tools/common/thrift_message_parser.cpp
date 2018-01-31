@@ -35,9 +35,11 @@
 
 #include "thrift_message_parser.h"
 #include <dsn/service_api_c.h>
-#include <dsn/cpp/serialization_helper/thrift_helper.h>
+#include <dsn/serialization/thrift_helper.h>
+#include <dsn/serialization/rpc_stream.h>
 #include <dsn/utility/ports.h>
 #include <dsn/utility/crc.h>
+#include <dsn/utility/char_ptr.h>
 
 #ifdef __TITLE__
 #undef __TITLE__

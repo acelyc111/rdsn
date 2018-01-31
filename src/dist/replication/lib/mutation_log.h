@@ -35,9 +35,10 @@
 
 #pragma once
 
-#include "../client_lib/replication_common.h"
-#include "mutation.h"
 #include <atomic>
+#include <dsn/tool-api/zlocks.h>
+#include "dist/replication/client_lib/replication_common.h"
+#include "mutation.h"
 
 namespace dsn {
 namespace replication {
@@ -295,7 +296,7 @@ protected:
     // thread-safe
     int64_t get_global_offset() const
     {
-        zauto_lock l(_lock);
+        service::zauto_lock l(_lock);
         return _global_end_offset;
     }
 
@@ -345,7 +346,7 @@ private:
     ///////////////////////////////////////////////
     //// memory states
     ///////////////////////////////////////////////
-    mutable zlock _lock;
+    mutable service::zlock _lock;
     bool _is_opened;
     bool _switch_file_hint;
     bool _switch_file_demand;
@@ -411,7 +412,7 @@ private:
     // bufferring - only one concurrent write is allowed
     typedef std::vector<aio_task_ptr> callbacks;
     typedef std::vector<mutation_ptr> mutations;
-    mutable zlock _slock;
+    mutable service::zlock _slock;
     std::atomic_bool _is_writing;
     std::shared_ptr<log_block> _pending_write;
     std::shared_ptr<callbacks> _pending_write_callbacks;
@@ -483,7 +484,7 @@ private:
     uint64_t _pending_write_start_time_ms;
     decree _pending_write_max_commit;
     decree _pending_write_max_decree;
-    mutable zlock _plock;
+    mutable service::zlock _plock;
 
     uint32_t _batch_buffer_bytes;
     uint32_t _batch_buffer_max_count;

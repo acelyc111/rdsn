@@ -41,7 +41,7 @@
 #include <vector>
 #include <iomanip>
 #include "http_message_parser.h"
-#include <dsn/cpp/serialization.h>
+#include <dsn/serialization/serialization.h>
 
 #ifdef __TITLE__
 #undef __TITLE__
