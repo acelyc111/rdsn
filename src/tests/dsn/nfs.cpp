@@ -4,12 +4,6 @@
 #include <dsn/utility/filesystem.h>
 #include <gtest/gtest.h>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-
-#define __TITLE__ "fd.test"
-
 using namespace dsn;
 
 static std::unique_ptr<::dsn::nfs_node> nfs_handler;

@@ -43,11 +43,6 @@
 #include <dsn/tool-api/group_address.h>
 #include <dsn/tool-api/uri_address.h>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "uri_address"
-
 namespace dsn {
 void uri_resolver_manager::setup_resolvers()
 {

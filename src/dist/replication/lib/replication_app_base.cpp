@@ -43,11 +43,6 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "replica.app.base"
-
 namespace dsn {
 namespace replication {
 

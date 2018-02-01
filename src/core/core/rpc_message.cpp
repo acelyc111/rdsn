@@ -45,11 +45,6 @@
 
 using namespace dsn::utils;
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "rpc.message"
-
 namespace dsn {
 
 std::atomic<uint64_t> message_ex::_id(0);

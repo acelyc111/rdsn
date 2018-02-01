@@ -42,11 +42,6 @@
 #include <dsn/utility/crc.h>
 #include <dsn/tool-api/async_calls.h>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "mutation_log"
-
 namespace dsn {
 namespace replication {
 

@@ -40,11 +40,6 @@
 
 #include "task_engine.h"
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "zlock"
-
 namespace dsn {
 namespace service {
 

@@ -37,11 +37,6 @@
 #include <dsn/tool-api/group_address.h>
 #include <dsn/dist/failure_detector_multimaster.h>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "dist.FD.multimaster"
-
 namespace dsn {
 namespace dist {
 

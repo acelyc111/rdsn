@@ -1,9 +1,4 @@
 #include <gtest/gtest.h>
-
-#ifndef __TITLE__
-#define __TITLE__ "dumpfile_test"
-#endif
-
 #include "dist/replication/meta_server/dump_file.h"
 
 TEST(dump_file, read_write)

@@ -47,11 +47,6 @@
 #include <dsn/tool-api/rpc_message.h>
 #include <dsn/tool-api/auto_codes.h>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "task"
-
 namespace dsn {
 
 class task_worker;

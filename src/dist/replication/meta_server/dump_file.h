@@ -33,8 +33,7 @@
  *     2015-12-10, Weijie Sun(sunweijie at xiaomi.com), first version
  *     xxxx-xx-xx, author, fix bug about xxx
  */
-#ifndef DUMP_FILE_H
-#define DUMP_FILE_H
+#pragma once
 
 #include <dsn/utility/crc.h>
 #include <dsn/utility/blob.h>
@@ -168,4 +167,3 @@ private:
     std::string _filename;
     uint32_t _crc;
 };
-#endif // DUMP_FILE_H

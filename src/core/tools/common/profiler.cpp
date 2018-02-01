@@ -70,11 +70,6 @@ START<== queue(server) == ENQUEUE <===== net(reply) ======= REPLY <=============
 #include <dsn/tool-api/command_manager.h>
 #include <dsn/tool-api/perf_counter_wrapper.h>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "toollet.profiler"
-
 namespace dsn {
 namespace tools {
 

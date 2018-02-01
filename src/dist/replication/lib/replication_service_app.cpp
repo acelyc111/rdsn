@@ -37,11 +37,6 @@
 #include "dist/replication/client_lib/replication_common.h"
 #include "replica_stub.h"
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "replica.service_app"
-
 dsn::error_code dsn_layer2_stateful_type1_bridge(int argc, char **argv)
 {
     dsn::service_app::register_factory<::dsn::replication::replication_service_app>("replica");

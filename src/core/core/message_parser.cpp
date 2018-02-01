@@ -37,11 +37,6 @@
 #include <dsn/service_api_c.h>
 #include <dsn/utility/mm.h>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "message.parser"
-
 namespace dsn {
 
 // ------------------- header type ------------------------------

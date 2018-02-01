@@ -37,11 +37,6 @@
 #include <dsn/utility/utils.h>
 #include <dsn/tool-api/async_calls.h>
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "partition.resolver.simple"
-
 namespace dsn {
 namespace dist {
 //------------------------------------------------------------------------------------

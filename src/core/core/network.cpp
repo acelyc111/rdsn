@@ -41,11 +41,6 @@
 #include <dsn/utility/factory_store.h>
 #include "message_parser_manager.h"
 
-#ifdef __TITLE__
-#undef __TITLE__
-#endif
-#define __TITLE__ "network"
-
 namespace dsn {
 /*static*/ join_point<void, rpc_session *>
     rpc_session::on_rpc_session_connected("rpc.session.connected");
