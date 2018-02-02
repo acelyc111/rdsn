@@ -102,22 +102,6 @@ error_code service_node::init_io_engine()
     return err;
 }
 
-error_code service_node::start_io_engine_in_main()
-{
-    auto &spec = service_engine::fast_instance().spec();
-    error_code err = ERR_OK;
-
-    // start timer service
-    _node_io.tsvc->start();
-
-    // start disk engine
-    _node_io.disk->start(_node_io.aio);
-
-    // start rpc engine
-    err = _node_io.rpc->start(_app_spec);
-    return err;
-}
-
 dsn::error_code service_node::start_app()
 {
     dassert(_entity.get(), "entity hasn't initialized");
@@ -173,8 +157,15 @@ error_code service_node::start()
     if (err != ERR_OK)
         return err;
 
-    // start io engines (only timer, disk and rpc), others are started in app start task
-    start_io_engine_in_main();
+    // start timer service
+    _node_io.tsvc->start();
+
+    // start disk engine
+    _node_io.disk->start(_node_io.aio);
+
+    // start rpc engine
+    err = _node_io.rpc->start(_app_spec);
+    dassert(err == ERR_OK, "%s : start rpc_service failed", full_name());
 
     // start task engine
     _computation->start();

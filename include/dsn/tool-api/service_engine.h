@@ -116,7 +116,6 @@ private:
     void init_service_app();
 
     error_code init_io_engine();
-    error_code start_io_engine_in_main();
 };
 
 typedef std::map<int, service_node *> service_nodes_by_app_id;
