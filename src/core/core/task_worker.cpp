@@ -308,6 +308,13 @@ void task_worker::loop()
     int best_batch_size = pool_spec().dequeue_batch_size;
 
     // try {
+    char buf[1024*1024];
+    buf[0] = '\0';
+    int buf_next = 0;
+    uint64_t last_print = dsn_now_ns();
+    int exec_count = 0;
+    uint64_t total_time = 0;
+    uint64_t max_time = 0;
     while (_is_running) {
         int batch_size = best_batch_size;
         task *task = q->dequeue(batch_size), *next;
@@ -320,7 +327,34 @@ void task_worker::loop()
         while (task != nullptr) {
             next = task->next;
             task->next = nullptr;
+            uint64_t start = dsn_now_ns();
+            const char* task_name = task->spec().name.c_str();
             task->exec_internal();
+            uint64_t end = dsn_now_ns();
+            uint64_t elasped = end - start;
+            exec_count++;
+            total_time += elasped;
+            if (elasped > 1000000) {
+                buf_next += sprintf(buf + buf_next, "%s:%" PRIu64 ",",
+                                    task_name, elasped / 1000);
+                buf[buf_next] = '\0';
+            }
+            if (elasped > max_time)
+                max_time = elasped;
+            if (end - last_print >= 1000000000) {
+                uint64_t avg_time = 0;
+                if (exec_count > 0)
+                    avg_time = total_time / exec_count / 1000;
+                ddebug("task_worker_stat: exec_count=%d,avg_time=%" PRIu64
+                       ",max_time=%" PRIu64 ",queue_length=%d,%s",
+                       exec_count, avg_time, max_time, q->count(), buf);
+                buf[0] = '\0';
+                buf_next = 0;
+                last_print = end;
+                exec_count = 0;
+                total_time = 0;
+                max_time = 0;
+            }
             task = next;
 #ifndef NDEBUG
             count++;
