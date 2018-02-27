@@ -315,6 +315,7 @@ void task_worker::loop()
     int exec_count = 0;
     uint64_t total_time = 0;
     uint64_t max_time = 0;
+    const char* max_task = nullptr;
     while (_is_running) {
         int batch_size = best_batch_size;
         task *task = q->dequeue(batch_size), *next;
@@ -339,21 +340,25 @@ void task_worker::loop()
                                     task_name, elasped / 1000);
                 buf[buf_next] = '\0';
             }
-            if (elasped > max_time)
+            if (elasped > max_time) {
                 max_time = elasped;
+                max_task = task_name;
+            }
             if (end - last_print >= 1000000000) {
                 uint64_t avg_time = 0;
                 if (exec_count > 0)
                     avg_time = total_time / exec_count / 1000;
-                ddebug("task_worker_stat: exec_count=%d,avg_time=%" PRIu64
-                       ",max_time=%" PRIu64 ",queue_length=%d,%s",
-                       exec_count, avg_time, max_time, q->count(), buf);
+                ddebug("task_worker_stat: exec_count=%d,queue_length=%d,"
+                       "avg_time=%" PRIu64 ",max_time=%s:%" PRIu64 ",%s",
+                       exec_count, q->count(), avg_time,
+                       max_task ? max_task : "", max_time / 1000, buf);
                 buf[0] = '\0';
                 buf_next = 0;
                 last_print = end;
                 exec_count = 0;
                 total_time = 0;
                 max_time = 0;
+                max_task = nullptr;
             }
             task = next;
 #ifndef NDEBUG
