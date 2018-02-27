@@ -1,5 +1,6 @@
 #include <dsn/utility/utils.h>
 #include <dsn/utility/binary_reader.h>
+#include <dsn/c/api_utilities.h>
 
 namespace dsn {
 
@@ -35,6 +36,11 @@ int binary_reader::read(blob &blob)
     if (0 == read(len))
         return 0;
 
+    return read(blob, len);
+}
+
+int binary_reader::read(blob &blob, int len)
+{
     if (len <= get_remaining_size()) {
         blob = _blob.range(static_cast<int>(_ptr - _blob.data()), len);
 

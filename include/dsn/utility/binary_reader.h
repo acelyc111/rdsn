@@ -39,6 +39,7 @@ public:
     int read(/*out*/ std::string &s);
     int read(char *buffer, int sz);
     int read(blob &blob);
+    int read(blob &blob, int len);
 
     bool next(const void **data, int *size);
     bool skip(int count);
