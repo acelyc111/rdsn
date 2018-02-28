@@ -232,6 +232,8 @@ void replica::do_possible_commit_on_primary(mutation_ptr &mu)
 
 void replica::on_prepare(dsn_message_t request)
 {
+    uint64_t t0 = dsn_now_ns();
+
     check_hashed_access();
 
     replica_configuration rconfig;
@@ -276,6 +278,8 @@ void replica::on_prepare(dsn_message_t request)
             return;
         }
     }
+
+    uint64_t t1 = dsn_now_ns();
 
     if (partition_status::PS_INACTIVE == status() || partition_status::PS_ERROR == status()) {
         derror("%s: mutation %s on_prepare failed as invalid replica state, state = %s",
@@ -331,6 +335,8 @@ void replica::on_prepare(dsn_message_t request)
         return;
     }
 
+    uint64_t t2 = dsn_now_ns();
+
     // real prepare start
 
     auto mu2 = _prepare_list->get_mutation_by_decree(decree);
@@ -372,6 +378,8 @@ void replica::on_prepare(dsn_message_t request)
         return;
     }
 
+    uint64_t t3 = dsn_now_ns();
+
     dassert(mu->log_task() == nullptr, "");
     mu->log_task() = _stub->_log->append(mu,
                                          LPC_WRITE_REPLICATION_LOG,
@@ -383,10 +391,19 @@ void replica::on_prepare(dsn_message_t request)
                                                    std::placeholders::_2),
                                          gpid_to_thread_hash(get_gpid()));
     dassert(nullptr != mu->log_task(), "");
+
+    uint64_t t4 = dsn_now_ns();
+
+    if (t4 - t0 >= 20000000) {
+        ddebug("%s: latency_stat: %" PRIu64 " { %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " }",
+               name(), (t4-t0) / 1000, (t1-t0)/1000, (t2-t1)/1000, (t3-t2)/1000, (t4-t3)/1000);
+    }
 }
 
 void replica::on_append_log_completed(mutation_ptr &mu, error_code err, size_t size)
 {
+    uint64_t t0 = dsn_now_ns();
+
     check_hashed_access();
 
     dinfo("%s: append shared log completed for mutation %s, size = %u, err = %s",
@@ -403,6 +420,8 @@ void replica::on_append_log_completed(mutation_ptr &mu, error_code err, size_t s
                mu->name(),
                err.to_string());
     }
+
+    uint64_t t1 = dsn_now_ns();
 
     // skip old mutations
     if (mu->data.header.ballot >= get_ballot() && status() != partition_status::PS_INACTIVE) {
@@ -430,14 +449,25 @@ void replica::on_append_log_completed(mutation_ptr &mu, error_code err, size_t s
         }
     }
 
+    uint64_t t2 = dsn_now_ns();
+
     if (err != ERR_OK) {
         // mutation log failure, propagate to all replicas
         _stub->handle_log_failure(err);
     }
 
+    uint64_t t3 = dsn_now_ns();
+
     // write local private log if necessary
     if (err == ERR_OK && status() != partition_status::PS_ERROR) {
         _private_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, this, nullptr);
+    }
+
+    uint64_t t4 = dsn_now_ns();
+
+    if (t4 - t0 >= 20000000) {
+        ddebug("%s: latency_stat: %" PRIu64 " { %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " }",
+               name(), (t4-t0) / 1000, (t1-t0)/1000, (t2-t1)/1000, (t3-t2)/1000, (t4-t3)/1000);
     }
 }
 
