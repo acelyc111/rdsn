@@ -46,7 +46,7 @@ namespace replication {
 
 using namespace ::dsn::service;
 
-::dsn::task_ptr mutation_log_shared::append(mutation_ptr &mu,
+::dsn::task_ptr mutation_log_shared::append(const mutation_ptr &mu,
                                             dsn::task_code callback_code,
                                             clientlet *callback_host,
                                             aio_handler &&callback,
@@ -210,7 +210,7 @@ void mutation_log_shared::write_pending_mutations(bool release_lock_required)
 
 ////////////////////////////////////////////////////
 
-::dsn::task_ptr mutation_log_private::append(mutation_ptr &mu,
+::dsn::task_ptr mutation_log_private::append(const mutation_ptr &mu,
                                              dsn::task_code callback_code,
                                              clientlet *callback_host,
                                              aio_handler &&callback,

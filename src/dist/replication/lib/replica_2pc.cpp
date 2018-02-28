@@ -460,7 +460,14 @@ void replica::on_append_log_completed(mutation_ptr &mu, error_code err, size_t s
 
     // write local private log if necessary
     if (err == ERR_OK && status() != partition_status::PS_ERROR) {
-        _private_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, this, nullptr);
+        tasking::enqueue(LPC_APPEND_LOG_PRIVATE,
+                         this,
+                         [this, mu] {
+                             if (status() != partition_status::PS_ERROR && _private_log) {
+                                _private_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, this, nullptr);
+                             }
+                         },
+                         gpid_to_thread_hash(get_gpid()));
     }
 
     uint64_t t4 = dsn_now_ns();

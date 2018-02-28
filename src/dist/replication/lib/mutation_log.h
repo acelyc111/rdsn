@@ -132,7 +132,7 @@ public:
     // append a log mutation
     // return value: nullptr for error
     // thread safe
-    virtual ::dsn::task_ptr append(mutation_ptr &mu,
+    virtual ::dsn::task_ptr append(const mutation_ptr &mu,
                                    dsn::task_code callback_code,
                                    clientlet *callback_host,
                                    aio_handler &&callback,
@@ -380,7 +380,7 @@ public:
     {
     }
 
-    virtual ::dsn::task_ptr append(mutation_ptr &mu,
+    virtual ::dsn::task_ptr append(const mutation_ptr &mu,
                                    dsn::task_code callback_code,
                                    clientlet *callback_host,
                                    aio_handler &&callback,
@@ -433,7 +433,7 @@ public:
         mutation_log_private::init_states();
     }
 
-    virtual ::dsn::task_ptr append(mutation_ptr &mu,
+    virtual ::dsn::task_ptr append(const mutation_ptr &mu,
                                    dsn::task_code callback_code,
                                    clientlet *callback_host,
                                    aio_handler &&callback,
