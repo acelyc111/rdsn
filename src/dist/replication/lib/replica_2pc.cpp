@@ -394,7 +394,7 @@ void replica::on_prepare(dsn_message_t request)
 
     uint64_t t4 = dsn_now_ns();
 
-    if (t4 - t0 >= 20000000) {
+    if (t4 - t0 >= 10000000) {
         ddebug("%s: latency_stat: %" PRIu64 " { %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " }",
                name(), (t4-t0) / 1000, (t1-t0)/1000, (t2-t1)/1000, (t3-t2)/1000, (t4-t3)/1000);
     }
@@ -460,6 +460,8 @@ void replica::on_append_log_completed(mutation_ptr &mu, error_code err, size_t s
 
     // write local private log if necessary
     if (err == ERR_OK && status() != partition_status::PS_ERROR) {
+        _private_log->append(mu, LPC_WRITE_REPLICATION_LOG_COMMON, this, nullptr);
+        /*
         tasking::enqueue(LPC_APPEND_LOG_PRIVATE,
                          this,
                          [this, mu] {
@@ -468,11 +470,12 @@ void replica::on_append_log_completed(mutation_ptr &mu, error_code err, size_t s
                              }
                          },
                          gpid_to_thread_hash(get_gpid()));
+                         */
     }
 
     uint64_t t4 = dsn_now_ns();
 
-    if (t4 - t0 >= 20000000) {
+    if (t4 - t0 >= 10000000) {
         ddebug("%s: latency_stat: %" PRIu64 " { %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " }",
                name(), (t4-t0) / 1000, (t1-t0)/1000, (t2-t1)/1000, (t3-t2)/1000, (t4-t3)/1000);
     }
