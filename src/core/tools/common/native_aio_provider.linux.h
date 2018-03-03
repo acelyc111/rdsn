@@ -46,6 +46,7 @@
 #include <fcntl.h>    /* O_RDWR */
 #include <string.h>   /* memset() */
 #include <inttypes.h> /* uint64_t */
+#include <memory>     /* std::unique_ptr */
 
 namespace dsn {
 namespace tools {
@@ -68,6 +69,7 @@ public:
     {
         struct iocb cb;
         aio_task *tsk;
+        std::unique_ptr<struct iovec[]> iov;
         native_linux_aio_provider *this_;
         utils::notify_event *evt;
         error_code err;

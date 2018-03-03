@@ -98,6 +98,7 @@ error_code native_linux_aio_provider::flush(dsn_handle_t fh)
 disk_aio *native_linux_aio_provider::prepare_aio_context(aio_task *tsk)
 {
     auto r = new linux_disk_aio_context;
+    r->support_writev = true;
     bzero((char *)&r->cb, sizeof(r->cb));
     r->tsk = tsk;
     r->evt = nullptr;
@@ -174,13 +175,41 @@ error_code native_linux_aio_provider::aio_internal(aio_task *aio_tsk,
                       aio->buffer_size,
                       aio->file_offset);
         break;
-    case AIO_Write:
-        io_prep_pwrite(&aio->cb,
-                       static_cast<int>((ssize_t)aio->file),
-                       aio->buffer,
-                       aio->buffer_size,
-                       aio->file_offset);
+    case AIO_Write: {
+        if (aio->buffer) {
+            //ddebug("io_prep_pwrite@1: buffer_size = %u", aio->buffer_size);
+            io_prep_pwrite(&aio->cb,
+                           static_cast<int>((ssize_t)aio->file),
+                           aio->buffer,
+                           aio->buffer_size,
+                           aio->file_offset);
+        } else if (aio_tsk->_unmerged_write_buffers.size() == 1) {
+            //ddebug("io_prep_pwrite@2: buffer_size = %d", aio_tsk->_unmerged_write_buffers[0].size);
+            io_prep_pwrite(&aio->cb,
+                           static_cast<int>((ssize_t)aio->file),
+                           aio_tsk->_unmerged_write_buffers[0].buffer,
+                           aio_tsk->_unmerged_write_buffers[0].size,
+                           aio->file_offset);
+        } else {
+            int iovcnt = aio_tsk->_unmerged_write_buffers.size();
+            aio->iov.reset(new struct iovec[iovcnt]);
+            struct iovec *iov = aio->iov.get();
+            uint32_t sz = 0;
+            for (int i = 0; i < iovcnt; i++) {
+                iov[i].iov_base = aio_tsk->_unmerged_write_buffers[i].buffer;
+                iov[i].iov_len = aio_tsk->_unmerged_write_buffers[i].size;
+                sz += iov[i].iov_len;
+            }
+            dassert(sz == aio->buffer_size,
+                    "unmerged_total_size = %u, aio_buffer_size = %u",
+                    sz,
+                    aio->buffer_size);
+            //ddebug("io_prep_pwritev: iovcnt = %d, buffer_size = %u", iovcnt, aio->buffer_size);
+            io_prep_pwritev(
+                &aio->cb, static_cast<int>((ssize_t)aio->file), iov, iovcnt, aio->file_offset);
+        }
         break;
+    }
     default:
         derror("unknown aio type %u", static_cast<int>(aio->type));
     }

@@ -353,6 +353,7 @@ public:
     // filled by apps
     dsn_handle_t file;
     void *buffer;
+    bool support_writev;
     uint32_t buffer_size;
     uint64_t file_offset;
 
@@ -364,6 +365,7 @@ public:
     disk_aio()
         : file(nullptr),
           buffer(nullptr),
+          support_writev(false),
           buffer_size(0),
           file_offset(0),
           type(AIO_Invalid),
@@ -398,6 +400,20 @@ public:
             }
         } else {
             memcpy(dest, _aio->buffer, _aio->buffer_size);
+        }
+    }
+
+    void copy_to(aio_task *dest)
+    {
+        if (!_unmerged_write_buffers.empty()) {
+            dest->_unmerged_write_buffers.insert(dest->_unmerged_write_buffers.end(),
+                                                 _unmerged_write_buffers.begin(),
+                                                 _unmerged_write_buffers.end());
+        } else {
+            dsn_file_buffer_t buf;
+            buf.buffer = _aio->buffer;
+            buf.size = _aio->buffer_size;
+            dest->_unmerged_write_buffers.push_back(buf);
         }
     }
 

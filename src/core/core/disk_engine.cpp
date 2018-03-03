@@ -291,42 +291,68 @@ void disk_engine::process_write(aio_task *aio, uint32_t sz)
 {
     // no batching
     if (aio->aio()->buffer_size == sz) {
-        aio->collapse();
+        if (!aio->aio()->support_writev) {
+            aio->collapse();
+        }
         return _provider->aio(aio);
     }
 
     // batching
     else {
-        // merge the buffers
-        auto bb = tls_trans_mem_alloc_blob((size_t)sz);
-        char *ptr = (char *)bb.data();
-        auto current_wk = aio;
-        do {
-            current_wk->copy_to(ptr);
-            ptr += current_wk->aio()->buffer_size;
-            current_wk = (aio_task *)current_wk->next;
-        } while (current_wk);
+        if (!aio->aio()->support_writev) {
+            // merge the buffers
+            auto bb = tls_trans_mem_alloc_blob((size_t)sz);
+            char *ptr = (char *)bb.data();
+            auto current_wk = aio;
+            do {
+                current_wk->copy_to(ptr);
+                ptr += current_wk->aio()->buffer_size;
+                current_wk = (aio_task *)current_wk->next;
+            } while (current_wk);
 
-        dassert(ptr == (char *)bb.data() + bb.length(),
-                "ptr = %" PRIu64 ", bb.data() = %" PRIu64 ", bb.length = %u",
-                (uint64_t)(ptr),
-                (uint64_t)(bb.data()),
-                bb.length());
+            dassert(ptr == (char *)bb.data() + bb.length(),
+                    "ptr = %" PRIu64 ", bb.data() = %" PRIu64 ", bb.length = %u",
+                    (uint64_t)(ptr),
+                    (uint64_t)(bb.data()),
+                    bb.length());
 
-        // setup io task
-        auto new_task = new batch_write_io_task(aio, bb);
-        auto dio = new_task->aio();
-        dio->buffer = (void *)bb.data();
-        dio->buffer_size = sz;
-        dio->file_offset = aio->aio()->file_offset;
+            // setup new io task
+            auto new_task = new batch_write_io_task(aio, bb);
+            auto dio = new_task->aio();
+            dio->buffer = (void *)bb.data();
+            dio->buffer_size = sz;
+            dio->file_offset = aio->aio()->file_offset;
 
-        dio->file = aio->aio()->file;
-        dio->file_object = aio->aio()->file_object;
-        dio->engine = aio->aio()->engine;
-        dio->type = AIO_Write;
+            dio->file = aio->aio()->file;
+            dio->file_object = aio->aio()->file_object;
+            dio->engine = aio->aio()->engine;
+            dio->type = AIO_Write;
 
-        new_task->add_ref(); // released in complete_io
-        return _provider->aio(new_task);
+            new_task->add_ref(); // released in complete_io
+            return _provider->aio(new_task);
+        } else {
+            // setup new io task
+            auto new_task = new aio_task(LPC_AIO_BATCH_WRITE, nullptr, aio, nullptr);
+            auto dio = new_task->aio();
+            dio->buffer = nullptr;
+            dio->buffer_size = sz;
+            dio->file_offset = aio->aio()->file_offset;
+
+            dio->file = aio->aio()->file;
+            dio->file_object = aio->aio()->file_object;
+            dio->engine = aio->aio()->engine;
+            dio->type = AIO_Write;
+
+            // zero copy buffers to new task
+            auto current_wk = aio;
+            do {
+                current_wk->copy_to(new_task);
+                current_wk = (aio_task *)current_wk->next;
+            } while (current_wk);
+
+            new_task->add_ref(); // released in complete_io
+            return _provider->aio(new_task);
+        }
     }
 }
 
