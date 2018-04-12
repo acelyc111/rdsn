@@ -1054,6 +1054,75 @@ dsn::error_code replication_ddl_client::enable_backup_policy(const std::string &
     }
 }
 
+dsn::error_code replication_ddl_client::add_compact_policy(const std::string &policy_name,
+                                                           const std::set<int32_t> &app_ids,
+                                                           int64_t interval_seconds,
+                                                           const int32_t start_time) {
+    std::shared_ptr<configuration_add_compact_policy_request> req =
+        std::make_shared<configuration_add_compact_policy_request>();
+    req->policy.__set_policy_name(policy_name);
+    req->policy.__set_app_ids(app_ids);
+    req->policy.__set_interval_seconds(interval_seconds);
+    req->policy.__set_start_time(start_time);
+    auto resp_task =
+        request_meta<configuration_add_compact_policy_request>(RPC_CM_ADD_COMPACT_POLICY, req);
+    resp_task->wait();
+
+    if (resp_task->error() != ERR_OK) {
+        return resp_task->error();
+    }
+
+    configuration_add_compact_policy_response resp;
+    ::dsn::unmarshall(resp_task->response(), resp);
+
+    if (resp.err != ERR_OK) {
+        std::cout << "not ok" << std::endl;
+        return resp.err;
+    } else {
+        std::cout << "add compact policy succeed, policy_name = " << policy_name << std::endl;
+    }
+    return ERR_OK;
+}
+
+dsn::error_code replication_ddl_client::modify_compact_policy(const std::string &policy_name,
+                                                              const std::set<int32_t> &app_ids,
+                                                              int64_t interval_seconds,
+                                                              const int32_t start_time) {
+    std::shared_ptr<configuration_modify_compact_policy_request> req =
+        std::make_shared<configuration_modify_compact_policy_request>();
+        req->policy.policy_name = policy_name;
+    if (!app_ids.empty()) {
+        req->policy.__set_app_ids(app_ids);
+    }
+    if (interval_seconds > 0) {
+        req->policy.__set_interval_seconds(interval_seconds);
+    }
+    if (start_time > 0) {
+        req->policy.__set_start_time(start_time);
+    }
+    auto resp_task =
+        request_meta<configuration_modify_compact_policy_request>(RPC_CM_MODIFY_COMPACT_POLICY, req);
+    resp_task->wait();
+
+    if (resp_task->error() != ERR_OK) {
+        return resp_task->error();
+    }
+
+    configuration_modify_compact_policy_response resp;
+    ::dsn::unmarshall(resp_task->response(), resp);
+    if (resp.err != ERR_OK) {
+        return resp.err;
+    } else {
+        std::cout << "Modify policy result: " << resp.err.to_string() << std::endl;
+        if (!resp.hint_message.empty()) {
+            std::cout << "=============================" << std::endl;
+            std::cout << resp.hint_message << std::endl;
+            std::cout << "=============================" << std::endl;
+        }
+        return resp.err;
+    }
+}
+
 // help functions
 
 template <typename T>
@@ -1096,13 +1165,54 @@ static void print_policy_entry(const policy_entry &entry)
               << " : " << entry.backup_history_count_to_keep << std::endl;
 }
 
+static void print_compact_policy_entry(const compact_policy_entry &entry)
+{
+    int width = strlen("start_time");           // the max length title
+
+    std::cout << "    " << std::setw(width) << std::left << "name"
+              << " : " << entry.policy_name << std::endl
+              << "    " << std::setw(width) << std::left << "interval"
+              << " : "  << entry.interval_seconds << "s" << std::endl
+              << "    " << std::setw(width) << std::left << "app_ids"
+              << " : " << print_set(entry.app_ids) << std::endl
+              << "    " << std::setw(width) << std::left << "start_time"
+              << " : " << ::dsn::utils::sec_of_day_to_hm(entry.start_time) << std::endl
+              << "    " << std::setw(width) << std::left << "status"
+              << " : " << (entry.is_disable ? "disabled" : "enabled") << std::endl
+              << std::endl;
+}
+
+static void print_compact_record(const compact_record &record)
+{
+    int width = strlen("start_time");
+
+    char start_time[30] = {'\0'};
+    char end_time[30] = {'\0'};
+    ::dsn::utils::time_ms_to_date_time(record.end_time, start_time, 30);
+    if (record.end_time == 0) {
+        end_time[0] = '-';
+        end_time[1] = '\0';
+    } else {
+        ::dsn::utils::time_ms_to_date_time(record.end_time, end_time, 30);
+    }
+
+    std::cout << "    " << std::setw(width) << std::left << "id : "
+              << record.id << std::endl
+              << "    " << std::setw(width) << std::left << "start_time : "
+              << start_time << std::endl
+              << "    " << std::setw(width) << std::left << "end_time : "
+              << end_time << std::endl
+              << "    " << std::setw(width) << std::left << "app_ids : "
+              << print_set(record.app_ids) << std::endl;
+}
+
 static void print_backup_entry(const backup_entry &bentry)
 {
     int width = strlen("start_time");
 
     char start_time[30] = {'\0'};
     char end_time[30] = {'\0'};
-    ::dsn::utils::time_ms_to_date_time(bentry.start_time_ms, start_time, 30);
+    ::dsn::utils::time_ms_to_date_time(bentry.end_time_ms, start_time, 30);
     if (bentry.end_time_ms == 0) {
         end_time[0] = '-';
         end_time[1] = '\0';
@@ -1307,6 +1417,42 @@ dsn::error_code replication_ddl_client::query_restore(int32_t restore_app_id, bo
     } else if (response.err == ERR_APP_DROPPED) {
         std::cout << "restore failed, because some partition's data is damaged on cold backup media"
                   << std::endl;
+    }
+    return ERR_OK;
+}
+
+dsn::error_code replication_ddl_client::query_compact_policy(const std::vector<std::string> &policy_names)
+{
+    std::shared_ptr<configuration_query_compact_policy_request> req =
+        std::make_shared<configuration_query_compact_policy_request>();
+    req->policy_names = policy_names;
+
+    auto resp_task =
+        request_meta<configuration_query_compact_policy_request>(RPC_CM_QUERY_COMPACT_POLICY, req);
+    resp_task->wait();
+
+    if (resp_task->error() != ERR_OK) {
+        return resp_task->error();
+    }
+
+    configuration_query_compact_policy_response resp;
+    ::dsn::unmarshall(resp_task->response(), resp);
+
+    if (resp.err != ERR_OK) {
+        return resp.err;
+    } else if (resp.policy_records.empty()) {
+        std::cout << "empty policy!" << std::endl;
+    } else {
+        for (const auto& policy_records : resp.policy_records) {
+            std::cout << "policy_info:" << std::endl;
+            print_compact_policy_entry(policy_records.policy);
+
+            std::cout << "compact_records:" << std::endl;
+            for (const auto& record : policy_records.records) {
+                print_compact_record(record);
+            }
+            std::cout << "************************" << std::endl;
+        }
     }
     return ERR_OK;
 }

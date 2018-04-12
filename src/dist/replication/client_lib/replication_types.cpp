@@ -9944,4 +9944,1235 @@ void configuration_query_restore_response::printTo(std::ostream& out) const {
   out << ")";
 }
 
+
+compact_policy_entry::~compact_policy_entry() throw() {
+}
+
+
+void compact_policy_entry::__set_policy_name(const std::string& val) {
+  this->policy_name = val;
+}
+
+void compact_policy_entry::__set_interval_seconds(const int64_t val) {
+  this->interval_seconds = val;
+__isset.interval_seconds = true;
+}
+
+void compact_policy_entry::__set_app_ids(const std::set<int32_t> & val) {
+  this->app_ids = val;
+__isset.app_ids = true;
+}
+
+void compact_policy_entry::__set_start_time(const int32_t val) {
+  this->start_time = val;
+__isset.start_time = true;
+}
+
+void compact_policy_entry::__set_is_disable(const bool val) {
+  this->is_disable = val;
+__isset.is_disable = true;
+}
+
+uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->policy_name);
+          this->__isset.policy_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->interval_seconds);
+          this->__isset.interval_seconds = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_SET) {
+          {
+            this->app_ids.clear();
+            uint32_t _size434;
+            ::apache::thrift::protocol::TType _etype437;
+            xfer += iprot->readSetBegin(_etype437, _size434);
+            uint32_t _i438;
+            for (_i438 = 0; _i438 < _size434; ++_i438)
+            {
+              int32_t _elem439;
+              xfer += iprot->readI32(_elem439);
+              this->app_ids.insert(_elem439);
+            }
+            xfer += iprot->readSetEnd();
+          }
+          this->__isset.app_ids = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->start_time);
+          this->__isset.start_time = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 5:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->is_disable);
+          this->__isset.is_disable = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t compact_policy_entry::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("compact_policy_entry");
+
+  xfer += oprot->writeFieldBegin("policy_name", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->policy_name);
+  xfer += oprot->writeFieldEnd();
+
+  if (this->__isset.interval_seconds) {
+    xfer += oprot->writeFieldBegin("interval_seconds", ::apache::thrift::protocol::T_I64, 2);
+    xfer += oprot->writeI64(this->interval_seconds);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.app_ids) {
+    xfer += oprot->writeFieldBegin("app_ids", ::apache::thrift::protocol::T_SET, 3);
+    {
+      xfer += oprot->writeSetBegin(::apache::thrift::protocol::T_I32, static_cast<uint32_t>(this->app_ids.size()));
+      std::set<int32_t> ::const_iterator _iter440;
+      for (_iter440 = this->app_ids.begin(); _iter440 != this->app_ids.end(); ++_iter440)
+      {
+        xfer += oprot->writeI32((*_iter440));
+      }
+      xfer += oprot->writeSetEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.start_time) {
+    xfer += oprot->writeFieldBegin("start_time", ::apache::thrift::protocol::T_I32, 4);
+    xfer += oprot->writeI32(this->start_time);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.is_disable) {
+    xfer += oprot->writeFieldBegin("is_disable", ::apache::thrift::protocol::T_BOOL, 5);
+    xfer += oprot->writeBool(this->is_disable);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(compact_policy_entry &a, compact_policy_entry &b) {
+  using ::std::swap;
+  swap(a.policy_name, b.policy_name);
+  swap(a.interval_seconds, b.interval_seconds);
+  swap(a.app_ids, b.app_ids);
+  swap(a.start_time, b.start_time);
+  swap(a.is_disable, b.is_disable);
+  swap(a.__isset, b.__isset);
+}
+
+compact_policy_entry::compact_policy_entry(const compact_policy_entry& other441) {
+  policy_name = other441.policy_name;
+  interval_seconds = other441.interval_seconds;
+  app_ids = other441.app_ids;
+  start_time = other441.start_time;
+  is_disable = other441.is_disable;
+  __isset = other441.__isset;
+}
+compact_policy_entry::compact_policy_entry( compact_policy_entry&& other442) {
+  policy_name = std::move(other442.policy_name);
+  interval_seconds = std::move(other442.interval_seconds);
+  app_ids = std::move(other442.app_ids);
+  start_time = std::move(other442.start_time);
+  is_disable = std::move(other442.is_disable);
+  __isset = std::move(other442.__isset);
+}
+compact_policy_entry& compact_policy_entry::operator=(const compact_policy_entry& other443) {
+  policy_name = other443.policy_name;
+  interval_seconds = other443.interval_seconds;
+  app_ids = other443.app_ids;
+  start_time = other443.start_time;
+  is_disable = other443.is_disable;
+  __isset = other443.__isset;
+  return *this;
+}
+compact_policy_entry& compact_policy_entry::operator=(compact_policy_entry&& other444) {
+  policy_name = std::move(other444.policy_name);
+  interval_seconds = std::move(other444.interval_seconds);
+  app_ids = std::move(other444.app_ids);
+  start_time = std::move(other444.start_time);
+  is_disable = std::move(other444.is_disable);
+  __isset = std::move(other444.__isset);
+  return *this;
+}
+void compact_policy_entry::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "compact_policy_entry(";
+  out << "policy_name=" << to_string(policy_name);
+  out << ", " << "interval_seconds="; (__isset.interval_seconds ? (out << to_string(interval_seconds)) : (out << "<null>"));
+  out << ", " << "app_ids="; (__isset.app_ids ? (out << to_string(app_ids)) : (out << "<null>"));
+  out << ", " << "start_time="; (__isset.start_time ? (out << to_string(start_time)) : (out << "<null>"));
+  out << ", " << "is_disable="; (__isset.is_disable ? (out << to_string(is_disable)) : (out << "<null>"));
+  out << ")";
+}
+
+
+configuration_add_compact_policy_request::~configuration_add_compact_policy_request() throw() {
+}
+
+
+void configuration_add_compact_policy_request::__set_policy(const compact_policy_entry& val) {
+  this->policy = val;
+}
+
+uint32_t configuration_add_compact_policy_request::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->policy.read(iprot);
+          this->__isset.policy = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t configuration_add_compact_policy_request::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("configuration_add_compact_policy_request");
+
+  xfer += oprot->writeFieldBegin("policy", ::apache::thrift::protocol::T_STRUCT, 1);
+  xfer += this->policy.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(configuration_add_compact_policy_request &a, configuration_add_compact_policy_request &b) {
+  using ::std::swap;
+  swap(a.policy, b.policy);
+  swap(a.__isset, b.__isset);
+}
+
+configuration_add_compact_policy_request::configuration_add_compact_policy_request(const configuration_add_compact_policy_request& other445) {
+  policy = other445.policy;
+  __isset = other445.__isset;
+}
+configuration_add_compact_policy_request::configuration_add_compact_policy_request( configuration_add_compact_policy_request&& other446) {
+  policy = std::move(other446.policy);
+  __isset = std::move(other446.__isset);
+}
+configuration_add_compact_policy_request& configuration_add_compact_policy_request::operator=(const configuration_add_compact_policy_request& other447) {
+  policy = other447.policy;
+  __isset = other447.__isset;
+  return *this;
+}
+configuration_add_compact_policy_request& configuration_add_compact_policy_request::operator=(configuration_add_compact_policy_request&& other448) {
+  policy = std::move(other448.policy);
+  __isset = std::move(other448.__isset);
+  return *this;
+}
+void configuration_add_compact_policy_request::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "configuration_add_compact_policy_request(";
+  out << "policy=" << to_string(policy);
+  out << ")";
+}
+
+
+configuration_add_compact_policy_response::~configuration_add_compact_policy_response() throw() {
+}
+
+
+void configuration_add_compact_policy_response::__set_err(const  ::dsn::error_code& val) {
+  this->err = val;
+}
+
+void configuration_add_compact_policy_response::__set_hint_message(const std::string& val) {
+  this->hint_message = val;
+}
+
+uint32_t configuration_add_compact_policy_response::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->err.read(iprot);
+          this->__isset.err = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->hint_message);
+          this->__isset.hint_message = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t configuration_add_compact_policy_response::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("configuration_add_compact_policy_response");
+
+  xfer += oprot->writeFieldBegin("err", ::apache::thrift::protocol::T_STRUCT, 1);
+  xfer += this->err.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("hint_message", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->hint_message);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(configuration_add_compact_policy_response &a, configuration_add_compact_policy_response &b) {
+  using ::std::swap;
+  swap(a.err, b.err);
+  swap(a.hint_message, b.hint_message);
+  swap(a.__isset, b.__isset);
+}
+
+configuration_add_compact_policy_response::configuration_add_compact_policy_response(const configuration_add_compact_policy_response& other449) {
+  err = other449.err;
+  hint_message = other449.hint_message;
+  __isset = other449.__isset;
+}
+configuration_add_compact_policy_response::configuration_add_compact_policy_response( configuration_add_compact_policy_response&& other450) {
+  err = std::move(other450.err);
+  hint_message = std::move(other450.hint_message);
+  __isset = std::move(other450.__isset);
+}
+configuration_add_compact_policy_response& configuration_add_compact_policy_response::operator=(const configuration_add_compact_policy_response& other451) {
+  err = other451.err;
+  hint_message = other451.hint_message;
+  __isset = other451.__isset;
+  return *this;
+}
+configuration_add_compact_policy_response& configuration_add_compact_policy_response::operator=(configuration_add_compact_policy_response&& other452) {
+  err = std::move(other452.err);
+  hint_message = std::move(other452.hint_message);
+  __isset = std::move(other452.__isset);
+  return *this;
+}
+void configuration_add_compact_policy_response::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "configuration_add_compact_policy_response(";
+  out << "err=" << to_string(err);
+  out << ", " << "hint_message=" << to_string(hint_message);
+  out << ")";
+}
+
+
+configuration_query_compact_policy_request::~configuration_query_compact_policy_request() throw() {
+}
+
+
+void configuration_query_compact_policy_request::__set_policy_names(const std::vector<std::string> & val) {
+  this->policy_names = val;
+}
+
+uint32_t configuration_query_compact_policy_request::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->policy_names.clear();
+            uint32_t _size453;
+            ::apache::thrift::protocol::TType _etype456;
+            xfer += iprot->readListBegin(_etype456, _size453);
+            this->policy_names.resize(_size453);
+            uint32_t _i457;
+            for (_i457 = 0; _i457 < _size453; ++_i457)
+            {
+              xfer += iprot->readString(this->policy_names[_i457]);
+            }
+            xfer += iprot->readListEnd();
+          }
+          this->__isset.policy_names = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t configuration_query_compact_policy_request::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("configuration_query_compact_policy_request");
+
+  xfer += oprot->writeFieldBegin("policy_names", ::apache::thrift::protocol::T_LIST, 1);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->policy_names.size()));
+    std::vector<std::string> ::const_iterator _iter458;
+    for (_iter458 = this->policy_names.begin(); _iter458 != this->policy_names.end(); ++_iter458)
+    {
+      xfer += oprot->writeString((*_iter458));
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(configuration_query_compact_policy_request &a, configuration_query_compact_policy_request &b) {
+  using ::std::swap;
+  swap(a.policy_names, b.policy_names);
+  swap(a.__isset, b.__isset);
+}
+
+configuration_query_compact_policy_request::configuration_query_compact_policy_request(const configuration_query_compact_policy_request& other459) {
+  policy_names = other459.policy_names;
+  __isset = other459.__isset;
+}
+configuration_query_compact_policy_request::configuration_query_compact_policy_request( configuration_query_compact_policy_request&& other460) {
+  policy_names = std::move(other460.policy_names);
+  __isset = std::move(other460.__isset);
+}
+configuration_query_compact_policy_request& configuration_query_compact_policy_request::operator=(const configuration_query_compact_policy_request& other461) {
+  policy_names = other461.policy_names;
+  __isset = other461.__isset;
+  return *this;
+}
+configuration_query_compact_policy_request& configuration_query_compact_policy_request::operator=(configuration_query_compact_policy_request&& other462) {
+  policy_names = std::move(other462.policy_names);
+  __isset = std::move(other462.__isset);
+  return *this;
+}
+void configuration_query_compact_policy_request::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "configuration_query_compact_policy_request(";
+  out << "policy_names=" << to_string(policy_names);
+  out << ")";
+}
+
+
+compact_record::~compact_record() throw() {
+}
+
+
+void compact_record::__set_id(const int64_t val) {
+  this->id = val;
+}
+
+void compact_record::__set_start_time(const int64_t val) {
+  this->start_time = val;
+}
+
+void compact_record::__set_end_time(const int64_t val) {
+  this->end_time = val;
+}
+
+void compact_record::__set_app_ids(const std::set<int32_t> & val) {
+  this->app_ids = val;
+}
+
+uint32_t compact_record::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->id);
+          this->__isset.id = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->start_time);
+          this->__isset.start_time = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->end_time);
+          this->__isset.end_time = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_SET) {
+          {
+            this->app_ids.clear();
+            uint32_t _size463;
+            ::apache::thrift::protocol::TType _etype466;
+            xfer += iprot->readSetBegin(_etype466, _size463);
+            uint32_t _i467;
+            for (_i467 = 0; _i467 < _size463; ++_i467)
+            {
+              int32_t _elem468;
+              xfer += iprot->readI32(_elem468);
+              this->app_ids.insert(_elem468);
+            }
+            xfer += iprot->readSetEnd();
+          }
+          this->__isset.app_ids = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t compact_record::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("compact_record");
+
+  xfer += oprot->writeFieldBegin("id", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->id);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("start_time", ::apache::thrift::protocol::T_I64, 2);
+  xfer += oprot->writeI64(this->start_time);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("end_time", ::apache::thrift::protocol::T_I64, 3);
+  xfer += oprot->writeI64(this->end_time);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("app_ids", ::apache::thrift::protocol::T_SET, 4);
+  {
+    xfer += oprot->writeSetBegin(::apache::thrift::protocol::T_I32, static_cast<uint32_t>(this->app_ids.size()));
+    std::set<int32_t> ::const_iterator _iter469;
+    for (_iter469 = this->app_ids.begin(); _iter469 != this->app_ids.end(); ++_iter469)
+    {
+      xfer += oprot->writeI32((*_iter469));
+    }
+    xfer += oprot->writeSetEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(compact_record &a, compact_record &b) {
+  using ::std::swap;
+  swap(a.id, b.id);
+  swap(a.start_time, b.start_time);
+  swap(a.end_time, b.end_time);
+  swap(a.app_ids, b.app_ids);
+  swap(a.__isset, b.__isset);
+}
+
+compact_record::compact_record(const compact_record& other470) {
+  id = other470.id;
+  start_time = other470.start_time;
+  end_time = other470.end_time;
+  app_ids = other470.app_ids;
+  __isset = other470.__isset;
+}
+compact_record::compact_record( compact_record&& other471) {
+  id = std::move(other471.id);
+  start_time = std::move(other471.start_time);
+  end_time = std::move(other471.end_time);
+  app_ids = std::move(other471.app_ids);
+  __isset = std::move(other471.__isset);
+}
+compact_record& compact_record::operator=(const compact_record& other472) {
+  id = other472.id;
+  start_time = other472.start_time;
+  end_time = other472.end_time;
+  app_ids = other472.app_ids;
+  __isset = other472.__isset;
+  return *this;
+}
+compact_record& compact_record::operator=(compact_record&& other473) {
+  id = std::move(other473.id);
+  start_time = std::move(other473.start_time);
+  end_time = std::move(other473.end_time);
+  app_ids = std::move(other473.app_ids);
+  __isset = std::move(other473.__isset);
+  return *this;
+}
+void compact_record::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "compact_record(";
+  out << "id=" << to_string(id);
+  out << ", " << "start_time=" << to_string(start_time);
+  out << ", " << "end_time=" << to_string(end_time);
+  out << ", " << "app_ids=" << to_string(app_ids);
+  out << ")";
+}
+
+
+compact_policy_records::~compact_policy_records() throw() {
+}
+
+
+void compact_policy_records::__set_policy(const compact_policy_entry& val) {
+  this->policy = val;
+}
+
+void compact_policy_records::__set_records(const std::vector<compact_record> & val) {
+  this->records = val;
+}
+
+uint32_t compact_policy_records::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->policy.read(iprot);
+          this->__isset.policy = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->records.clear();
+            uint32_t _size474;
+            ::apache::thrift::protocol::TType _etype477;
+            xfer += iprot->readListBegin(_etype477, _size474);
+            this->records.resize(_size474);
+            uint32_t _i478;
+            for (_i478 = 0; _i478 < _size474; ++_i478)
+            {
+              xfer += this->records[_i478].read(iprot);
+            }
+            xfer += iprot->readListEnd();
+          }
+          this->__isset.records = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t compact_policy_records::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("compact_policy_records");
+
+  xfer += oprot->writeFieldBegin("policy", ::apache::thrift::protocol::T_STRUCT, 1);
+  xfer += this->policy.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("records", ::apache::thrift::protocol::T_LIST, 2);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->records.size()));
+    std::vector<compact_record> ::const_iterator _iter479;
+    for (_iter479 = this->records.begin(); _iter479 != this->records.end(); ++_iter479)
+    {
+      xfer += (*_iter479).write(oprot);
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(compact_policy_records &a, compact_policy_records &b) {
+  using ::std::swap;
+  swap(a.policy, b.policy);
+  swap(a.records, b.records);
+  swap(a.__isset, b.__isset);
+}
+
+compact_policy_records::compact_policy_records(const compact_policy_records& other480) {
+  policy = other480.policy;
+  records = other480.records;
+  __isset = other480.__isset;
+}
+compact_policy_records::compact_policy_records( compact_policy_records&& other481) {
+  policy = std::move(other481.policy);
+  records = std::move(other481.records);
+  __isset = std::move(other481.__isset);
+}
+compact_policy_records& compact_policy_records::operator=(const compact_policy_records& other482) {
+  policy = other482.policy;
+  records = other482.records;
+  __isset = other482.__isset;
+  return *this;
+}
+compact_policy_records& compact_policy_records::operator=(compact_policy_records&& other483) {
+  policy = std::move(other483.policy);
+  records = std::move(other483.records);
+  __isset = std::move(other483.__isset);
+  return *this;
+}
+void compact_policy_records::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "compact_policy_records(";
+  out << "policy=" << to_string(policy);
+  out << ", " << "records=" << to_string(records);
+  out << ")";
+}
+
+
+configuration_query_compact_policy_response::~configuration_query_compact_policy_response() throw() {
+}
+
+
+void configuration_query_compact_policy_response::__set_err(const  ::dsn::error_code& val) {
+  this->err = val;
+}
+
+void configuration_query_compact_policy_response::__set_policy_records(const std::vector<compact_policy_records> & val) {
+  this->policy_records = val;
+}
+
+void configuration_query_compact_policy_response::__set_hint_msg(const std::string& val) {
+  this->hint_msg = val;
+__isset.hint_msg = true;
+}
+
+uint32_t configuration_query_compact_policy_response::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->err.read(iprot);
+          this->__isset.err = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->policy_records.clear();
+            uint32_t _size484;
+            ::apache::thrift::protocol::TType _etype487;
+            xfer += iprot->readListBegin(_etype487, _size484);
+            this->policy_records.resize(_size484);
+            uint32_t _i488;
+            for (_i488 = 0; _i488 < _size484; ++_i488)
+            {
+              xfer += this->policy_records[_i488].read(iprot);
+            }
+            xfer += iprot->readListEnd();
+          }
+          this->__isset.policy_records = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->hint_msg);
+          this->__isset.hint_msg = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t configuration_query_compact_policy_response::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("configuration_query_compact_policy_response");
+
+  xfer += oprot->writeFieldBegin("err", ::apache::thrift::protocol::T_STRUCT, 1);
+  xfer += this->err.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("policy_records", ::apache::thrift::protocol::T_LIST, 2);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->policy_records.size()));
+    std::vector<compact_policy_records> ::const_iterator _iter489;
+    for (_iter489 = this->policy_records.begin(); _iter489 != this->policy_records.end(); ++_iter489)
+    {
+      xfer += (*_iter489).write(oprot);
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+
+  if (this->__isset.hint_msg) {
+    xfer += oprot->writeFieldBegin("hint_msg", ::apache::thrift::protocol::T_STRING, 3);
+    xfer += oprot->writeString(this->hint_msg);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(configuration_query_compact_policy_response &a, configuration_query_compact_policy_response &b) {
+  using ::std::swap;
+  swap(a.err, b.err);
+  swap(a.policy_records, b.policy_records);
+  swap(a.hint_msg, b.hint_msg);
+  swap(a.__isset, b.__isset);
+}
+
+configuration_query_compact_policy_response::configuration_query_compact_policy_response(const configuration_query_compact_policy_response& other490) {
+  err = other490.err;
+  policy_records = other490.policy_records;
+  hint_msg = other490.hint_msg;
+  __isset = other490.__isset;
+}
+configuration_query_compact_policy_response::configuration_query_compact_policy_response( configuration_query_compact_policy_response&& other491) {
+  err = std::move(other491.err);
+  policy_records = std::move(other491.policy_records);
+  hint_msg = std::move(other491.hint_msg);
+  __isset = std::move(other491.__isset);
+}
+configuration_query_compact_policy_response& configuration_query_compact_policy_response::operator=(const configuration_query_compact_policy_response& other492) {
+  err = other492.err;
+  policy_records = other492.policy_records;
+  hint_msg = other492.hint_msg;
+  __isset = other492.__isset;
+  return *this;
+}
+configuration_query_compact_policy_response& configuration_query_compact_policy_response::operator=(configuration_query_compact_policy_response&& other493) {
+  err = std::move(other493.err);
+  policy_records = std::move(other493.policy_records);
+  hint_msg = std::move(other493.hint_msg);
+  __isset = std::move(other493.__isset);
+  return *this;
+}
+void configuration_query_compact_policy_response::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "configuration_query_compact_policy_response(";
+  out << "err=" << to_string(err);
+  out << ", " << "policy_records=" << to_string(policy_records);
+  out << ", " << "hint_msg="; (__isset.hint_msg ? (out << to_string(hint_msg)) : (out << "<null>"));
+  out << ")";
+}
+
+
+configuration_modify_compact_policy_request::~configuration_modify_compact_policy_request() throw() {
+}
+
+
+void configuration_modify_compact_policy_request::__set_policy(const compact_policy_entry& val) {
+  this->policy = val;
+}
+
+uint32_t configuration_modify_compact_policy_request::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->policy.read(iprot);
+          this->__isset.policy = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t configuration_modify_compact_policy_request::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("configuration_modify_compact_policy_request");
+
+  xfer += oprot->writeFieldBegin("policy", ::apache::thrift::protocol::T_STRUCT, 1);
+  xfer += this->policy.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(configuration_modify_compact_policy_request &a, configuration_modify_compact_policy_request &b) {
+  using ::std::swap;
+  swap(a.policy, b.policy);
+  swap(a.__isset, b.__isset);
+}
+
+configuration_modify_compact_policy_request::configuration_modify_compact_policy_request(const configuration_modify_compact_policy_request& other494) {
+  policy = other494.policy;
+  __isset = other494.__isset;
+}
+configuration_modify_compact_policy_request::configuration_modify_compact_policy_request( configuration_modify_compact_policy_request&& other495) {
+  policy = std::move(other495.policy);
+  __isset = std::move(other495.__isset);
+}
+configuration_modify_compact_policy_request& configuration_modify_compact_policy_request::operator=(const configuration_modify_compact_policy_request& other496) {
+  policy = other496.policy;
+  __isset = other496.__isset;
+  return *this;
+}
+configuration_modify_compact_policy_request& configuration_modify_compact_policy_request::operator=(configuration_modify_compact_policy_request&& other497) {
+  policy = std::move(other497.policy);
+  __isset = std::move(other497.__isset);
+  return *this;
+}
+void configuration_modify_compact_policy_request::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "configuration_modify_compact_policy_request(";
+  out << "policy=" << to_string(policy);
+  out << ")";
+}
+
+
+configuration_modify_compact_policy_response::~configuration_modify_compact_policy_response() throw() {
+}
+
+
+void configuration_modify_compact_policy_response::__set_err(const  ::dsn::error_code& val) {
+  this->err = val;
+}
+
+void configuration_modify_compact_policy_response::__set_hint_message(const std::string& val) {
+  this->hint_message = val;
+}
+
+uint32_t configuration_modify_compact_policy_response::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->err.read(iprot);
+          this->__isset.err = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->hint_message);
+          this->__isset.hint_message = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t configuration_modify_compact_policy_response::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("configuration_modify_compact_policy_response");
+
+  xfer += oprot->writeFieldBegin("err", ::apache::thrift::protocol::T_STRUCT, 1);
+  xfer += this->err.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("hint_message", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->hint_message);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(configuration_modify_compact_policy_response &a, configuration_modify_compact_policy_response &b) {
+  using ::std::swap;
+  swap(a.err, b.err);
+  swap(a.hint_message, b.hint_message);
+  swap(a.__isset, b.__isset);
+}
+
+configuration_modify_compact_policy_response::configuration_modify_compact_policy_response(const configuration_modify_compact_policy_response& other498) {
+  err = other498.err;
+  hint_message = other498.hint_message;
+  __isset = other498.__isset;
+}
+configuration_modify_compact_policy_response::configuration_modify_compact_policy_response( configuration_modify_compact_policy_response&& other499) {
+  err = std::move(other499.err);
+  hint_message = std::move(other499.hint_message);
+  __isset = std::move(other499.__isset);
+}
+configuration_modify_compact_policy_response& configuration_modify_compact_policy_response::operator=(const configuration_modify_compact_policy_response& other500) {
+  err = other500.err;
+  hint_message = other500.hint_message;
+  __isset = other500.__isset;
+  return *this;
+}
+configuration_modify_compact_policy_response& configuration_modify_compact_policy_response::operator=(configuration_modify_compact_policy_response&& other501) {
+  err = std::move(other501.err);
+  hint_message = std::move(other501.hint_message);
+  __isset = std::move(other501.__isset);
+  return *this;
+}
+void configuration_modify_compact_policy_response::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "configuration_modify_compact_policy_response(";
+  out << "err=" << to_string(err);
+  out << ", " << "hint_message=" << to_string(hint_message);
+  out << ")";
+}
+
 }} // namespace

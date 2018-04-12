@@ -41,6 +41,8 @@
 #include <iostream>
 #include <memory>
 #include <array>
+#include <sstream>
+#include <iomanip>
 
 #if defined(__linux__)
 #include <sys/syscall.h>
@@ -97,6 +99,18 @@ void time_ms_to_string(uint64_t ts_ms, char *str)
             static_cast<uint32_t>(ts_ms % 1000));
 }
 
+std::string time_to_date(uint64_t ts_s) // yyyy-MM-dd hh:mm:ss
+{
+    auto t = (time_t)ts_s;
+    struct tm tmp;
+    auto ret = localtime_r(&t, &tmp);
+
+    char str[20] = {0};
+    strftime(str, 20, "%Y-%m-%d %H:%M:%S", ret);
+
+    return std::string(str);
+}
+
 // len >= 11
 void time_ms_to_date(uint64_t ts_ms, char *str, int len)
 {
@@ -123,6 +137,31 @@ void time_ms_to_date_time(uint64_t ts_ms, int32_t &hour, int32_t &min, int32_t &
     hour = ret->tm_hour;
     min = ret->tm_min;
     sec = ret->tm_sec;
+}
+
+void hm_of_day_to_sec(const std::string &hm,
+                      int32_t &sec)
+{
+    int hour = 0, min = 0;
+    if (::sscanf(hm.c_str(), "%d:%d", &hour, &min) == 2 &&
+        (0 <= hour && hour <= 23) &&
+        (0 <= min && min <= 59)) {
+        sec = 3600 * hour + 60 * min;
+    } else {
+        sec = -1;
+    }
+}
+
+std::string sec_of_day_to_hm(int32_t sec)
+{
+    sec %= 86400;
+    int hour = sec / 3600;
+    int min = sec % 3600 / 60;
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(2) << std::right << hour
+       << ":"
+       << std::setfill('0') << std::setw(2) << std::right << min;
+    return ss.str();
 }
 
 int pipe_execute(const char *command, std::ostream &output)

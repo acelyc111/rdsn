@@ -155,6 +155,18 @@ public:
                                          int64_t new_backup_interval_sec,
                                          int32_t backup_history_count_to_keep = 0,
                                          const std::string &start_time = std::string());
+    // TODO add rpc function for add, modify, query, disable, enable of manual compaction
+    dsn::error_code add_compact_policy(const std::string &policy_name,
+                                       const std::set<int32_t> &app_ids,
+                                       int64_t interval_seconds,
+                                       const int32_t start_time);
+
+    dsn::error_code modify_compact_policy(const std::string &policy_name,
+                                         const std::set<int32_t> &app_ids,
+                                         int64_t interval_seconds,
+                                         const int32_t start_time);
+
+    dsn::error_code query_compact_policy(const std::vector<std::string> &policy_names);
 
 private:
     bool static valid_app_char(int c);

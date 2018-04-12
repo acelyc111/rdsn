@@ -102,6 +102,7 @@ public:
                            /*out*/ query_app_info_response &resp);
     void on_cold_backup(const backup_request &request, /*out*/ backup_response &response);
 
+    // TODO add manual comapct handler
     //
     //    messages from peers (primary or secondary)
     //        - prepare

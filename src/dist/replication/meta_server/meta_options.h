@@ -83,6 +83,7 @@ public:
     lb_suboptions _lb_opts;
 
     bool cold_backup_disabled;
+    bool manual_compact_disabled;
 
 public:
     void initialize();

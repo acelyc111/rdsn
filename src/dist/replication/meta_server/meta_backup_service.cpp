@@ -1199,6 +1199,7 @@ error_code backup_service::sync_policies_from_remote_storage()
     return err;
 }
 
+// TODO async called in meta service start()
 void backup_service::start()
 {
     dsn::task_ptr after_create_policy_meta_root =

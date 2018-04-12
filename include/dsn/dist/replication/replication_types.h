@@ -239,6 +239,24 @@ class configuration_query_restore_request;
 
 class configuration_query_restore_response;
 
+class compact_policy_entry;
+
+class configuration_add_compact_policy_request;
+
+class configuration_add_compact_policy_response;
+
+class configuration_query_compact_policy_request;
+
+class compact_record;
+
+class compact_policy_records;
+
+class configuration_query_compact_policy_response;
+
+class configuration_modify_compact_policy_request;
+
+class configuration_modify_compact_policy_response;
+
 typedef struct _mutation_header__isset {
   _mutation_header__isset() : pid(false), ballot(false), decree(false), log_offset(false), last_committed_decree(false), timestamp(false) {}
   bool pid :1;
@@ -4225,6 +4243,520 @@ class configuration_query_restore_response {
 void swap(configuration_query_restore_response &a, configuration_query_restore_response &b);
 
 inline std::ostream& operator<<(std::ostream& out, const configuration_query_restore_response& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _compact_policy_entry__isset {
+  _compact_policy_entry__isset() : policy_name(false), interval_seconds(false), app_ids(false), start_time(false), is_disable(false) {}
+  bool policy_name :1;
+  bool interval_seconds :1;
+  bool app_ids :1;
+  bool start_time :1;
+  bool is_disable :1;
+} _compact_policy_entry__isset;
+
+class compact_policy_entry {
+ public:
+
+  compact_policy_entry(const compact_policy_entry&);
+  compact_policy_entry(compact_policy_entry&&);
+  compact_policy_entry& operator=(const compact_policy_entry&);
+  compact_policy_entry& operator=(compact_policy_entry&&);
+  compact_policy_entry() : policy_name(), interval_seconds(0), start_time(0), is_disable(0) {
+  }
+
+  virtual ~compact_policy_entry() throw();
+  std::string policy_name;
+  int64_t interval_seconds;
+  std::set<int32_t>  app_ids;
+  int32_t start_time;
+  bool is_disable;
+
+  _compact_policy_entry__isset __isset;
+
+  void __set_policy_name(const std::string& val);
+
+  void __set_interval_seconds(const int64_t val);
+
+  void __set_app_ids(const std::set<int32_t> & val);
+
+  void __set_start_time(const int32_t val);
+
+  void __set_is_disable(const bool val);
+
+  bool operator == (const compact_policy_entry & rhs) const
+  {
+    if (!(policy_name == rhs.policy_name))
+      return false;
+    if (__isset.interval_seconds != rhs.__isset.interval_seconds)
+      return false;
+    else if (__isset.interval_seconds && !(interval_seconds == rhs.interval_seconds))
+      return false;
+    if (__isset.app_ids != rhs.__isset.app_ids)
+      return false;
+    else if (__isset.app_ids && !(app_ids == rhs.app_ids))
+      return false;
+    if (__isset.start_time != rhs.__isset.start_time)
+      return false;
+    else if (__isset.start_time && !(start_time == rhs.start_time))
+      return false;
+    if (__isset.is_disable != rhs.__isset.is_disable)
+      return false;
+    else if (__isset.is_disable && !(is_disable == rhs.is_disable))
+      return false;
+    return true;
+  }
+  bool operator != (const compact_policy_entry &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const compact_policy_entry & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(compact_policy_entry &a, compact_policy_entry &b);
+
+inline std::ostream& operator<<(std::ostream& out, const compact_policy_entry& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _configuration_add_compact_policy_request__isset {
+  _configuration_add_compact_policy_request__isset() : policy(false) {}
+  bool policy :1;
+} _configuration_add_compact_policy_request__isset;
+
+class configuration_add_compact_policy_request {
+ public:
+
+  configuration_add_compact_policy_request(const configuration_add_compact_policy_request&);
+  configuration_add_compact_policy_request(configuration_add_compact_policy_request&&);
+  configuration_add_compact_policy_request& operator=(const configuration_add_compact_policy_request&);
+  configuration_add_compact_policy_request& operator=(configuration_add_compact_policy_request&&);
+  configuration_add_compact_policy_request() {
+  }
+
+  virtual ~configuration_add_compact_policy_request() throw();
+  compact_policy_entry policy;
+
+  _configuration_add_compact_policy_request__isset __isset;
+
+  void __set_policy(const compact_policy_entry& val);
+
+  bool operator == (const configuration_add_compact_policy_request & rhs) const
+  {
+    if (!(policy == rhs.policy))
+      return false;
+    return true;
+  }
+  bool operator != (const configuration_add_compact_policy_request &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const configuration_add_compact_policy_request & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(configuration_add_compact_policy_request &a, configuration_add_compact_policy_request &b);
+
+inline std::ostream& operator<<(std::ostream& out, const configuration_add_compact_policy_request& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _configuration_add_compact_policy_response__isset {
+  _configuration_add_compact_policy_response__isset() : err(false), hint_message(false) {}
+  bool err :1;
+  bool hint_message :1;
+} _configuration_add_compact_policy_response__isset;
+
+class configuration_add_compact_policy_response {
+ public:
+
+  configuration_add_compact_policy_response(const configuration_add_compact_policy_response&);
+  configuration_add_compact_policy_response(configuration_add_compact_policy_response&&);
+  configuration_add_compact_policy_response& operator=(const configuration_add_compact_policy_response&);
+  configuration_add_compact_policy_response& operator=(configuration_add_compact_policy_response&&);
+  configuration_add_compact_policy_response() : hint_message() {
+  }
+
+  virtual ~configuration_add_compact_policy_response() throw();
+   ::dsn::error_code err;
+  std::string hint_message;
+
+  _configuration_add_compact_policy_response__isset __isset;
+
+  void __set_err(const  ::dsn::error_code& val);
+
+  void __set_hint_message(const std::string& val);
+
+  bool operator == (const configuration_add_compact_policy_response & rhs) const
+  {
+    if (!(err == rhs.err))
+      return false;
+    if (!(hint_message == rhs.hint_message))
+      return false;
+    return true;
+  }
+  bool operator != (const configuration_add_compact_policy_response &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const configuration_add_compact_policy_response & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(configuration_add_compact_policy_response &a, configuration_add_compact_policy_response &b);
+
+inline std::ostream& operator<<(std::ostream& out, const configuration_add_compact_policy_response& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _configuration_query_compact_policy_request__isset {
+  _configuration_query_compact_policy_request__isset() : policy_names(false) {}
+  bool policy_names :1;
+} _configuration_query_compact_policy_request__isset;
+
+class configuration_query_compact_policy_request {
+ public:
+
+  configuration_query_compact_policy_request(const configuration_query_compact_policy_request&);
+  configuration_query_compact_policy_request(configuration_query_compact_policy_request&&);
+  configuration_query_compact_policy_request& operator=(const configuration_query_compact_policy_request&);
+  configuration_query_compact_policy_request& operator=(configuration_query_compact_policy_request&&);
+  configuration_query_compact_policy_request() {
+  }
+
+  virtual ~configuration_query_compact_policy_request() throw();
+  std::vector<std::string>  policy_names;
+
+  _configuration_query_compact_policy_request__isset __isset;
+
+  void __set_policy_names(const std::vector<std::string> & val);
+
+  bool operator == (const configuration_query_compact_policy_request & rhs) const
+  {
+    if (!(policy_names == rhs.policy_names))
+      return false;
+    return true;
+  }
+  bool operator != (const configuration_query_compact_policy_request &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const configuration_query_compact_policy_request & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(configuration_query_compact_policy_request &a, configuration_query_compact_policy_request &b);
+
+inline std::ostream& operator<<(std::ostream& out, const configuration_query_compact_policy_request& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _compact_record__isset {
+  _compact_record__isset() : id(false), start_time(false), end_time(false), app_ids(false) {}
+  bool id :1;
+  bool start_time :1;
+  bool end_time :1;
+  bool app_ids :1;
+} _compact_record__isset;
+
+class compact_record {
+ public:
+
+  compact_record(const compact_record&);
+  compact_record(compact_record&&);
+  compact_record& operator=(const compact_record&);
+  compact_record& operator=(compact_record&&);
+  compact_record() : id(0), start_time(0), end_time(0) {
+  }
+
+  virtual ~compact_record() throw();
+  int64_t id;
+  int64_t start_time;
+  int64_t end_time;
+  std::set<int32_t>  app_ids;
+
+  _compact_record__isset __isset;
+
+  void __set_id(const int64_t val);
+
+  void __set_start_time(const int64_t val);
+
+  void __set_end_time(const int64_t val);
+
+  void __set_app_ids(const std::set<int32_t> & val);
+
+  bool operator == (const compact_record & rhs) const
+  {
+    if (!(id == rhs.id))
+      return false;
+    if (!(start_time == rhs.start_time))
+      return false;
+    if (!(end_time == rhs.end_time))
+      return false;
+    if (!(app_ids == rhs.app_ids))
+      return false;
+    return true;
+  }
+  bool operator != (const compact_record &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const compact_record & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(compact_record &a, compact_record &b);
+
+inline std::ostream& operator<<(std::ostream& out, const compact_record& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _compact_policy_records__isset {
+  _compact_policy_records__isset() : policy(false), records(false) {}
+  bool policy :1;
+  bool records :1;
+} _compact_policy_records__isset;
+
+class compact_policy_records {
+ public:
+
+  compact_policy_records(const compact_policy_records&);
+  compact_policy_records(compact_policy_records&&);
+  compact_policy_records& operator=(const compact_policy_records&);
+  compact_policy_records& operator=(compact_policy_records&&);
+  compact_policy_records() {
+  }
+
+  virtual ~compact_policy_records() throw();
+  compact_policy_entry policy;
+  std::vector<compact_record>  records;
+
+  _compact_policy_records__isset __isset;
+
+  void __set_policy(const compact_policy_entry& val);
+
+  void __set_records(const std::vector<compact_record> & val);
+
+  bool operator == (const compact_policy_records & rhs) const
+  {
+    if (!(policy == rhs.policy))
+      return false;
+    if (!(records == rhs.records))
+      return false;
+    return true;
+  }
+  bool operator != (const compact_policy_records &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const compact_policy_records & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(compact_policy_records &a, compact_policy_records &b);
+
+inline std::ostream& operator<<(std::ostream& out, const compact_policy_records& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _configuration_query_compact_policy_response__isset {
+  _configuration_query_compact_policy_response__isset() : err(false), policy_records(false), hint_msg(false) {}
+  bool err :1;
+  bool policy_records :1;
+  bool hint_msg :1;
+} _configuration_query_compact_policy_response__isset;
+
+class configuration_query_compact_policy_response {
+ public:
+
+  configuration_query_compact_policy_response(const configuration_query_compact_policy_response&);
+  configuration_query_compact_policy_response(configuration_query_compact_policy_response&&);
+  configuration_query_compact_policy_response& operator=(const configuration_query_compact_policy_response&);
+  configuration_query_compact_policy_response& operator=(configuration_query_compact_policy_response&&);
+  configuration_query_compact_policy_response() : hint_msg() {
+  }
+
+  virtual ~configuration_query_compact_policy_response() throw();
+   ::dsn::error_code err;
+  std::vector<compact_policy_records>  policy_records;
+  std::string hint_msg;
+
+  _configuration_query_compact_policy_response__isset __isset;
+
+  void __set_err(const  ::dsn::error_code& val);
+
+  void __set_policy_records(const std::vector<compact_policy_records> & val);
+
+  void __set_hint_msg(const std::string& val);
+
+  bool operator == (const configuration_query_compact_policy_response & rhs) const
+  {
+    if (!(err == rhs.err))
+      return false;
+    if (!(policy_records == rhs.policy_records))
+      return false;
+    if (__isset.hint_msg != rhs.__isset.hint_msg)
+      return false;
+    else if (__isset.hint_msg && !(hint_msg == rhs.hint_msg))
+      return false;
+    return true;
+  }
+  bool operator != (const configuration_query_compact_policy_response &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const configuration_query_compact_policy_response & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(configuration_query_compact_policy_response &a, configuration_query_compact_policy_response &b);
+
+inline std::ostream& operator<<(std::ostream& out, const configuration_query_compact_policy_response& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _configuration_modify_compact_policy_request__isset {
+  _configuration_modify_compact_policy_request__isset() : policy(false) {}
+  bool policy :1;
+} _configuration_modify_compact_policy_request__isset;
+
+class configuration_modify_compact_policy_request {
+ public:
+
+  configuration_modify_compact_policy_request(const configuration_modify_compact_policy_request&);
+  configuration_modify_compact_policy_request(configuration_modify_compact_policy_request&&);
+  configuration_modify_compact_policy_request& operator=(const configuration_modify_compact_policy_request&);
+  configuration_modify_compact_policy_request& operator=(configuration_modify_compact_policy_request&&);
+  configuration_modify_compact_policy_request() {
+  }
+
+  virtual ~configuration_modify_compact_policy_request() throw();
+  compact_policy_entry policy;
+
+  _configuration_modify_compact_policy_request__isset __isset;
+
+  void __set_policy(const compact_policy_entry& val);
+
+  bool operator == (const configuration_modify_compact_policy_request & rhs) const
+  {
+    if (!(policy == rhs.policy))
+      return false;
+    return true;
+  }
+  bool operator != (const configuration_modify_compact_policy_request &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const configuration_modify_compact_policy_request & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(configuration_modify_compact_policy_request &a, configuration_modify_compact_policy_request &b);
+
+inline std::ostream& operator<<(std::ostream& out, const configuration_modify_compact_policy_request& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _configuration_modify_compact_policy_response__isset {
+  _configuration_modify_compact_policy_response__isset() : err(false), hint_message(false) {}
+  bool err :1;
+  bool hint_message :1;
+} _configuration_modify_compact_policy_response__isset;
+
+class configuration_modify_compact_policy_response {
+ public:
+
+  configuration_modify_compact_policy_response(const configuration_modify_compact_policy_response&);
+  configuration_modify_compact_policy_response(configuration_modify_compact_policy_response&&);
+  configuration_modify_compact_policy_response& operator=(const configuration_modify_compact_policy_response&);
+  configuration_modify_compact_policy_response& operator=(configuration_modify_compact_policy_response&&);
+  configuration_modify_compact_policy_response() : hint_message() {
+  }
+
+  virtual ~configuration_modify_compact_policy_response() throw();
+   ::dsn::error_code err;
+  std::string hint_message;
+
+  _configuration_modify_compact_policy_response__isset __isset;
+
+  void __set_err(const  ::dsn::error_code& val);
+
+  void __set_hint_message(const std::string& val);
+
+  bool operator == (const configuration_modify_compact_policy_response & rhs) const
+  {
+    if (!(err == rhs.err))
+      return false;
+    if (!(hint_message == rhs.hint_message))
+      return false;
+    return true;
+  }
+  bool operator != (const configuration_modify_compact_policy_response &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const configuration_modify_compact_policy_response & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(configuration_modify_compact_policy_response &a, configuration_modify_compact_policy_response &b);
+
+inline std::ostream& operator<<(std::ostream& out, const configuration_modify_compact_policy_response& obj)
 {
   obj.printTo(out);
   return out;

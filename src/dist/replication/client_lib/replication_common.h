@@ -116,6 +116,7 @@ public:
     int32_t learn_app_max_concurrent_count;
 
     std::string cold_backup_root;
+    std::string manual_compact_root;
     int32_t max_concurrent_uploading_file_count;
 
     int32_t manual_compact_min_interval_seconds;

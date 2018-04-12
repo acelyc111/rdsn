@@ -562,6 +562,63 @@ struct configuration_query_restore_response
     3:list<i32>             restore_progress;
 }
 
+struct compact_policy_entry
+{
+    1:string                policy_name;
+    2:optional i64          interval_seconds;
+    3:optional set<i32>     app_ids;
+    4:optional i32          start_time;
+    5:optional bool         is_disable;
+}
+
+struct configuration_add_compact_policy_request
+{
+    1:compact_policy_entry  policy;
+}
+
+struct configuration_add_compact_policy_response
+{
+    1:dsn.error_code        err;
+    2:string                hint_message;
+}
+
+struct configuration_query_compact_policy_request
+{
+    1:list<string>      policy_names;
+}
+
+struct compact_record
+{
+    1:i64           id;
+    2:i64           start_time;
+    3:i64           end_time;
+    4:set<i32>      app_ids;
+}
+
+struct compact_policy_records
+{
+    1:compact_policy_entry  policy;
+    2:list<compact_record>  records;
+}
+
+struct configuration_query_compact_policy_response
+{
+    1:dsn.error_code                err;
+    2:list<compact_policy_records>  policy_records;
+    3:optional string               hint_msg;
+}
+
+struct configuration_modify_compact_policy_request
+{
+    1:compact_policy_entry  policy;
+}
+
+struct configuration_modify_compact_policy_response
+{
+    1:dsn.error_code        err;
+    2:string                hint_message;
+}
+
 /*
 service replica_s
 {

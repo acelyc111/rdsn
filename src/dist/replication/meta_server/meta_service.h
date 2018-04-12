@@ -44,6 +44,7 @@
 #include "dist/replication/client_lib/replication_common.h"
 #include "dist/replication/meta_server/meta_options.h"
 #include "dist/replication/meta_server/meta_backup_service.h"
+#include "dist/replication/meta_server/meta_compact_service.h"
 #include "dist/replication/client_lib/block_service_manager.h"
 
 class meta_service_test_app;
@@ -144,6 +145,11 @@ private:
     void on_report_restore_status(dsn_message_t req);
     void on_query_restore_status(dsn_message_t req);
 
+    void on_add_compact_policy(dsn_message_t req);
+    void on_modify_compact_policy(dsn_message_t req);
+    void on_query_compact_policy(dsn_message_t req);
+    // TODO add manual compact handle funcs(add, modify(include disable and enable), query)
+
     // common routines
     // ret:
     //   1. the meta is leader
@@ -166,6 +172,7 @@ private:
     std::shared_ptr<dist::meta_state_service> _storage;
     std::shared_ptr<server_load_balancer> _balancer;
     std::shared_ptr<backup_service> _backup_handler;
+    std::shared_ptr<compact_service> _compact_handler;
 
     // handle all the block filesystems for current meta service
     // (in other words, current service node)
