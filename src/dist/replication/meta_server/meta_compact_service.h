@@ -9,12 +9,6 @@ class meta_service;
 class server_state;
 class compact_service;
 
-class partition_compact_progress
-{
-public:
-    static const int32_t kFinished = 1000;
-};
-
 enum class policy_status: int32_t {
     ALIVE = 1,
     DELETING = 2
@@ -49,7 +43,7 @@ public:
     bool is_disable = false;
     int32_t start_time = 0;
     int32_t history_count_to_keep = 7;
-    int64_t interval_seconds = 0;
+    int32_t interval_seconds = 0;
     std::set<int32_t> app_ids;
     std::map<int32_t, std::string> app_names;
 
@@ -62,12 +56,13 @@ public:
 };
 
 struct compact_progress {
-    int32_t unfinished_apps = 0;                                // unfinished apps count
-    std::map<gpid, int32_t> partition_progress;                 // gpid => progress
-    std::map<gpid, dsn::task_ptr> compact_requests;             // gpid => compact task
-    std::map<app_id, int32_t> app_unfinish_partition_count;     // app_id => unfinish partition count
+    int32_t max_replica_count = 0;
+    int32_t unfinished_apps = 0;                                    // unfinished apps count
+    std::map<gpid, std::set<dsn::rpc_address>> partition_progress;  // gpid => <rpc_address => progress>
+    std::map<gpid, dsn::task_ptr> compact_requests;                 // gpid => compact task
+    std::map<app_id, int32_t> app_unfinish_partition_count;         // app_id => unfinish partition count
     // if app is dropped when starting a new compact or under compacting, we just skip compact this app
-    std::map<app_id, bool> is_app_skipped;                      // true when app is invalid
+    std::map<app_id, bool> is_app_skipped;                          // true when app is invalid
 
     void reset() {
         unfinished_apps = 0;
@@ -96,19 +91,26 @@ private:
     void issue_new_compact();
     void retry_issue_new_compact();
     bool should_start_compact();
+    bool time_in_1hour(int start_sec_of_day);
     void prepare_current_compact_on_new();
     void initialize_compact_progress();
     void continue_current_compact();
     void start_compact_app_meta(int32_t app_id);
     void start_compact_app(int32_t app_id);
     void start_compact_partition(gpid pid);
+    bool valid_replicas(const std::vector<dsn::rpc_address> &replicas);
+    void on_compact_reply(error_code err,
+                          compact_response &&response,
+                          gpid pid,
+                          const dsn::rpc_address &replica,
+                          bool is_primary);
     void issue_gc_policy_record_task();
     void update_compact_duration();
     void gc_policy_record(const policy_record &record);
     void remove_local_record(int64_t id);
     bool update_partition_progress(gpid pid,
-                                   int32_t progress,
-                                   const rpc_address &source);
+                                   bool finish,
+                                   const dsn::rpc_address &source);
     void finish_compact_app(int32_t app_id);
 
     void write_compact_record(const policy_record &record,
@@ -151,6 +153,7 @@ public:
         std::chrono::milliseconds meta_retry_delay;
         std::chrono::milliseconds reconfiguration_retry_delay;
         std::chrono::milliseconds issue_new_op_interval;
+        std::chrono::milliseconds request_compact_period;
     };
 
     typedef std::function<std::shared_ptr<compact_policy_context>(compact_service *)> policy_factory;

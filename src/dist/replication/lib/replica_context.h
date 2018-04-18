@@ -517,6 +517,60 @@ private:
 
 typedef dsn::ref_ptr<cold_backup_context> cold_backup_context_ptr;
 
+enum class compact_status
+{
+    KInvalid = 0,
+    kCompacting,
+    kCompleted
+};
+typedef std::underlying_type<compact_status>::type compact_status_under;
+
+const char* compact_status_to_string(compact_status s);
+
+class compact_context : public ref_counter {
+public:
+    explicit compact_context(replica *r_,
+                             const compact_request &req)
+        : request(req),
+          _status((compact_status_under)compact_status::KInvalid),
+          _owner_replica(r_)
+    {
+        std::stringstream ss;
+        ss << "compact("
+           << request.pid.get_app_id() << "."
+           << request.pid.get_partition_index() << "."
+           << request.policy_name << "."
+           << request.id << ")";
+        name = ss.str();
+    }
+
+    ~compact_context() {}
+
+    void start_compact()
+    {
+        _status.store((compact_status_under)compact_status::kCompacting);
+    }
+
+    void finish_compact()
+    {
+        _status.store((compact_status_under)compact_status::kCompleted);
+    }
+
+    void cancel() {}
+
+    compact_status status() const { return (compact_status)_status.load(); }
+
+public:
+    std::string name;
+    compact_request request;
+
+private:
+    std::atomic_int _status;
+    replica *_owner_replica;
+};
+
+typedef dsn::ref_ptr<compact_context> compact_context_ptr;
+
 //---------------inline impl----------------------------------------------------------------
 
 inline partition_status::type primary_context::get_node_status(::dsn::rpc_address addr) const

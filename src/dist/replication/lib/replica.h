@@ -98,6 +98,8 @@ public:
     void on_config_sync(const partition_configuration &config);
     void on_cold_backup(const backup_request &request, /*out*/ backup_response &response);
 
+    void on_policy_compact(const compact_request &request, /*out*/ compact_response &response);
+
     //
     //    messages from peers (primary or secondary)
     //
@@ -291,6 +293,8 @@ private:
 
     void update_restore_progress();
 
+    void check_and_compact(compact_context_ptr compact_context);
+
     bool could_start_manual_compact();
 
     void manual_compact();
@@ -335,6 +339,7 @@ private:
     potential_secondary_context _potential_secondary_states;
     // policy_name --> cold_backup_context
     std::map<std::string, cold_backup_context_ptr> _cold_backup_contexts;
+    std::map<std::string, compact_context_ptr> _compact_contexts;
 
     // timer task that running in replication-thread
     dsn::task_ptr _collect_info_timer;

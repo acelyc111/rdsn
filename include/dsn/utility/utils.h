@@ -62,6 +62,8 @@ void time_ms_to_date_time(uint64_t ts_ms,
                           int32_t &min,
                           int32_t &sec); // time to hour, min, sec
 
+int sec_of_day();
+
 void hm_of_day_to_sec(const std::string &hm,
                       int32_t &sec);
 std::string sec_of_day_to_hm(int32_t sec);

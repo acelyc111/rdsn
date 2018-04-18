@@ -619,6 +619,24 @@ struct configuration_modify_compact_policy_response
     2:string                hint_message;
 }
 
+struct compact_request
+{
+    1:i64                   id;
+    2:dsn.gpid              pid;
+    3:string                policy_name;
+    4:string                app_name;
+
+}
+
+struct compact_response
+{
+    1:dsn.error_code    err;
+    2:i64               id;
+    3:dsn.gpid          pid;
+    4:bool              finish;
+    5:string            policy_name;
+}
+
 /*
 service replica_s
 {

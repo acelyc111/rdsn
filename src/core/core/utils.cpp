@@ -139,6 +139,18 @@ void time_ms_to_date_time(uint64_t ts_ms, int32_t &hour, int32_t &min, int32_t &
     sec = ret->tm_sec;
 }
 
+int sec_of_day()
+{
+    time_t t;
+    time(&t);
+
+    struct tm tms;
+    localtime_r(&t, &tms);
+    return tms.tm_hour * 3600 +
+           tms.tm_min * 60 +
+           tms.tm_sec;
+}
+
 void hm_of_day_to_sec(const std::string &hm,
                       int32_t &sec)
 {

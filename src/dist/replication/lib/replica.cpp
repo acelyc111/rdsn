@@ -38,6 +38,7 @@
 #include "mutation_log.h"
 #include "replica_stub.h"
 #include <dsn/cpp/json_helper.h>
+#include <dsn/dist/fmt_logging.h>
 #include <dsn/dist/replication/replication_app_base.h>
 
 namespace dsn {
@@ -449,6 +450,101 @@ bool replica::could_start_manual_compact()
     } else {
         return false;
     }
+}
+
+void replica::on_policy_compact(const compact_request &request,
+                                compact_response &response)
+{
+    const std::string &policy_name = request.policy_name;
+    auto req_id = request.id;
+    compact_context_ptr new_context(new compact_context(this, request));
+
+    if (status() == partition_status::type::PS_PRIMARY ||
+        status() == partition_status::type::PS_SECONDARY) {
+        compact_context_ptr compact_context = nullptr;
+        auto find = _compact_contexts.find(policy_name);
+        if (find != _compact_contexts.end()) {
+            compact_context = find->second;
+        } else {
+            auto r = _compact_contexts.insert(std::make_pair(policy_name, new_context));
+            dassert(r.second, "");
+            compact_context = r.first->second;
+        }
+
+        dassert(compact_context != nullptr, "");
+        compact_status status = compact_context->status();
+
+        // obsoleted compact exist
+        if (compact_context->request.id < req_id) {
+            ddebug_f("{}: obsoleted compact exist, old compact id = {}, status = {}",
+                     new_context->name,
+                     compact_context->request.id,
+                     compact_status_to_string(status));
+            compact_context->cancel();
+            _compact_contexts.erase(policy_name);
+            on_policy_compact(request, response);
+            return;
+        }
+
+        // outdated compact request
+        if (compact_context->request.id > req_id) {
+            // req_id is outdated
+            derror_f("{}: outdated compact request, current compact id = {}, status = {}",
+                     new_context->name,
+                     compact_context->request.id,
+                     compact_status_to_string(status));
+            response.err = dsn::ERR_VERSION_OUTDATED;
+            response.finish = false;
+            return;
+        }
+
+        if (status == compact_status::kCompacting) {
+            // do nothing
+            ddebug_f("{}: compact is on going, status = {}",
+                     compact_context->name,
+                     compact_status_to_string(status));
+            response.err = dsn::ERR_BUSY;
+            response.finish = false;
+        } else if (status == compact_status::KInvalid) {
+            // execute compact task async
+//            _stub->_counter_cold_backup_recent_start_count->increment();
+            ddebug_f("{}: start check_and_compact", compact_context->name);
+            compact_context->start_compact();
+            tasking::enqueue(
+                LPC_MANUAL_COMPACT,
+                this,
+                [this, compact_context]() {
+                    check_and_compact(compact_context);
+            });
+            response.err = dsn::ERR_BUSY;
+            response.finish = false;
+        } else if (status == compact_status::kCompleted) {
+            // finished
+            ddebug_f("{}: compact completed", compact_context->name);
+            response.err = dsn::ERR_OK;
+            response.finish = true;
+        } else {
+            // bad case
+            dassert_f(false,
+                      "{}: unhandled case, status = {}",
+                      compact_context->name,
+                      compact_status_to_string(status));
+        }
+    } else {
+        derror_f("{}: invalid state for compaction, partition_status = {}",
+              new_context->name,
+              enum_to_string(status()));
+        response.err = ERR_INVALID_STATE;
+        response.finish = false;
+    }
+}
+
+void replica::check_and_compact(compact_context_ptr compact_context)
+{
+    if (could_start_manual_compact()) {
+        manual_compact();
+    }
+    compact_context->finish_compact();
 }
 
 void replica::manual_compact()

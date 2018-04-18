@@ -40,6 +40,7 @@
 #include <dsn/cpp/json_helper.h>
 #include <dsn/utility/filesystem.h>
 #include <dsn/tool-api/command_manager.h>
+#include <dsn/dist/fmt_logging.h>
 #include <dsn/dist/replication/replication_app_base.h>
 #include <vector>
 #include <deque>
@@ -852,6 +853,42 @@ void replica_stub::on_cold_backup(const backup_request &request, /*out*/ backup_
                request.policy.policy_name.c_str(),
                request.backup_id);
         response.err = ERR_OBJECT_NOT_FOUND;
+    }
+}
+
+void replica_stub::on_policy_compact(const compact_request &request,
+                                     compact_response &response)
+{
+    ddebug_f("receive policy compact request: {}.{}.{}.{}",
+             request.policy_name.c_str(),
+             request.id,
+             request.pid.get_app_id(),
+             request.pid.get_partition_index());
+    response.pid = request.pid;
+    response.policy_name = request.policy_name;
+    response.id = request.id;
+
+/*    if (_options.cold_backup_root.empty()) {
+        derror("backup{%d.%d.%s.%" PRId64
+               "}: cold_backup_root is empty, response ERR_OPERATION_DISABLED",
+               request.pid.get_app_id(),
+               request.pid.get_partition_index(),
+               request.policy.policy_name.c_str(),
+               request.backup_id);
+        response.err = ERR_OPERATION_DISABLED;
+        return;
+    }*/
+
+    replica_ptr rep = get_replica(request.pid);
+    if (rep != nullptr) {
+        rep->on_policy_compact(request, response);
+    } else {
+        derror_f("{}.{}.{}.{} replica not found",
+                 request.policy_name.c_str(),
+                 request.id,
+                 request.pid.get_app_id(),
+                 request.pid.get_partition_index());
+        response.err = dsn::ERR_OBJECT_NOT_FOUND;
     }
 }
 
@@ -1881,6 +1918,8 @@ void replica_stub::open_service()
 
     register_rpc_handler(RPC_QUERY_APP_INFO, "query_app_info", &replica_stub::on_query_app_info);
     register_rpc_handler(RPC_COLD_BACKUP, "ColdBackup", &replica_stub::on_cold_backup);
+
+    register_rpc_handler(RPC_POLICY_COMPACT, "policy_compact", &replica_stub::on_policy_compact);
 
     // TODO register manual compact handler
     _kill_partition_command = ::dsn::command_manager::instance().register_app_command(

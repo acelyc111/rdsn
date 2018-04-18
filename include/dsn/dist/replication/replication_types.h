@@ -257,6 +257,10 @@ class configuration_modify_compact_policy_request;
 
 class configuration_modify_compact_policy_response;
 
+class compact_request;
+
+class compact_response;
+
 typedef struct _mutation_header__isset {
   _mutation_header__isset() : pid(false), ballot(false), decree(false), log_offset(false), last_committed_decree(false), timestamp(false) {}
   bool pid :1;
@@ -4757,6 +4761,144 @@ class configuration_modify_compact_policy_response {
 void swap(configuration_modify_compact_policy_response &a, configuration_modify_compact_policy_response &b);
 
 inline std::ostream& operator<<(std::ostream& out, const configuration_modify_compact_policy_response& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _compact_request__isset {
+  _compact_request__isset() : id(false), pid(false), policy_name(false), app_name(false) {}
+  bool id :1;
+  bool pid :1;
+  bool policy_name :1;
+  bool app_name :1;
+} _compact_request__isset;
+
+class compact_request {
+ public:
+
+  compact_request(const compact_request&);
+  compact_request(compact_request&&);
+  compact_request& operator=(const compact_request&);
+  compact_request& operator=(compact_request&&);
+  compact_request() : id(0), policy_name(), app_name() {
+  }
+
+  virtual ~compact_request() throw();
+  int64_t id;
+   ::dsn::gpid pid;
+  std::string policy_name;
+  std::string app_name;
+
+  _compact_request__isset __isset;
+
+  void __set_id(const int64_t val);
+
+  void __set_pid(const  ::dsn::gpid& val);
+
+  void __set_policy_name(const std::string& val);
+
+  void __set_app_name(const std::string& val);
+
+  bool operator == (const compact_request & rhs) const
+  {
+    if (!(id == rhs.id))
+      return false;
+    if (!(pid == rhs.pid))
+      return false;
+    if (!(policy_name == rhs.policy_name))
+      return false;
+    if (!(app_name == rhs.app_name))
+      return false;
+    return true;
+  }
+  bool operator != (const compact_request &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const compact_request & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(compact_request &a, compact_request &b);
+
+inline std::ostream& operator<<(std::ostream& out, const compact_request& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _compact_response__isset {
+  _compact_response__isset() : err(false), id(false), pid(false), finish(false), policy_name(false) {}
+  bool err :1;
+  bool id :1;
+  bool pid :1;
+  bool finish :1;
+  bool policy_name :1;
+} _compact_response__isset;
+
+class compact_response {
+ public:
+
+  compact_response(const compact_response&);
+  compact_response(compact_response&&);
+  compact_response& operator=(const compact_response&);
+  compact_response& operator=(compact_response&&);
+  compact_response() : id(0), finish(0), policy_name() {
+  }
+
+  virtual ~compact_response() throw();
+   ::dsn::error_code err;
+  int64_t id;
+   ::dsn::gpid pid;
+  bool finish;
+  std::string policy_name;
+
+  _compact_response__isset __isset;
+
+  void __set_err(const  ::dsn::error_code& val);
+
+  void __set_id(const int64_t val);
+
+  void __set_pid(const  ::dsn::gpid& val);
+
+  void __set_finish(const bool val);
+
+  void __set_policy_name(const std::string& val);
+
+  bool operator == (const compact_response & rhs) const
+  {
+    if (!(err == rhs.err))
+      return false;
+    if (!(id == rhs.id))
+      return false;
+    if (!(pid == rhs.pid))
+      return false;
+    if (!(finish == rhs.finish))
+      return false;
+    if (!(policy_name == rhs.policy_name))
+      return false;
+    return true;
+  }
+  bool operator != (const compact_response &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const compact_response & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(compact_response &a, compact_response &b);
+
+inline std::ostream& operator<<(std::ostream& out, const compact_response& obj)
 {
   obj.printTo(out);
   return out;

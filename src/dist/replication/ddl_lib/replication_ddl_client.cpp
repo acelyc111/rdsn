@@ -1186,24 +1186,14 @@ static void print_compact_record(const compact_record &record)
 {
     int width = strlen("start_time");
 
-    char start_time[30] = {'\0'};
-    char end_time[30] = {'\0'};
-    ::dsn::utils::time_ms_to_date_time(record.end_time, start_time, 30);
-    if (record.end_time == 0) {
-        end_time[0] = '-';
-        end_time[1] = '\0';
-    } else {
-        ::dsn::utils::time_ms_to_date_time(record.end_time, end_time, 30);
-    }
-
-    std::cout << "    " << std::setw(width) << std::left << "id : "
-              << record.id << std::endl
-              << "    " << std::setw(width) << std::left << "start_time : "
-              << start_time << std::endl
-              << "    " << std::setw(width) << std::left << "end_time : "
-              << end_time << std::endl
-              << "    " << std::setw(width) << std::left << "app_ids : "
-              << print_set(record.app_ids) << std::endl;
+    std::cout << "    " << std::setw(width) << std::left << "id"
+              << " : " << record.id << std::endl
+              << "    " << std::setw(width) << std::left << "start_time"
+              << " : " << ::dsn::utils::time_to_date(record.start_time) << std::endl
+              << "    " << std::setw(width) << std::left << "end_time"
+              << " : " << ::dsn::utils::time_to_date(record.end_time) << std::endl
+              << "    " << std::setw(width) << std::left << "app_ids"
+              << " : " << print_set(record.app_ids) << std::endl;
 }
 
 static void print_backup_entry(const backup_entry &bentry)
@@ -1450,6 +1440,7 @@ dsn::error_code replication_ddl_client::query_compact_policy(const std::vector<s
             std::cout << "compact_records:" << std::endl;
             for (const auto& record : policy_records.records) {
                 print_compact_record(record);
+                std::cout << std::endl;
             }
             std::cout << "************************" << std::endl;
         }

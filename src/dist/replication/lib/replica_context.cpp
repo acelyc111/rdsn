@@ -1280,5 +1280,20 @@ void cold_backup_context::file_upload_complete(const std::string &filename)
     _cur_upload_file_cnt -= 1;
     _file_status[filename] = file_status::FileUploadComplete;
 }
+
+const char* compact_status_to_string(compact_status s)
+{
+    switch(s) {
+        case compact_status::KInvalid:
+            return "KInvalid";
+        case compact_status::kCompacting:
+            return "kCompacting";
+        case compact_status::kCompleted:
+            return "kCompleted";
+        default:
+            return "unknown";
+    }
+}
+
 }
 } // end namespace

@@ -11175,4 +11175,348 @@ void configuration_modify_compact_policy_response::printTo(std::ostream& out) co
   out << ")";
 }
 
+
+compact_request::~compact_request() throw() {
+}
+
+
+void compact_request::__set_id(const int64_t val) {
+  this->id = val;
+}
+
+void compact_request::__set_pid(const  ::dsn::gpid& val) {
+  this->pid = val;
+}
+
+void compact_request::__set_policy_name(const std::string& val) {
+  this->policy_name = val;
+}
+
+void compact_request::__set_app_name(const std::string& val) {
+  this->app_name = val;
+}
+
+uint32_t compact_request::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->id);
+          this->__isset.id = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->pid.read(iprot);
+          this->__isset.pid = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->policy_name);
+          this->__isset.policy_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->app_name);
+          this->__isset.app_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t compact_request::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("compact_request");
+
+  xfer += oprot->writeFieldBegin("id", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->id);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("pid", ::apache::thrift::protocol::T_STRUCT, 2);
+  xfer += this->pid.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("policy_name", ::apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeString(this->policy_name);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("app_name", ::apache::thrift::protocol::T_STRING, 4);
+  xfer += oprot->writeString(this->app_name);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(compact_request &a, compact_request &b) {
+  using ::std::swap;
+  swap(a.id, b.id);
+  swap(a.pid, b.pid);
+  swap(a.policy_name, b.policy_name);
+  swap(a.app_name, b.app_name);
+  swap(a.__isset, b.__isset);
+}
+
+compact_request::compact_request(const compact_request& other502) {
+  id = other502.id;
+  pid = other502.pid;
+  policy_name = other502.policy_name;
+  app_name = other502.app_name;
+  __isset = other502.__isset;
+}
+compact_request::compact_request( compact_request&& other503) {
+  id = std::move(other503.id);
+  pid = std::move(other503.pid);
+  policy_name = std::move(other503.policy_name);
+  app_name = std::move(other503.app_name);
+  __isset = std::move(other503.__isset);
+}
+compact_request& compact_request::operator=(const compact_request& other504) {
+  id = other504.id;
+  pid = other504.pid;
+  policy_name = other504.policy_name;
+  app_name = other504.app_name;
+  __isset = other504.__isset;
+  return *this;
+}
+compact_request& compact_request::operator=(compact_request&& other505) {
+  id = std::move(other505.id);
+  pid = std::move(other505.pid);
+  policy_name = std::move(other505.policy_name);
+  app_name = std::move(other505.app_name);
+  __isset = std::move(other505.__isset);
+  return *this;
+}
+void compact_request::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "compact_request(";
+  out << "id=" << to_string(id);
+  out << ", " << "pid=" << to_string(pid);
+  out << ", " << "policy_name=" << to_string(policy_name);
+  out << ", " << "app_name=" << to_string(app_name);
+  out << ")";
+}
+
+
+compact_response::~compact_response() throw() {
+}
+
+
+void compact_response::__set_err(const  ::dsn::error_code& val) {
+  this->err = val;
+}
+
+void compact_response::__set_id(const int64_t val) {
+  this->id = val;
+}
+
+void compact_response::__set_pid(const  ::dsn::gpid& val) {
+  this->pid = val;
+}
+
+void compact_response::__set_finish(const bool val) {
+  this->finish = val;
+}
+
+void compact_response::__set_policy_name(const std::string& val) {
+  this->policy_name = val;
+}
+
+uint32_t compact_response::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->err.read(iprot);
+          this->__isset.err = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->id);
+          this->__isset.id = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->pid.read(iprot);
+          this->__isset.pid = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->finish);
+          this->__isset.finish = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 5:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->policy_name);
+          this->__isset.policy_name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t compact_response::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("compact_response");
+
+  xfer += oprot->writeFieldBegin("err", ::apache::thrift::protocol::T_STRUCT, 1);
+  xfer += this->err.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("id", ::apache::thrift::protocol::T_I64, 2);
+  xfer += oprot->writeI64(this->id);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("pid", ::apache::thrift::protocol::T_STRUCT, 3);
+  xfer += this->pid.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("finish", ::apache::thrift::protocol::T_BOOL, 4);
+  xfer += oprot->writeBool(this->finish);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("policy_name", ::apache::thrift::protocol::T_STRING, 5);
+  xfer += oprot->writeString(this->policy_name);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(compact_response &a, compact_response &b) {
+  using ::std::swap;
+  swap(a.err, b.err);
+  swap(a.id, b.id);
+  swap(a.pid, b.pid);
+  swap(a.finish, b.finish);
+  swap(a.policy_name, b.policy_name);
+  swap(a.__isset, b.__isset);
+}
+
+compact_response::compact_response(const compact_response& other506) {
+  err = other506.err;
+  id = other506.id;
+  pid = other506.pid;
+  finish = other506.finish;
+  policy_name = other506.policy_name;
+  __isset = other506.__isset;
+}
+compact_response::compact_response( compact_response&& other507) {
+  err = std::move(other507.err);
+  id = std::move(other507.id);
+  pid = std::move(other507.pid);
+  finish = std::move(other507.finish);
+  policy_name = std::move(other507.policy_name);
+  __isset = std::move(other507.__isset);
+}
+compact_response& compact_response::operator=(const compact_response& other508) {
+  err = other508.err;
+  id = other508.id;
+  pid = other508.pid;
+  finish = other508.finish;
+  policy_name = other508.policy_name;
+  __isset = other508.__isset;
+  return *this;
+}
+compact_response& compact_response::operator=(compact_response&& other509) {
+  err = std::move(other509.err);
+  id = std::move(other509.id);
+  pid = std::move(other509.pid);
+  finish = std::move(other509.finish);
+  policy_name = std::move(other509.policy_name);
+  __isset = std::move(other509.__isset);
+  return *this;
+}
+void compact_response::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "compact_response(";
+  out << "err=" << to_string(err);
+  out << ", " << "id=" << to_string(id);
+  out << ", " << "pid=" << to_string(pid);
+  out << ", " << "finish=" << to_string(finish);
+  out << ", " << "policy_name=" << to_string(policy_name);
+  out << ")";
+}
+
 }} // namespace
