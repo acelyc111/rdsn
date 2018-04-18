@@ -293,8 +293,13 @@ private:
 
     void update_restore_progress();
 
+    void send_compact_request_to_secondary(const compact_request &request,
+                                           compact_context_ptr compact_context);
     void check_and_compact(compact_context_ptr compact_context);
 
+    void start_manual_compact(compact_status compact_status,
+                              compact_context_ptr compact_context,
+                              compact_response &response);
     bool could_start_manual_compact();
 
     void manual_compact();

@@ -56,9 +56,8 @@ public:
 };
 
 struct compact_progress {
-    int32_t max_replica_count = 0;
     int32_t unfinished_apps = 0;                                    // unfinished apps count
-    std::map<gpid, std::set<dsn::rpc_address>> partition_progress;  // gpid => <rpc_address => progress>
+    std::map<gpid, bool> partition_progress;                        // gpid => progress
     std::map<gpid, dsn::task_ptr> compact_requests;                 // gpid => compact task
     std::map<app_id, int32_t> app_unfinish_partition_count;         // app_id => unfinish partition count
     // if app is dropped when starting a new compact or under compacting, we just skip compact this app
@@ -98,12 +97,12 @@ private:
     void start_compact_app_meta(int32_t app_id);
     void start_compact_app(int32_t app_id);
     void start_compact_partition(gpid pid);
-    bool valid_replicas(const std::vector<dsn::rpc_address> &replicas);
+    void start_compact_primary(gpid pid,
+                               const dsn::rpc_address &replica);
     void on_compact_reply(error_code err,
                           compact_response &&response,
                           gpid pid,
-                          const dsn::rpc_address &replica,
-                          bool is_primary);
+                          const dsn::rpc_address &replica);
     void issue_gc_policy_record_task();
     void update_compact_duration();
     void gc_policy_record(const policy_record &record);

@@ -537,10 +537,10 @@ public:
     {
         std::stringstream ss;
         ss << "compact("
-           << request.pid.get_app_id() << "."
-           << request.pid.get_partition_index() << "."
            << request.policy_name << "."
-           << request.id << ")";
+           << request.id
+           << request.pid.get_app_id() << "."
+           << request.pid.get_partition_index() << "." << ")";
         name = ss.str();
     }
 
@@ -563,6 +563,7 @@ public:
 public:
     std::string name;
     compact_request request;
+    std::map<::dsn::rpc_address, bool> secondary_status;
 
 private:
     std::atomic_int _status;
