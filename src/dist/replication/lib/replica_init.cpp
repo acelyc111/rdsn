@@ -39,6 +39,7 @@
 #include "replica_stub.h"
 #include <dsn/utility/factory_store.h>
 #include <dsn/utility/filesystem.h>
+#include <dsn/dist/fmt_logging.h>
 #include <dsn/dist/replication/replication_app_base.h>
 
 namespace dsn {
@@ -212,6 +213,11 @@ error_code replica::init_app_and_prepare_list(bool create_new)
     } else {
         err = _app->open_internal(this);
         if (err == ERR_OK) {
+            _manual_compact_last_finish_time_ms.store(_app->last_compact_finish_time());
+            ddebug_f("{}: _manual_compact_last_finish_time_ms={}",
+                     name(),
+                     _manual_compact_last_finish_time_ms.load());
+
             dassert(_app->last_committed_decree() == _app->last_durable_decree(),
                     "invalid app state, %" PRId64 " VS %" PRId64 "",
                     _app->last_committed_decree(),

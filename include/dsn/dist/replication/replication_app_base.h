@@ -212,6 +212,7 @@ public:
 
     // do full compaction manually.
     virtual void manual_compact() = 0;
+    virtual uint64_t last_compact_finish_time() = 0;
 
 public:
     //

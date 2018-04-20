@@ -82,6 +82,7 @@ public:
                                                        const learn_state &state) override;
 
     virtual void manual_compact() {};
+    virtual uint64_t last_compact_finish_time() { return 0; }
 
 private:
     void recover();

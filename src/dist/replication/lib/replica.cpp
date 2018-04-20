@@ -551,14 +551,9 @@ void replica::on_policy_compact(const compact_request &request,
         }
 
         // request on secondary
-        if (status() == partition_status::PS_SECONDARY) {
-            start_manual_compact(compact_status,
-                                 compact_context,
-                                 response);
-            return;
+        if (status() == partition_status::PS_PRIMARY) {
+            send_compact_request_to_secondary(request, compact_context);
         }
-
-        send_compact_request_to_secondary(request, compact_context);
 
         start_manual_compact(compact_status,
                              compact_context,
@@ -625,7 +620,13 @@ std::string replica::get_compact_state()
     if (last_finish_time_ms > 0) {
         char str[24];
         utils::time_ms_to_string(last_finish_time_ms, str);
-        state << "last finish at [" << str << "], last used " << last_time_used_ms << " ms";
+        state << "last finish at [" << str << "], last used ";
+        if (last_time_used_ms == 0) {
+            state << "-";
+        } else {
+            state << last_time_used_ms;
+        }
+        state << " ms";
     } else {
         state << "last finish at [-]";
     }
