@@ -4253,12 +4253,12 @@ inline std::ostream& operator<<(std::ostream& out, const configuration_query_res
 }
 
 typedef struct _compact_policy_entry__isset {
-  _compact_policy_entry__isset() : policy_name(false), interval_seconds(false), app_ids(false), start_time(false), is_disable(false) {}
+  _compact_policy_entry__isset() : policy_name(false), interval_seconds(false), app_ids(false), start_time(false), enable(false) {}
   bool policy_name :1;
   bool interval_seconds :1;
   bool app_ids :1;
   bool start_time :1;
-  bool is_disable :1;
+  bool enable :1;
 } _compact_policy_entry__isset;
 
 class compact_policy_entry {
@@ -4268,7 +4268,7 @@ class compact_policy_entry {
   compact_policy_entry(compact_policy_entry&&);
   compact_policy_entry& operator=(const compact_policy_entry&);
   compact_policy_entry& operator=(compact_policy_entry&&);
-  compact_policy_entry() : policy_name(), interval_seconds(0), start_time(0), is_disable(0) {
+  compact_policy_entry() : policy_name(), interval_seconds(0), start_time(0), enable(0) {
   }
 
   virtual ~compact_policy_entry() throw();
@@ -4276,7 +4276,7 @@ class compact_policy_entry {
   int64_t interval_seconds;
   std::set<int32_t>  app_ids;
   int32_t start_time;
-  bool is_disable;
+  bool enable;
 
   _compact_policy_entry__isset __isset;
 
@@ -4288,7 +4288,7 @@ class compact_policy_entry {
 
   void __set_start_time(const int32_t val);
 
-  void __set_is_disable(const bool val);
+  void __set_enable(const bool val);
 
   bool operator == (const compact_policy_entry & rhs) const
   {
@@ -4306,9 +4306,9 @@ class compact_policy_entry {
       return false;
     else if (__isset.start_time && !(start_time == rhs.start_time))
       return false;
-    if (__isset.is_disable != rhs.__isset.is_disable)
+    if (__isset.enable != rhs.__isset.enable)
       return false;
-    else if (__isset.is_disable && !(is_disable == rhs.is_disable))
+    else if (__isset.enable && !(enable == rhs.enable))
       return false;
     return true;
   }

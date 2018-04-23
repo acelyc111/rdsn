@@ -333,7 +333,6 @@ void meta_service::register_rpc_handlers()
         RPC_CM_MODIFY_COMPACT_POLICY, "modify_compact_policy", &meta_service::on_modify_compact_policy);
     register_rpc_handler(
         RPC_CM_QUERY_COMPACT_POLICY, "query_compact_policy", &meta_service::on_query_compact_policy);
-    // TODO register manual compact command handler(add, modify(include disable and enable), query)
 }
 
 int meta_service::check_leader(dsn_message_t req)

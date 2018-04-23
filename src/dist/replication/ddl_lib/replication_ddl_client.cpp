@@ -1057,7 +1057,7 @@ dsn::error_code replication_ddl_client::enable_backup_policy(const std::string &
 dsn::error_code replication_ddl_client::add_compact_policy(const std::string &policy_name,
                                                            const std::set<int32_t> &app_ids,
                                                            int64_t interval_seconds,
-                                                           const int32_t start_time) {
+                                                           int32_t start_time) {
     std::shared_ptr<configuration_add_compact_policy_request> req =
         std::make_shared<configuration_add_compact_policy_request>();
     req->policy.__set_policy_name(policy_name);
@@ -1084,22 +1084,28 @@ dsn::error_code replication_ddl_client::add_compact_policy(const std::string &po
     return ERR_OK;
 }
 
-dsn::error_code replication_ddl_client::modify_compact_policy(const std::string &policy_name,
-                                                              const std::set<int32_t> &app_ids,
-                                                              int64_t interval_seconds,
-                                                              const int32_t start_time) {
+dsn::error_code
+replication_ddl_client::do_modify_compact_policy(const std::string &policy_name,
+                                                 const std::set<int32_t>* app_ids,
+                                                 int64_t* interval_seconds,
+                                                 int32_t* start_time,
+                                                 bool* enable) {
     std::shared_ptr<configuration_modify_compact_policy_request> req =
         std::make_shared<configuration_modify_compact_policy_request>();
         req->policy.policy_name = policy_name;
-    if (!app_ids.empty()) {
-        req->policy.__set_app_ids(app_ids);
+    if (app_ids != nullptr && !app_ids->empty()) {
+        req->policy.__set_app_ids(*app_ids);
     }
-    if (interval_seconds > 0) {
-        req->policy.__set_interval_seconds(interval_seconds);
+    if (interval_seconds != nullptr && *interval_seconds > 0) {
+        req->policy.__set_interval_seconds(*interval_seconds);
     }
-    if (start_time > 0) {
-        req->policy.__set_start_time(start_time);
+    if (start_time != nullptr && *start_time > 0) {
+        req->policy.__set_start_time(*start_time);
     }
+    if (enable != nullptr) {
+        req->policy.__set_enable(*enable);
+    }
+
     auto resp_task =
         request_meta<configuration_modify_compact_policy_request>(RPC_CM_MODIFY_COMPACT_POLICY, req);
     resp_task->wait();
@@ -1121,6 +1127,26 @@ dsn::error_code replication_ddl_client::modify_compact_policy(const std::string 
         }
         return resp.err;
     }
+}
+
+dsn::error_code replication_ddl_client::modify_compact_policy(const std::string &policy_name,
+                                                              const std::set<int32_t> &app_ids,
+                                                              int64_t interval_seconds,
+                                                              int32_t start_time) {
+    return do_modify_compact_policy(policy_name,
+                                    &app_ids,
+                                    &interval_seconds,
+                                    &start_time,
+                                    nullptr);
+}
+
+dsn::error_code replication_ddl_client::switch_compact_policy(const std::string &policy_name, bool enable)
+{
+    return do_modify_compact_policy(policy_name,
+                                    nullptr,
+                                    nullptr,
+                                    nullptr,
+                                    &enable);
 }
 
 // help functions
@@ -1178,7 +1204,7 @@ static void print_compact_policy_entry(const compact_policy_entry &entry)
               << "    " << std::setw(width) << std::left << "start_time"
               << " : " << ::dsn::utils::sec_of_day_to_hm(entry.start_time) << std::endl
               << "    " << std::setw(width) << std::left << "status"
-              << " : " << (entry.is_disable ? "disabled" : "enabled") << std::endl
+              << " : " << (entry.enable ? "enabled" : "disabled") << std::endl
               << std::endl;
 }
 

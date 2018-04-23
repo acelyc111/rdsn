@@ -9968,9 +9968,9 @@ void compact_policy_entry::__set_start_time(const int32_t val) {
 __isset.start_time = true;
 }
 
-void compact_policy_entry::__set_is_disable(const bool val) {
-  this->is_disable = val;
-__isset.is_disable = true;
+void compact_policy_entry::__set_enable(const bool val) {
+  this->enable = val;
+__isset.enable = true;
 }
 
 uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot) {
@@ -10041,8 +10041,8 @@ uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot
         break;
       case 5:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->is_disable);
-          this->__isset.is_disable = true;
+          xfer += iprot->readBool(this->enable);
+          this->__isset.enable = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -10091,9 +10091,9 @@ uint32_t compact_policy_entry::write(::apache::thrift::protocol::TProtocol* opro
     xfer += oprot->writeI32(this->start_time);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.is_disable) {
-    xfer += oprot->writeFieldBegin("is_disable", ::apache::thrift::protocol::T_BOOL, 5);
-    xfer += oprot->writeBool(this->is_disable);
+  if (this->__isset.enable) {
+    xfer += oprot->writeFieldBegin("enable", ::apache::thrift::protocol::T_BOOL, 5);
+    xfer += oprot->writeBool(this->enable);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -10107,7 +10107,7 @@ void swap(compact_policy_entry &a, compact_policy_entry &b) {
   swap(a.interval_seconds, b.interval_seconds);
   swap(a.app_ids, b.app_ids);
   swap(a.start_time, b.start_time);
-  swap(a.is_disable, b.is_disable);
+  swap(a.enable, b.enable);
   swap(a.__isset, b.__isset);
 }
 
@@ -10116,7 +10116,7 @@ compact_policy_entry::compact_policy_entry(const compact_policy_entry& other441)
   interval_seconds = other441.interval_seconds;
   app_ids = other441.app_ids;
   start_time = other441.start_time;
-  is_disable = other441.is_disable;
+  enable = other441.enable;
   __isset = other441.__isset;
 }
 compact_policy_entry::compact_policy_entry( compact_policy_entry&& other442) {
@@ -10124,7 +10124,7 @@ compact_policy_entry::compact_policy_entry( compact_policy_entry&& other442) {
   interval_seconds = std::move(other442.interval_seconds);
   app_ids = std::move(other442.app_ids);
   start_time = std::move(other442.start_time);
-  is_disable = std::move(other442.is_disable);
+  enable = std::move(other442.enable);
   __isset = std::move(other442.__isset);
 }
 compact_policy_entry& compact_policy_entry::operator=(const compact_policy_entry& other443) {
@@ -10132,7 +10132,7 @@ compact_policy_entry& compact_policy_entry::operator=(const compact_policy_entry
   interval_seconds = other443.interval_seconds;
   app_ids = other443.app_ids;
   start_time = other443.start_time;
-  is_disable = other443.is_disable;
+  enable = other443.enable;
   __isset = other443.__isset;
   return *this;
 }
@@ -10141,7 +10141,7 @@ compact_policy_entry& compact_policy_entry::operator=(compact_policy_entry&& oth
   interval_seconds = std::move(other444.interval_seconds);
   app_ids = std::move(other444.app_ids);
   start_time = std::move(other444.start_time);
-  is_disable = std::move(other444.is_disable);
+  enable = std::move(other444.enable);
   __isset = std::move(other444.__isset);
   return *this;
 }
@@ -10152,7 +10152,7 @@ void compact_policy_entry::printTo(std::ostream& out) const {
   out << ", " << "interval_seconds="; (__isset.interval_seconds ? (out << to_string(interval_seconds)) : (out << "<null>"));
   out << ", " << "app_ids="; (__isset.app_ids ? (out << to_string(app_ids)) : (out << "<null>"));
   out << ", " << "start_time="; (__isset.start_time ? (out << to_string(start_time)) : (out << "<null>"));
-  out << ", " << "is_disable="; (__isset.is_disable ? (out << to_string(is_disable)) : (out << "<null>"));
+  out << ", " << "enable="; (__isset.enable ? (out << to_string(enable)) : (out << "<null>"));
   out << ")";
 }
 

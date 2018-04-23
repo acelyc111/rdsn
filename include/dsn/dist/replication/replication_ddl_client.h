@@ -159,14 +159,16 @@ public:
     dsn::error_code add_compact_policy(const std::string &policy_name,
                                        const std::set<int32_t> &app_ids,
                                        int64_t interval_seconds,
-                                       const int32_t start_time);
+                                       int32_t start_time);
 
     dsn::error_code modify_compact_policy(const std::string &policy_name,
                                          const std::set<int32_t> &app_ids,
                                          int64_t interval_seconds,
-                                         const int32_t start_time);
+                                         int32_t start_time);
 
     dsn::error_code query_compact_policy(const std::vector<std::string> &policy_names);
+
+    dsn::error_code switch_compact_policy(const std::string &policy_name, bool enable);
 
 private:
     bool static valid_app_char(int c);
@@ -176,6 +178,12 @@ private:
                           error_code err,
                           dsn_message_t request,
                           dsn_message_t resp);
+
+    dsn::error_code do_modify_compact_policy(const std::string &policy_name,
+                                             const std::set<int32_t>* app_ids,
+                                             int64_t* interval_seconds,
+                                             int32_t* start_time,
+                                             bool* enable);
 
     template <typename TRequest>
     dsn::task_ptr request_meta(dsn::task_code code,

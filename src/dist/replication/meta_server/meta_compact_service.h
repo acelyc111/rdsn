@@ -9,76 +9,62 @@ class meta_service;
 class server_state;
 class compact_service;
 
-enum class policy_status: int32_t {
-    ALIVE = 1,
-    DELETING = 2
-};
-
-typedef std::underlying_type<policy_status>::type policy_status_under;
-
 struct policy_record
 {
-    int32_t info_status = (policy_status_under)policy_status::ALIVE;
     int64_t id = 0;
     int64_t start_time = 0;
     int64_t end_time = 0;
-
-    // "app_ids" is copied from policy.app_ids when
-    // a new compact is generated. The policy's
-    // app set may be changed, but policy_record.app_ids
-    // never change.
-    std::set<int32_t> app_ids;
-    std::map<int32_t, std::string> app_names;
+    std::set<int32_t> app_ids;              // "app_ids" is copied from policy.app_ids when
+                                            // a new compact task is generated.
+                                            // The policy's app set may be changed,
+                                            // but policy_record.app_ids never change.
+    std::map<int32_t, std::string> app_id_names;
 
     DEFINE_JSON_SERIALIZATION(id,
                               start_time,
                               end_time,
                               app_ids,
-                              app_names,
-                              info_status)
+                              app_id_names)
 };
 
-class compact_policy : public policy_info {          // TODO policy_info is needed？
+class compact_policy {
 public:
-    bool is_disable = false;
+    bool enable = true;
     int32_t start_time = 0;
-    int32_t history_count_to_keep = 7;
     int32_t interval_seconds = 0;
+    std::string policy_name;
     std::set<int32_t> app_ids;
-    std::map<int32_t, std::string> app_names;
+    std::map<int32_t, std::string> app_id_names;
 
-    DEFINE_JSON_SERIALIZATION(policy_name,
-                              app_ids,
-                              app_names,
+    static const int32_t history_count_to_keep = 7;
+
+    DEFINE_JSON_SERIALIZATION(enable,
+                              start_time,
                               interval_seconds,
-                              is_disable,
-                              start_time)
+                              policy_name,
+                              app_ids,
+                              app_id_names)
 };
 
 struct compact_progress {
-    int32_t unfinished_apps = 0;                                    // unfinished apps count
-    std::map<gpid, bool> partition_progress;                        // gpid => progress
-    std::map<gpid, dsn::task_ptr> compact_requests;                 // gpid => compact task
-    std::map<app_id, int32_t> app_unfinish_partition_count;         // app_id => unfinish partition count
-    // if app is dropped when starting a new compact or under compacting, we just skip compact this app
-    std::map<app_id, bool> is_app_skipped;                          // true when app is invalid
+    int32_t unfinish_apps_count = 0;
+    std::map<gpid, bool> gpid_finish;
+    std::map<app_id, int32_t> app_unfinish_partition_count;
+    std::map<app_id, bool> skipped_app;     // if app is dropped when starting a new compact
+                                            // or under compacting, we just skip compact this app
 
     void reset() {
-        unfinished_apps = 0;
-        partition_progress.clear();
-        compact_requests.clear();
+        unfinish_apps_count = 0;
+        gpid_finish.clear();
         app_unfinish_partition_count.clear();
-        is_app_skipped.clear();
+        skipped_app.clear();
     }
 };
 
-// policy level (multi apps)
 class compact_policy_context {
 public:
     explicit compact_policy_context(compact_service *service)
-            : _compact_service(service) {
-    }
-
+            : _compact_service(service) {}
     ~compact_policy_context() {}
 
     void set_policy(compact_policy &&p);
@@ -88,14 +74,15 @@ public:
 
 private:
     void issue_new_compact();
+    void continue_current_compact();
     void retry_issue_new_compact();
     bool should_start_compact();
-    bool time_in_1hour(int start_sec_of_day);
-    void prepare_current_compact_on_new();
-    void initialize_compact_progress();
-    void continue_current_compact();
-    void start_compact_app_meta(int32_t app_id);
+    bool start_in_1hour(int start_sec_of_day);
+    void init_current_record();
+    void init_progress();
+
     void start_compact_app(int32_t app_id);
+    bool skip_compact_app(int32_t app_id);
     void start_compact_partition(gpid pid);
     void start_compact_primary(gpid pid,
                                const dsn::rpc_address &replica);
@@ -103,22 +90,17 @@ private:
                           compact_response &&response,
                           gpid pid,
                           const dsn::rpc_address &replica);
-    void issue_gc_policy_record_task();
-    void update_compact_duration();
-    void gc_policy_record(const policy_record &record);
-    void remove_local_record(int64_t id);
-    bool update_partition_progress(gpid pid,
-                                   bool finish,
-                                   const dsn::rpc_address &source);
+    bool finish_compact_partition(gpid pid,
+                                  bool finish,
+                                  const dsn::rpc_address &source);
     void finish_compact_app(int32_t app_id);
+    void finish_compact_policy();
 
-    void write_compact_record(const policy_record &record,
-                              dsn::task_ptr write_callback);
     void sync_record_to_remote_storage(const policy_record &record,
-                                      task_ptr sync_task,
-                                      bool create_new_node);
-    void sync_remove_compact_record(const policy_record &record,
-                                    dsn::task_ptr sync_task);
+                                       task_ptr sync_task,
+                                       bool create_new_node);
+    void remove_record_on_remote_storage(const policy_record &record);
+
     void add_record(const policy_record &record);
     std::list<policy_record> get_compact_records();
     bool is_under_compacting();
@@ -128,34 +110,25 @@ private:
     friend class compact_service;
     compact_service *_compact_service;
 
-    // lock the data-structure below
     dsn::service::zlock _lock;
-
-    // policy related
     compact_policy _policy;
-
-    // compact related
     policy_record _cur_record;
-    // id --> policy_record
-    std::map<int64_t, policy_record> _compact_history;        // key:时间,由小到大
+    std::map<int64_t, policy_record> _history_records;
     compact_progress _progress;
-    std::string _compact_sig; // policy_name@id, used when print compact related log
 
-    perf_counter_wrapper _counter_recent_compact_duration;
+    std::string _record_sig;                // policy_name@record_id, used for logging
 };
 
-// cluster level
 class compact_service {
 public:
-    struct compact_service_option
-    {
-        std::chrono::milliseconds meta_retry_delay;
-        std::chrono::milliseconds reconfiguration_retry_delay;
-        std::chrono::milliseconds issue_new_op_interval;
-        std::chrono::milliseconds request_compact_period;
+    struct compact_service_option {
+        std::chrono::milliseconds meta_retry_delay = 10000_ms;
+        std::chrono::milliseconds reconfiguration_retry_delay = 15000_ms;
+        std::chrono::milliseconds issue_new_op_interval = 300000_ms;
+        std::chrono::milliseconds request_compact_period = 10000_ms;
     };
-
     typedef std::function<std::shared_ptr<compact_policy_context>(compact_service *)> policy_factory;
+
     explicit compact_service(meta_service *meta_svc,
                              const std::string &policy_meta_root,
                              const policy_factory &factory);
@@ -163,12 +136,6 @@ public:
     void start();
 
     void add_policy(dsn_message_t msg);
-    void do_add_policy(dsn_message_t req,
-                       std::shared_ptr<compact_policy_context> policy_cxt_ptr,
-                       const std::string &hint_msg);
-    void do_update_policy_to_remote_storage(dsn_message_t req,
-                                            const compact_policy &policy,
-                                            std::shared_ptr<compact_policy_context> &policy_cxt_ptr);
     void query_policy(dsn_message_t msg);
     void modify_policy(dsn_message_t msg);
 
@@ -178,9 +145,17 @@ public:
     std::string get_record_path(const std::string &policy_name, int64_t compact_id);
 
 private:
-    void start_create_policy_meta_root(dsn::task_ptr callback);
     void start_sync_policies();
     error_code sync_policies_from_remote_storage();
+
+    void create_policy_root(dsn::task_ptr callback);
+    void do_add_policy(dsn_message_t req,
+                       std::shared_ptr<compact_policy_context> policy_cxt_ptr,
+                       const std::string &hint_msg);
+    void modify_policy_on_remote_storage(dsn_message_t req,
+                                         const compact_policy &policy,
+                                         std::shared_ptr<compact_policy_context> &policy_cxt_ptr);
+
     std::string get_policy_path(const std::string &policy_name);
     bool is_valid_policy_name(const std::string &policy_name);
 
@@ -189,15 +164,13 @@ private:
     meta_service *_meta_svc;
     server_state *_state;
 
-    // _lock is only used to lock _policy_cxts
-    dsn::service::zlock _lock;
-    // policy_name -> compact_policy_context
-    std::map<std::string, std::shared_ptr<compact_policy_context>> _policy_cxts;  // poicy name => compact_policy_context   // TODO 可以改名
-
-    // the root of policy metas, stored on remote_storage(zookeeper)
-    std::string _policy_meta_root;
+    // storage root path on zookeeper
+    std::string _policy_root;
 
     compact_service_option _opt;
+
+    dsn::service::zlock _lock;
+    std::map<std::string, std::shared_ptr<compact_policy_context>> _policy_cxts;
 };
 }
 }

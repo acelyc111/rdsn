@@ -568,7 +568,7 @@ struct compact_policy_entry
     2:optional i64          interval_seconds;
     3:optional set<i32>     app_ids;
     4:optional i32          start_time;
-    5:optional bool         is_disable;
+    5:optional bool         enable;
 }
 
 struct configuration_add_compact_policy_request
