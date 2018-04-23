@@ -438,23 +438,9 @@ void replica::close()
     _counter_private_log_size.clear();
 }
 
-bool replica::could_start_manual_compact()
-{
-    uint64_t not_start = 0;
-    uint64_t now = dsn_now_ms();
-    if (_options->manual_compact_min_interval_seconds > 0 &&
-        (_manual_compact_last_finish_time_ms.load() == 0 ||
-         now - _manual_compact_last_finish_time_ms.load() >
-             (uint64_t)_options->manual_compact_min_interval_seconds * 1000)) {
-        return _manual_compact_enqueue_time_ms.compare_exchange_strong(not_start, now);
-    } else {
-        return false;
-    }
-}
-
-void replica::start_manual_compact(compact_status compact_status,
-                                   compact_context_ptr compact_context,
-                                   compact_response &response)
+void replica::policy_compact(compact_status compact_status,
+                             compact_context_ptr compact_context,
+                             compact_response &response)
 {
     if (compact_status == compact_status::kCompacting) {
         // do nothing
@@ -465,14 +451,14 @@ void replica::start_manual_compact(compact_status compact_status,
         response.finish = false;
     } else if (compact_status == compact_status::KInvalid) {
         // execute compact task async
-//            _stub->_counter_cold_backup_recent_start_count->increment();
         ddebug_f("{}: start check_and_compact", compact_context->name);
         compact_context->start_compact();
         tasking::enqueue(
             LPC_MANUAL_COMPACT,
             this,
             [this, compact_context]() {
-                check_and_compact(compact_context);
+                check_and_compact();
+                compact_context->finish_compact();
         });
         response.err = dsn::ERR_BUSY;
         response.finish = false;
@@ -509,14 +495,14 @@ void replica::on_policy_compact(const compact_request &request,
 {
     const std::string &policy_name = request.policy_name;
     auto req_id = request.id;
-    compact_context_ptr new_context(new compact_context(this, request));
+    compact_context_ptr new_context(new compact_context(request));
 
     if (status() == partition_status::type::PS_PRIMARY ||
         status() == partition_status::type::PS_SECONDARY) {
         compact_context_ptr compact_context = nullptr;
-        auto find = _compact_contexts.find(policy_name);
-        if (find != _compact_contexts.end()) {
-            compact_context = find->second;
+        auto iter = _compact_contexts.find(policy_name);
+        if (iter != _compact_contexts.end()) {
+            compact_context = iter->second;
         } else {
             auto r = _compact_contexts.insert(std::make_pair(policy_name, new_context));
             dassert(r.second, "");
@@ -532,7 +518,6 @@ void replica::on_policy_compact(const compact_request &request,
                      new_context->name,
                      compact_context->request.id,
                      compact_status_to_string(compact_status));
-            compact_context->cancel();
             _compact_contexts.erase(policy_name);
             on_policy_compact(request, response);
             return;
@@ -550,18 +535,16 @@ void replica::on_policy_compact(const compact_request &request,
             return;
         }
 
-        // request on secondary
+        // request on primary
         if (status() == partition_status::PS_PRIMARY) {
             send_compact_request_to_secondary(request, compact_context);
         }
 
-        start_manual_compact(compact_status,
-                             compact_context,
-                             response);
+        policy_compact(compact_status, compact_context, response);
     } else {
         derror_f("{}: invalid state for compaction, partition_status = {}",
-              new_context->name,
-              enum_to_string(status()));
+                 new_context->name,
+                 enum_to_string(status()));
         response.err = ERR_INVALID_STATE;
         response.finish = false;
     }
@@ -578,18 +561,31 @@ void replica::send_compact_request_to_secondary(const compact_request &request,
                   [this, compact_context, secondary](dsn::error_code err,
                                                      compact_response &&resp) {
                       if (err == dsn::ERR_OK && resp.finish) {
-                          compact_context->secondary_status[secondary] = true;      // TODO deal with changes
+                          compact_context->secondary_status[secondary] = true;
                       }
                   });
     }
 }
 
-void replica::check_and_compact(compact_context_ptr compact_context)
+void replica::check_and_compact()
 {
     if (could_start_manual_compact()) {
         manual_compact();
     }
-    compact_context->finish_compact();
+}
+
+bool replica::could_start_manual_compact()
+{
+    uint64_t not_start = 0;
+    uint64_t now = dsn_now_ms();
+    if (_options->manual_compact_min_interval_seconds > 0 &&
+        (_manual_compact_last_finish_time_ms.load() == 0 ||
+         now - _manual_compact_last_finish_time_ms.load() >
+             (uint64_t)_options->manual_compact_min_interval_seconds * 1000)) {
+        return _manual_compact_enqueue_time_ms.compare_exchange_strong(not_start, now);
+    } else {
+        return false;
+    }
 }
 
 void replica::manual_compact()

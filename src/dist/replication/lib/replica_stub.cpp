@@ -868,17 +868,6 @@ void replica_stub::on_policy_compact(const compact_request &request,
     response.policy_name = request.policy_name;
     response.id = request.id;
 
-/*    if (_options.cold_backup_root.empty()) {
-        derror("backup{%d.%d.%s.%" PRId64
-               "}: cold_backup_root is empty, response ERR_OPERATION_DISABLED",
-               request.pid.get_app_id(),
-               request.pid.get_partition_index(),
-               request.policy.policy_name.c_str(),
-               request.backup_id);
-        response.err = ERR_OPERATION_DISABLED;
-        return;
-    }*/
-
     replica_ptr rep = get_replica(request.pid);
     if (rep != nullptr) {
         rep->on_policy_compact(request, response);
@@ -1921,7 +1910,6 @@ void replica_stub::open_service()
 
     register_rpc_handler(RPC_POLICY_COMPACT, "policy_compact", &replica_stub::on_policy_compact);
 
-    // TODO register manual compact handler
     _kill_partition_command = ::dsn::command_manager::instance().register_app_command(
         {"kill_partition"},
         "kill_partition [app_id [partition_index]]",

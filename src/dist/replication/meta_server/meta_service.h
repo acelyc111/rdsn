@@ -148,7 +148,6 @@ private:
     void on_add_compact_policy(dsn_message_t req);
     void on_modify_compact_policy(dsn_message_t req);
     void on_query_compact_policy(dsn_message_t req);
-    // TODO add manual compact handle funcs(add, modify(include disable and enable), query)
 
     // common routines
     // ret:

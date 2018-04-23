@@ -686,11 +686,6 @@ void meta_service::on_modify_backup_policy(dsn_message_t req)
         reply(req, response);
     } else {
         dsn_msg_add_ref(req);
-//        task_ptr enqueue(dsn::task_code evt,
-//                 clientlet *svc,
-//                 TCallback &&callback,
-//                 int hash = 0,
-//                 std::chrono::milliseconds delay = std::chrono::milliseconds(0))
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          nullptr,
                          std::bind(&backup_service::modify_policy, _backup_handler.get(), req));
@@ -719,7 +714,6 @@ void meta_service::on_query_restore_status(dsn_message_t req)
                      std::bind(&server_state::on_query_restore_status, _state.get(), req));
 }
 
-// TODO add implement of add, modify, query for manual compaction
 void meta_service::on_add_compact_policy(dsn_message_t req)
 {
     configuration_add_compact_policy_response response;
@@ -733,7 +727,9 @@ void meta_service::on_add_compact_policy(dsn_message_t req)
         dsn_msg_add_ref(req);
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          nullptr,
-                         std::bind(&compact_service::add_policy, _compact_handler.get(), req));
+                         std::bind(&compact_service::add_policy,
+                                   _compact_handler.get(),
+                                   req));
     }
 }
 
@@ -750,7 +746,9 @@ void meta_service::on_modify_compact_policy(dsn_message_t req)
         dsn_msg_add_ref(req);
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          nullptr,
-                         std::bind(&compact_service::modify_policy, _compact_handler.get(), req));
+                         std::bind(&compact_service::modify_policy,
+                                   _compact_handler.get(),
+                                   req));
     }
 }
 
@@ -767,7 +765,9 @@ void meta_service::on_query_compact_policy(dsn_message_t req)
         dsn_msg_add_ref(req);
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          nullptr,
-                         std::bind(&compact_service::query_policy, _compact_handler.get(), req));
+                         std::bind(&compact_service::query_policy,
+                                   _compact_handler.get(),
+                                   req));
     }
 }
 

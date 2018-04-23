@@ -529,16 +529,14 @@ const char* compact_status_to_string(compact_status s);
 
 class compact_context : public ref_counter {
 public:
-    explicit compact_context(replica *r_,
-                             const compact_request &req)
+    explicit compact_context(const compact_request &req)
         : request(req),
-          _status((compact_status_under)compact_status::KInvalid),
-          _owner_replica(r_)
+          _status((compact_status_under)compact_status::KInvalid)
     {
         std::stringstream ss;
         ss << "compact("
            << request.policy_name << "."
-           << request.id
+           << request.id << "."
            << request.pid.get_app_id() << "."
            << request.pid.get_partition_index() << "." << ")";
         name = ss.str();
@@ -556,8 +554,6 @@ public:
         _status.store((compact_status_under)compact_status::kCompleted);
     }
 
-    void cancel() {}
-
     compact_status status() const { return (compact_status)_status.load(); }
 
 public:
@@ -567,7 +563,6 @@ public:
 
 private:
     std::atomic_int _status;
-    replica *_owner_replica;
 };
 
 typedef dsn::ref_ptr<compact_context> compact_context_ptr;

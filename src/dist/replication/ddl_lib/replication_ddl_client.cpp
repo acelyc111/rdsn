@@ -1064,6 +1064,7 @@ dsn::error_code replication_ddl_client::add_compact_policy(const std::string &po
     req->policy.__set_app_ids(app_ids);
     req->policy.__set_interval_seconds(interval_seconds);
     req->policy.__set_start_time(start_time);
+    req->policy.__set_enable(true);
     auto resp_task =
         request_meta<configuration_add_compact_policy_request>(RPC_CM_ADD_COMPACT_POLICY, req);
     resp_task->wait();
@@ -1079,9 +1080,14 @@ dsn::error_code replication_ddl_client::add_compact_policy(const std::string &po
         std::cout << "not ok" << std::endl;
         return resp.err;
     } else {
-        std::cout << "add compact policy succeed, policy_name = " << policy_name << std::endl;
+        std::cout << "Add policy result: " << resp.err.to_string() << std::endl;
+        if (!resp.hint_message.empty()) {
+            std::cout << "=============================" << std::endl;
+            std::cout << resp.hint_message << std::endl;
+            std::cout << "=============================" << std::endl;
+        }
+        return resp.err;
     }
-    return ERR_OK;
 }
 
 dsn::error_code
@@ -1228,7 +1234,7 @@ static void print_backup_entry(const backup_entry &bentry)
 
     char start_time[30] = {'\0'};
     char end_time[30] = {'\0'};
-    ::dsn::utils::time_ms_to_date_time(bentry.end_time_ms, start_time, 30);
+    ::dsn::utils::time_ms_to_date_time(bentry.start_time_ms, start_time, 30);
     if (bentry.end_time_ms == 0) {
         end_time[0] = '-';
         end_time[1] = '\0';
