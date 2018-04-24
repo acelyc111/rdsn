@@ -115,6 +115,7 @@ void compact_policy_context::start_compact_primary(gpid pid,
     req.pid = pid;
     req.policy_name = _policy.policy_name;
     req.app_name = _policy.app_id_names[pid.get_app_id()];
+    req.opts = _policy.opts;
     dsn_message_t request = dsn_msg_create_request(RPC_POLICY_COMPACT,
                                                    0,
                                                    pid.thread_hash());
@@ -878,6 +879,7 @@ void compact_service::add_policy(dsn_message_t msg)
         tmp.interval_seconds = policy.interval_seconds;
         tmp.app_ids = app_ids;
         tmp.app_id_names = app_id_names;
+        tmp.opts = policy.opts;
         policy_ctx->set_policy(tmp);
 
         do_add_policy(msg, policy_ctx, response.hint_message);
@@ -1022,7 +1024,7 @@ void compact_service::modify_policy(dsn_message_t msg)
             if (policy_ctx->is_under_compacting()) {
                 ddebug_f("policy({}) is under compacting, not allow to disabled",
                          cur_policy.policy_name.c_str());
-                response.err = dsn::ERR_BUSY;                                           // TODO could mark to drop
+                response.err = dsn::ERR_BUSY;
             } else if (cur_policy.enable) {
                 ddebug_f("policy({}) is marked to disabled", cur_policy.policy_name.c_str());
                 cur_policy.enable = false;
@@ -1058,6 +1060,15 @@ void compact_service::modify_policy(dsn_message_t msg)
                  ::dsn::utils::sec_of_day_to_hm(cur_policy.start_time).c_str(),
                  ::dsn::utils::sec_of_day_to_hm(req_policy.start_time).c_str());
         cur_policy.start_time = req_policy.start_time;
+        have_modify_policy = true;
+    }
+
+    if (req_policy.__isset.opts) {
+        ddebug_f("policy({}) change opts from {} to {}",
+                 cur_policy.policy_name.c_str(),
+                 ::dsn::utils::kv_map_to_string(cur_policy.opts, ',', '=').c_str(),
+                 ::dsn::utils::kv_map_to_string(req_policy.opts, ',', '=').c_str());
+        cur_policy.opts = req_policy.opts;
         have_modify_policy = true;
     }
 
@@ -1155,6 +1166,7 @@ void compact_service::query_policy(dsn_message_t msg)
         t_policy.policy.__set_app_ids(cur_policy.app_ids);
         t_policy.policy.__set_start_time(cur_policy.start_time);
         t_policy.policy.__set_enable(cur_policy.enable);
+        t_policy.policy.__set_opts(cur_policy.opts);
         const std::list<policy_record> &records =
             policy_ctx->get_compact_records();
         for (const auto &record : records) {

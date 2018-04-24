@@ -155,16 +155,18 @@ public:
                                          int64_t new_backup_interval_sec,
                                          int32_t backup_history_count_to_keep = 0,
                                          const std::string &start_time = std::string());
-    // TODO add rpc function for add, modify, query, disable, enable of manual compaction
+
     dsn::error_code add_compact_policy(const std::string &policy_name,
                                        const std::set<int32_t> &app_ids,
                                        int64_t interval_seconds,
-                                       int32_t start_time);
+                                       int32_t start_time,
+                                       const std::map<std::string, std::string> &opts);
 
     dsn::error_code modify_compact_policy(const std::string &policy_name,
-                                         const std::set<int32_t> &app_ids,
-                                         int64_t interval_seconds,
-                                         int32_t start_time);
+                                          const std::set<int32_t> &app_ids,
+                                          int64_t interval_seconds,
+                                          int32_t start_time,
+                                          const std::map<std::string, std::string> &opts);
 
     dsn::error_code query_compact_policy(const std::vector<std::string> &policy_names);
 
@@ -193,7 +195,8 @@ private:
                                              const std::set<int32_t>* app_ids,
                                              int64_t* interval_seconds,
                                              int32_t* start_time,
-                                             bool* enable);
+                                             bool* enable,
+                                             const std::map<std::string, std::string>* opts);
 
     template <typename TRequest>
     dsn::task_ptr request_meta(dsn::task_code code,

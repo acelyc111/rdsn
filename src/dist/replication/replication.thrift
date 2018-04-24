@@ -564,11 +564,12 @@ struct configuration_query_restore_response
 
 struct compact_policy_entry
 {
-    1:string                policy_name;
-    2:optional i64          interval_seconds;
-    3:optional set<i32>     app_ids;
-    4:optional i32          start_time;
-    5:optional bool         enable;
+    1:string                        policy_name;
+    2:optional i64                  interval_seconds;
+    3:optional set<i32>             app_ids;
+    4:optional i32                  start_time;
+    5:optional bool                 enable;
+    6:optional map<string, string>  opts;
 }
 
 struct configuration_add_compact_policy_request
@@ -625,7 +626,7 @@ struct compact_request
     2:dsn.gpid              pid;
     3:string                policy_name;
     4:string                app_name;
-
+    5:map<string, string>   opts;
 }
 
 struct compact_response

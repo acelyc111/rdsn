@@ -300,9 +300,10 @@ private:
                                            compact_context_ptr compact_context);
     void check_and_compact(const std::map<std::string, std::string> &opts);
 
-    void policy_compact(compact_status compact_status,
-                        compact_context_ptr compact_context,
-                        compact_response &response);
+    void do_policy_compact(compact_status compact_status,
+                           compact_context_ptr compact_context,
+                           const std::map<std::string, std::string> &opts,
+                           compact_response &response);
     bool could_start_manual_compact();
 
     void manual_compact(const std::map<std::string, std::string> &opts);

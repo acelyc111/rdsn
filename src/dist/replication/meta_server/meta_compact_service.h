@@ -33,6 +33,7 @@ public:
     int32_t start_time = 0;
     int32_t interval_seconds = 0;
     std::string policy_name;
+    std::map<std::string, std::string> opts;
     std::set<int32_t> app_ids;
     std::map<int32_t, std::string> app_id_names;
 

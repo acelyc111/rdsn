@@ -438,9 +438,10 @@ void replica::close()
     _counter_private_log_size.clear();
 }
 
-void replica::policy_compact(compact_status compact_status,
-                             compact_context_ptr compact_context,
-                             compact_response &response)
+void replica::do_policy_compact(compact_status compact_status,
+                                compact_context_ptr compact_context,
+                                const std::map<std::string, std::string> &opts,
+                                compact_response &response)
 {
     if (compact_status == compact_status::kCompacting) {
         // do nothing
@@ -456,8 +457,7 @@ void replica::policy_compact(compact_status compact_status,
         tasking::enqueue(
             LPC_MANUAL_COMPACT,
             this,
-            [this, compact_context]() {
-                std::map<std::string, std::string> opts;
+            [this, compact_context, opts]() {
                 check_and_compact(opts);
                 compact_context->finish_compact();
         });
@@ -541,7 +541,7 @@ void replica::on_policy_compact(const compact_request &request,
             send_compact_request_to_secondary(request, compact_context);
         }
 
-        policy_compact(compact_status, compact_context, response);
+        do_policy_compact(compact_status, compact_context, request.opts, response);
     } else {
         derror_f("{}: invalid state for compaction, partition_status = {}",
                  new_context->name,

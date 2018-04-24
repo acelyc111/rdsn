@@ -4268,12 +4268,13 @@ inline std::ostream& operator<<(std::ostream& out, const configuration_query_res
 }
 
 typedef struct _compact_policy_entry__isset {
-  _compact_policy_entry__isset() : policy_name(false), interval_seconds(false), app_ids(false), start_time(false), enable(false) {}
+  _compact_policy_entry__isset() : policy_name(false), interval_seconds(false), app_ids(false), start_time(false), enable(false), opts(false) {}
   bool policy_name :1;
   bool interval_seconds :1;
   bool app_ids :1;
   bool start_time :1;
   bool enable :1;
+  bool opts :1;
 } _compact_policy_entry__isset;
 
 class compact_policy_entry {
@@ -4292,6 +4293,7 @@ class compact_policy_entry {
   std::set<int32_t>  app_ids;
   int32_t start_time;
   bool enable;
+  std::map<std::string, std::string>  opts;
 
   _compact_policy_entry__isset __isset;
 
@@ -4304,6 +4306,8 @@ class compact_policy_entry {
   void __set_start_time(const int32_t val);
 
   void __set_enable(const bool val);
+
+  void __set_opts(const std::map<std::string, std::string> & val);
 
   bool operator == (const compact_policy_entry & rhs) const
   {
@@ -4324,6 +4328,10 @@ class compact_policy_entry {
     if (__isset.enable != rhs.__isset.enable)
       return false;
     else if (__isset.enable && !(enable == rhs.enable))
+      return false;
+    if (__isset.opts != rhs.__isset.opts)
+      return false;
+    else if (__isset.opts && !(opts == rhs.opts))
       return false;
     return true;
   }
@@ -4782,11 +4790,12 @@ inline std::ostream& operator<<(std::ostream& out, const configuration_modify_co
 }
 
 typedef struct _compact_request__isset {
-  _compact_request__isset() : id(false), pid(false), policy_name(false), app_name(false) {}
+  _compact_request__isset() : id(false), pid(false), policy_name(false), app_name(false), opts(false) {}
   bool id :1;
   bool pid :1;
   bool policy_name :1;
   bool app_name :1;
+  bool opts :1;
 } _compact_request__isset;
 
 class compact_request {
@@ -4804,6 +4813,7 @@ class compact_request {
    ::dsn::gpid pid;
   std::string policy_name;
   std::string app_name;
+  std::map<std::string, std::string>  opts;
 
   _compact_request__isset __isset;
 
@@ -4815,6 +4825,8 @@ class compact_request {
 
   void __set_app_name(const std::string& val);
 
+  void __set_opts(const std::map<std::string, std::string> & val);
+
   bool operator == (const compact_request & rhs) const
   {
     if (!(id == rhs.id))
@@ -4824,6 +4836,8 @@ class compact_request {
     if (!(policy_name == rhs.policy_name))
       return false;
     if (!(app_name == rhs.app_name))
+      return false;
+    if (!(opts == rhs.opts))
       return false;
     return true;
   }

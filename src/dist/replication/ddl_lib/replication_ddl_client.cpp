@@ -1048,7 +1048,8 @@ dsn::error_code replication_ddl_client::enable_backup_policy(const std::string &
 dsn::error_code replication_ddl_client::add_compact_policy(const std::string &policy_name,
                                                            const std::set<int32_t> &app_ids,
                                                            int64_t interval_seconds,
-                                                           int32_t start_time) {
+                                                           int32_t start_time,
+                                                           const std::map<std::string, std::string> &opts) {
     std::shared_ptr<configuration_add_compact_policy_request> req =
         std::make_shared<configuration_add_compact_policy_request>();
     req->policy.__set_policy_name(policy_name);
@@ -1056,6 +1057,7 @@ dsn::error_code replication_ddl_client::add_compact_policy(const std::string &po
     req->policy.__set_interval_seconds(interval_seconds);
     req->policy.__set_start_time(start_time);
     req->policy.__set_enable(true);
+    req->policy.__set_opts(opts);
     auto resp_task =
         request_meta<configuration_add_compact_policy_request>(RPC_CM_ADD_COMPACT_POLICY, req);
     resp_task->wait();
@@ -1086,7 +1088,8 @@ replication_ddl_client::do_modify_compact_policy(const std::string &policy_name,
                                                  const std::set<int32_t>* app_ids,
                                                  int64_t* interval_seconds,
                                                  int32_t* start_time,
-                                                 bool* enable) {
+                                                 bool* enable,
+                                                 const std::map<std::string, std::string>* opts) {
     std::shared_ptr<configuration_modify_compact_policy_request> req =
         std::make_shared<configuration_modify_compact_policy_request>();
         req->policy.policy_name = policy_name;
@@ -1101,6 +1104,9 @@ replication_ddl_client::do_modify_compact_policy(const std::string &policy_name,
     }
     if (enable != nullptr) {
         req->policy.__set_enable(*enable);
+    }
+    if (opts != nullptr) {
+        req->policy.__set_opts(*opts);
     }
 
     auto resp_task =
@@ -1129,12 +1135,14 @@ replication_ddl_client::do_modify_compact_policy(const std::string &policy_name,
 dsn::error_code replication_ddl_client::modify_compact_policy(const std::string &policy_name,
                                                               const std::set<int32_t> &app_ids,
                                                               int64_t interval_seconds,
-                                                              int32_t start_time) {
+                                                              int32_t start_time,
+                                                              const std::map<std::string, std::string>& opts) {
     return do_modify_compact_policy(policy_name,
                                     &app_ids,
                                     &interval_seconds,
                                     &start_time,
-                                    nullptr);
+                                    nullptr,
+                                    &opts);
 }
 
 dsn::error_code replication_ddl_client::switch_compact_policy(const std::string &policy_name, bool enable)
@@ -1143,7 +1151,8 @@ dsn::error_code replication_ddl_client::switch_compact_policy(const std::string 
                                     nullptr,
                                     nullptr,
                                     nullptr,
-                                    &enable);
+                                    &enable,
+                                    nullptr);
 }
 
 // help functions
@@ -1202,6 +1211,8 @@ static void print_compact_policy_entry(const compact_policy_entry &entry)
               << " : " << ::dsn::utils::sec_of_day_to_hm(entry.start_time) << std::endl
               << "    " << std::setw(width) << std::left << "status"
               << " : " << (entry.enable ? "enabled" : "disabled") << std::endl
+              << "    " << std::setw(width) << std::left << "opts"
+              << " : " << ::dsn::utils::kv_map_to_string(entry.opts, ',', '=').c_str() << std::endl
               << std::endl;
 }
 
