@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <dsn/cpp/auto_codes.h>
+#include <dsn/tool-api/auto_codes.h>
 #include <dsn/utility/errors.h>
 #include <fmt/format.h>
 

@@ -33,6 +33,8 @@
  */
 #include <boost/lexical_cast.hpp>
 #include <dsn/utility/error_code.h>
+
+#include <dsn/tool-api/group_address.h>
 #include <dsn/dist/replication/replication_ddl_client.h>
 #include <dsn/dist/replication/replication_other_types.h>
 #include <iostream>
@@ -143,16 +145,13 @@ std::string replication_ddl_client::list_hostname_from_ip_port(const char *ip_po
 
 replication_ddl_client::replication_ddl_client(const std::vector<dsn::rpc_address> &meta_servers)
 {
-    _meta_server.assign_group(dsn_group_build("meta-servers"));
+    _meta_server.assign_group("meta-servers");
     for (auto &m : meta_servers) {
-        dsn_group_add(_meta_server.group_handle(), m.c_addr());
+        _meta_server.group_address()->add(m);
     }
 }
 
-replication_ddl_client::~replication_ddl_client()
-{
-    dsn_group_destroy(_meta_server.group_handle());
-}
+replication_ddl_client::~replication_ddl_client() {}
 
 dsn::error_code replication_ddl_client::wait_app_ready(const std::string &app_name,
                                                        int partition_count,
@@ -388,8 +387,8 @@ dsn::error_code replication_ddl_client::list_apps(const dsn::app_status::type st
         << std::setw(max_app_name_size) << std::left << "app_name" << std::setw(20) << std::left
         << "app_type" << std::setw(20) << std::left << "partition_count" << std::setw(20)
         << std::left << "replica_count" << std::setw(20) << std::left << "is_stateful"
-        << std::setw(20) << std::left << "settings" << std::setw(20) << std::left
-        << "drop_expire_time" << std::endl;
+        << std::setw(20) << std::left << "drop_expire_time" << std::setw(20) << std::left << "envs"
+        << std::endl;
     int available_app_count = 0;
     for (int i = 0; i < apps.size(); i++) {
         dsn::app_info info = apps[i];
@@ -398,15 +397,7 @@ dsn::error_code replication_ddl_client::list_apps(const dsn::app_status::type st
         }
         std::string status_str = enum_to_string(info.status);
         status_str = status_str.substr(status_str.find("AS_") + 3);
-        std::string settings = "{";
-        for (auto kv : info.envs) {
-            settings += (kv.first + ":" + kv.second + ",");
-        }
-        if (settings.length() > 1) {
-            settings.back() = '}';
-        } else {
-            settings = "{}";
-        }
+        std::string envs_str = "{" + dsn::utils::kv_map_to_string(info.envs, ',', '=') + "}";
         std::string drop_expire_time = "-";
         if (info.status == app_status::AS_AVAILABLE) {
             available_app_count++;
@@ -419,8 +410,8 @@ dsn::error_code replication_ddl_client::list_apps(const dsn::app_status::type st
             << std::setw(max_app_name_size) << std::left << info.app_name << std::setw(20)
             << std::left << info.app_type << std::setw(20) << std::left << info.partition_count
             << std::setw(20) << std::left << info.max_replica_count << std::setw(20) << std::left
-            << (info.is_stateful ? "true" : "false") << std::setw(20) << std::left << settings
-            << std::setw(20) << std::left << drop_expire_time << std::endl;
+            << (info.is_stateful ? "true" : "false") << std::setw(20) << std::left
+            << drop_expire_time << std::setw(20) << std::left << envs_str << std::endl;
     }
     out << std::endl << std::flush;
 
@@ -1498,6 +1489,104 @@ void replication_ddl_client::end_meta_request(
     } else {
         callback->enqueue_rpc_response(err, resp);
     }
+}
+
+::dsn::error_code replication_ddl_client::set_app_envs(const std::string &app_name,
+                                                       const std::vector<std::string> &keys,
+                                                       const std::vector<std::string> &values)
+{
+    std::shared_ptr<configuration_update_app_env_request> req =
+        std::make_shared<configuration_update_app_env_request>();
+    req->__set_app_name(app_name);
+    req->__set_op(app_env_operation::type::APP_ENV_OP_SET);
+    req->__set_keys(keys);
+    req->__set_values(values);
+
+    auto resp_task = request_meta<configuration_update_app_env_request>(RPC_CM_UPDATE_APP_ENV, req);
+    resp_task->wait();
+
+    if (resp_task->error() != ERR_OK) {
+        return resp_task->error();
+    }
+    configuration_update_app_env_response response;
+    ::dsn::unmarshall(resp_task->response(), response);
+    if (response.err != ERR_OK) {
+        return response.err;
+    } else {
+        std::cout << "set app envs succeed" << std::endl;
+        if (!response.hint_message.empty()) {
+            std::cout << "=============================" << std::endl;
+            std::cout << response.hint_message << std::endl;
+            std::cout << "=============================" << std::endl;
+        }
+    }
+    return ERR_OK;
+}
+
+::dsn::error_code replication_ddl_client::del_app_envs(const std::string &app_name,
+                                                       const std::vector<std::string> &keys)
+{
+    std::shared_ptr<configuration_update_app_env_request> req =
+        std::make_shared<configuration_update_app_env_request>();
+    req->__set_app_name(app_name);
+    req->__set_op(app_env_operation::type::APP_ENV_OP_DEL);
+    req->__set_keys(keys);
+
+    auto resp_task = request_meta<configuration_update_app_env_request>(RPC_CM_UPDATE_APP_ENV, req);
+    resp_task->wait();
+
+    if (resp_task->error() != ERR_OK) {
+        return resp_task->error();
+    }
+    configuration_update_app_env_response response;
+    ::dsn::unmarshall(resp_task->response(), response);
+    if (response.err != ERR_OK) {
+        return response.err;
+    } else {
+        std::cout << "del app envs succeed" << std::endl;
+        if (!response.hint_message.empty()) {
+            std::cout << "=============================" << std::endl;
+            std::cout << response.hint_message << std::endl;
+            std::cout << "=============================" << std::endl;
+        }
+    }
+    return ERR_OK;
+}
+
+::dsn::error_code replication_ddl_client::clear_app_envs(const std::string &app_name,
+                                                         bool clear_all,
+                                                         const std::string &prefix)
+{
+    std::shared_ptr<configuration_update_app_env_request> req =
+        std::make_shared<configuration_update_app_env_request>();
+    req->__set_app_name(app_name);
+    req->__set_op(app_env_operation::type::APP_ENV_OP_CLEAR);
+    if (clear_all) {
+        req->__set_clear_prefix("");
+    } else {
+        dassert(!prefix.empty(), "prefix can not be empty");
+        req->__set_clear_prefix(prefix);
+    }
+
+    auto resp_task = request_meta<configuration_update_app_env_request>(RPC_CM_UPDATE_APP_ENV, req);
+    resp_task->wait();
+
+    if (resp_task->error() != ERR_OK) {
+        return resp_task->error();
+    }
+    configuration_update_app_env_response response;
+    ::dsn::unmarshall(resp_task->response(), response);
+    if (response.err != ERR_OK) {
+        return response.err;
+    } else {
+        std::cout << "clear app envs succeed" << std::endl;
+        if (!response.hint_message.empty()) {
+            std::cout << "=============================" << std::endl;
+            std::cout << response.hint_message << std::endl;
+            std::cout << "=============================" << std::endl;
+        }
+    }
+    return ERR_OK;
 }
 }
 } // namespace

@@ -43,7 +43,6 @@
 #include <string>
 #include <boost/lexical_cast.hpp>
 
-#include "meta_service.h"
 #include "server_state.h"
 #include "server_load_balancer.h"
 
@@ -435,23 +434,24 @@ error_code server_state::initialize_default_apps()
 
             default_app.app_name = dsn_config_get_value_string(s, "app_name", "", "app name");
             if (default_app.app_name.length() == 0) {
-                dwarn("'[%s] app_name' not specified, ignore this section", sections[i]);
+                dwarn("'[%s] app_name' not specified, ignore this section", s);
                 continue;
             }
 
-            default_app.app_type = dsn_config_get_value_string(s, "app_type", "", "app type-name");
+            default_app.app_type = dsn_config_get_value_string(s, "app_type", "", "app type name");
             default_app.partition_count = (int)dsn_config_get_value_uint64(
                 s, "partition_count", 1, "how many partitions the app should have");
             default_app.is_stateful =
                 dsn_config_get_value_bool(s, "stateful", true, "whether this is a stateful app");
             default_app.max_replica_count = (int)dsn_config_get_value_uint64(
-                s, "max_replica_count", 3, "max_replica count in app");
-            // TODO: setup envs
+                s, "max_replica_count", 3, "max replica count in app");
+            std::string envs_str = dsn_config_get_value_string(s, "envs", "", "app envs");
+            bool parse = dsn::utils::parse_kv_map(envs_str.c_str(), default_app.envs, ',', '=');
 
             dassert(default_app.app_type.length() > 0, "'[%s] app_type' not specified", s);
-            dassert(default_app.partition_count > 0,
-                    "partition_count should > 0, partition_count = %d",
-                    default_app.partition_count);
+            dassert(default_app.partition_count > 0, "'[%s] partition_count' should > 0", s);
+            dassert(parse, "'[%s] envs' is invalid, envs = %s", s, envs_str.c_str());
+
             std::shared_ptr<app_state> app = app_state::create(default_app);
             _all_apps.emplace(app->app_id, app);
         }
@@ -2534,6 +2534,220 @@ void server_state::lock_write(zauto_write_lock &other)
 {
     zauto_write_lock l(_lock);
     l.swap(other);
+}
+
+void server_state::do_update_app_info(const std::string &app_path,
+                                      const app_info &info,
+                                      const std::function<void(error_code ec)> &cb)
+{
+    // persistent envs to zookeeper
+    blob value = dsn::json::json_forwarder<app_info>::encode(info);
+    auto new_cb = [ this, app_path, info, user_cb = std::move(cb) ](error_code ec)
+    {
+        if (ec == ERR_OK) {
+            user_cb(ec);
+        } else if (ec == ERR_TIMEOUT) {
+            dwarn("update app_info(app = %s) to remote storage timeout, continue to update later",
+                  info.app_name.c_str());
+            tasking::enqueue(
+                LPC_META_STATE_NORMAL,
+                tracker(),
+                std::bind(
+                    &server_state::do_update_app_info, this, app_path, info, std::move(user_cb)),
+                0,
+                std::chrono::seconds(1));
+        } else {
+            dassert(false, "we can't handle this, error(%s)", ec.to_string());
+        }
+    };
+    _meta_svc->get_remote_storage()->set_data(
+        app_path, value, LPC_META_STATE_NORMAL, std::move(new_cb), tracker());
+}
+
+void server_state::set_app_envs(const app_env_rpc &env_rpc)
+{
+    const configuration_update_app_env_request &request = env_rpc.request();
+    if (!request.__isset.keys || !request.__isset.values ||
+        request.keys.size() != request.values.size() || request.keys.size() <= 0) {
+        env_rpc.response().err = ERR_INVALID_PARAMETERS;
+        dwarn("set_app_envs failed with invalid request");
+        return;
+    }
+    const std::vector<std::string> &keys = request.keys;
+    const std::vector<std::string> &values = request.values;
+    const std::string &app_name = request.app_name;
+
+    app_info ainfo;
+    std::string app_path;
+    {
+        zauto_read_lock l(_lock);
+        std::shared_ptr<app_state> app = get_app(app_name);
+        if (app == nullptr) {
+            dwarn("set_app_env failed with invalid app_name(%s)", app_name.c_str());
+            env_rpc.response().err = ERR_INVALID_PARAMETERS;
+            env_rpc.response().hint_message = "invalid app name";
+            return;
+        } else {
+            ainfo = *(reinterpret_cast<app_info *>(app.get()));
+            app_path = get_app_path(*app);
+        }
+    }
+    for (int idx = 0; idx < keys.size(); idx++) {
+        ainfo.envs[keys[idx]] = values[idx];
+    }
+    do_update_app_info(app_path, ainfo, [this, app_name, keys, values, env_rpc](error_code ec) {
+        dassert(
+            ec == ERR_OK, "update app_info to remote storage failed with err = %s", ec.to_string());
+        zauto_write_lock l(_lock);
+        std::shared_ptr<app_state> app = get_app(app_name);
+        for (int idx = 0; idx < keys.size(); idx++) {
+            app->envs[keys[idx]] = values[idx];
+        }
+    });
+}
+
+void server_state::del_app_envs(const app_env_rpc &env_rpc)
+{
+    const configuration_update_app_env_request &request = env_rpc.request();
+    if (!request.__isset.keys || request.keys.size() <= 0) {
+        env_rpc.response().err = ERR_INVALID_PARAMETERS;
+        dwarn("del_app_envs failed with invalid request");
+        return;
+    }
+    const std::vector<std::string> &keys = request.keys;
+    const std::string &app_name = request.app_name;
+
+    app_info ainfo;
+    std::string app_path;
+    {
+        zauto_read_lock l(_lock);
+        std::shared_ptr<app_state> app = get_app(app_name);
+        if (app == nullptr) {
+            dwarn("del_app_env failed with invalid app_name(%s)", app_name.c_str());
+            env_rpc.response().err = ERR_INVALID_PARAMETERS;
+            env_rpc.response().hint_message = "invalid app name";
+            return;
+        } else {
+            ainfo = *(reinterpret_cast<app_info *>(app.get()));
+            app_path = get_app_path(*app);
+        }
+    }
+
+    std::ostringstream oss;
+    oss << "deleted keys:";
+    int deleted = 0;
+    for (const auto &key : keys) {
+        if (ainfo.envs.erase(key) > 0) {
+            oss << std::endl << "    " << key;
+            deleted++;
+        }
+    }
+
+    if (deleted == 0) {
+        env_rpc.response().hint_message = "no key need to delete";
+        return;
+    }
+    else {
+        env_rpc.response().hint_message = oss.str();
+    }
+
+    do_update_app_info(app_path, ainfo, [this, app_name, keys, env_rpc](error_code ec) {
+        dassert(
+            ec == ERR_OK, "update app_info to remote storage failed with err = %s", ec.to_string());
+        zauto_write_lock l(_lock);
+        std::shared_ptr<app_state> app = get_app(app_name);
+        for (const auto &key : keys) {
+            app->envs.erase(key);
+        }
+    });
+}
+
+void server_state::clear_app_envs(const app_env_rpc &env_rpc)
+{
+    const configuration_update_app_env_request &request = env_rpc.request();
+    if (!request.__isset.clear_prefix) {
+        env_rpc.response().err = ERR_INVALID_PARAMETERS;
+        dwarn("clear_app_envs failed with invalid request");
+        return;
+    }
+
+    const std::string &prefix = request.clear_prefix;
+    const std::string &app_name = request.app_name;
+
+    app_info ainfo;
+    std::string app_path;
+    {
+        zauto_read_lock l(_lock);
+        std::shared_ptr<app_state> app = get_app(app_name);
+        if (app == nullptr) {
+            dwarn("del_app_env failed with invalid app_name(%s)", app_name.c_str());
+            env_rpc.response().err = ERR_INVALID_PARAMETERS;
+            env_rpc.response().hint_message = "invalid app name";
+            return;
+        } else {
+            ainfo = *(reinterpret_cast<app_info *>(app.get()));
+            app_path = get_app_path(*app);
+        }
+    }
+
+    if (ainfo.envs.empty()) {
+        env_rpc.response().hint_message = "no key need to delete";
+        return;
+    }
+
+    std::set<std::string> erase_keys;
+    std::ostringstream oss;
+    oss << "deleted keys:";
+
+    if (prefix.empty()) {
+        // ignore prefix
+        for (auto &kv : ainfo.envs) {
+            oss << std::endl << "    " << kv.first;
+        }
+        ainfo.envs.clear();
+    } else {
+        // acquire key
+        for (const auto &pair : ainfo.envs) {
+            const std::string &key = pair.first;
+            // normal : key = prefix.xxx
+            if (key.size() > prefix.size() + 1) {
+                if (key.substr(0, prefix.size()) == prefix && key.at(prefix.size()) == '.') {
+                    erase_keys.emplace(key);
+                }
+            }
+        }
+        // erase
+        for (const auto &key : erase_keys) {
+            oss << std::endl << "    " << key;
+            ainfo.envs.erase(key);
+        }
+    }
+
+    if (!prefix.empty() && erase_keys.empty()) {
+        // no need update app_info
+        env_rpc.response().hint_message = "no key need to delete";
+        return;
+    }
+    else {
+        env_rpc.response().hint_message = oss.str();
+    }
+
+    do_update_app_info(
+        app_path, ainfo, [this, app_name, prefix, erase_keys, env_rpc](error_code ec) {
+            dassert(ec == ERR_OK,
+                    "update app_info to remote storage failed with err = %s",
+                    ec.to_string());
+
+            zauto_write_lock l(_lock);
+            std::shared_ptr<app_state> app = get_app(app_name);
+            if (prefix.empty()) {
+                app->envs.clear();
+            } else {
+                for (const auto &key : erase_keys) {
+                    app->envs.erase(key);
+                }
+            }
+        });
 }
 }
 }

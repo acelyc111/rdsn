@@ -60,6 +60,10 @@ extern DSN_API uint64_t dsn_config_get_value_uint64(const char *section,
                                                     const char *key,
                                                     uint64_t default_value,
                                                     const char *dsptr);
+extern DSN_API int64_t dsn_config_get_value_int64(const char *section,
+                                                  const char *key,
+                                                  int64_t default_value,
+                                                  const char *dsptr);
 extern DSN_API double dsn_config_get_value_double(const char *section,
                                                   const char *key,
                                                   double default_value,
@@ -129,7 +133,7 @@ extern DSN_API void dsn_coredump();
 #define dfatal(...) dlog(LOG_LEVEL_FATAL, __VA_ARGS__)
 #define dassert(x, ...)                                                                            \
     do {                                                                                           \
-        if (!(x)) {                                                                                \
+        if (dsn_unlikely(!(x))) {                                                                  \
             dlog(LOG_LEVEL_FATAL, "assertion expression: " #x);                                    \
             dlog(LOG_LEVEL_FATAL, __VA_ARGS__);                                                    \
             dsn_coredump();                                                                        \
@@ -181,20 +185,4 @@ extern DSN_API void dsn_coredump();
             return;                                                                                \
         }                                                                                          \
     } while (0)
-
-/*!
-@defgroup memory Memory Management
-@ingroup service-api-utilities
-
-Memory Management
-
-@{
-*/
-
-/*! high-performance malloc for transient objects, i.e., their life-time is short */
-extern DSN_API void *dsn_transient_malloc(uint32_t size);
-
-/*! high-performance free for transient objects, paired with \ref dsn_transient_malloc */
-extern DSN_API void dsn_transient_free(void *ptr);
-
 /*@}*/

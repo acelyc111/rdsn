@@ -23,43 +23,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #pragma once
 
+#include <cstdint>
+#include <algorithm>
 #include <dsn/utility/ports.h>
-#include <dsn/utility/utils.h>
-#include <dsn/utility/blob.h>
-#include <dsn/service_api_c.h>
+#include <dsn/c/api_layer1.h>
 
 namespace dsn {
-typedef struct tls_transient_memory_t
-{
-    unsigned int magic;
-    size_t remain_bytes;
-    char block_ptr_buffer[sizeof(std::shared_ptr<char>)];
-    std::shared_ptr<char> *block;
-    char *next;
-    bool committed;
-} tls_transient_memory_t;
+//
+// uniq_timestamp_us is used to generate an increasing unique microsecond timestamp
+// in rdsn, it's mainly used for replica to set mutation's timestamp
+//
+// Notice: this module is not thread-safe, 
+// please ensure that it is accessed only by one thread
+//
+class uniq_timestamp_us {
+private:
+    uint64_t _last_ts;
+public:
+    uniq_timestamp_us() { _last_ts = dsn_now_us(); }
 
-extern __thread tls_transient_memory_t tls_trans_memory;
-extern void tls_trans_mem_init(size_t default_per_block_bytes);
-extern void tls_trans_mem_alloc(size_t min_size);
+    void try_update(uint64_t new_ts)
+    {
+        if ( dsn_likely(new_ts > _last_ts) )
+            _last_ts = new_ts;
+    }
 
-extern void tls_trans_mem_next(void **ptr, size_t *sz, size_t min_size);
-extern void tls_trans_mem_commit(size_t use_size);
-
-extern blob tls_trans_mem_alloc_blob(size_t sz);
-
-extern void *tls_trans_malloc(size_t sz);
-extern void tls_trans_free(void *ptr);
+    uint64_t next()
+    {
+        _last_ts = std::max(dsn_now_us(), _last_ts+1);
+        return _last_ts;
+    }
+};
 }

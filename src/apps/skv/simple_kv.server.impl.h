@@ -84,8 +84,10 @@ public:
     virtual ::dsn::error_code storage_apply_checkpoint(chkpt_apply_mode mode,
                                                        const learn_state &state) override;
 
-    virtual void manual_compact() {};
     virtual uint64_t last_compact_finish_time() { return 0; }
+    virtual void manual_compact(const std::map<std::string, std::string> &opts) {}
+    virtual void update_app_envs(const std::map<std::string, std::string> &envs) {}
+    virtual void query_app_envs(/*out*/ std::map<std::string, std::string> &envs) {}
 
 private:
     void recover();

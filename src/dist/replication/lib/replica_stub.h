@@ -47,6 +47,7 @@
 #include "replica.h"
 #include <dsn/cpp/perf_counter_wrapper.h>
 #include <dsn/dist/failure_detector_multimaster.h>
+#include <functional>
 
 namespace dsn {
 namespace replication {
@@ -145,6 +146,19 @@ public:
 
     std::string get_replica_dir(const char *app_type, gpid gpid, bool create_new = true);
 
+    //
+    // helper methods
+    //
+
+    // execute command function on specified or all replicas.
+    //   - if allow_empty_args = true and args is empty, then apply on all replicas.
+    //   - if allow_empty_args = false, you should specify at least one argument.
+    // each argument should be in format of:
+    //     id1,id2... (where id is 'app_id' or 'app_id.partition_id')
+    std::string exec_command_on_replica(const std::vector<std::string> &args,
+                                        bool allow_empty_args,
+                                        std::function<std::string(const replica_ptr &rep)> func);
+
 private:
     enum replica_node_state
     {
@@ -192,7 +206,7 @@ private:
     replica_life_cycle get_replica_life_cycle(const dsn::gpid &pid);
     void on_gc_replica(replica_stub_ptr this_, gpid pid);
 
-    void manual_compact(gpid pid);
+    void manual_compact(gpid pid, const std::map<std::string, std::string> &opts);
 
 private:
     friend class ::dsn::replication::replication_checker;
@@ -237,6 +251,7 @@ private:
     dsn_handle_t _trigger_chkpt_command;
     dsn_handle_t _manual_compact_command;
     dsn_handle_t _query_compact_command;
+    dsn_handle_t _query_app_envs_command;
 
     bool _deny_client;
     bool _verbose_client_log;

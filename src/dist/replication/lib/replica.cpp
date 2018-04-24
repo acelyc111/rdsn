@@ -83,7 +83,7 @@ replica::replica(
     if (need_restore) {
         // add an extra env for restore
         _extra_envs.insert(
-            std::make_pair(backup_restore_constant::FORCE_RESORE, std::string("true")));
+            std::make_pair(backup_restore_constant::FORCE_RESTORE, std::string("true")));
     }
 }
 
@@ -178,7 +178,7 @@ void replica::response_client_message(bool is_read, dsn_message_t request, error
          "%s: reply client %s to %s, err = %s",
          name(),
          is_read ? "read" : "write",
-         dsn_address_to_string(dsn_msg_from_address(request)),
+         dsn_msg_from_address(request).to_string(),
          error.to_string());
 
     dsn_rpc_reply(dsn_msg_create_response(request), error);
@@ -457,7 +457,8 @@ void replica::policy_compact(compact_status compact_status,
             LPC_MANUAL_COMPACT,
             this,
             [this, compact_context]() {
-                check_and_compact();
+                std::map<std::string, std::string> opts;
+                check_and_compact(opts);
                 compact_context->finish_compact();
         });
         response.err = dsn::ERR_BUSY;
@@ -567,10 +568,10 @@ void replica::send_compact_request_to_secondary(const compact_request &request,
     }
 }
 
-void replica::check_and_compact()
+void replica::check_and_compact(const std::map<std::string, std::string> &opts)
 {
     if (could_start_manual_compact()) {
-        manual_compact();
+        manual_compact(opts);
     }
 }
 
@@ -588,13 +589,13 @@ bool replica::could_start_manual_compact()
     }
 }
 
-void replica::manual_compact()
+void replica::manual_compact(const std::map<std::string, std::string> &opts)
 {
     if (_app != nullptr) {
         ddebug("%s: start to execute manual compaction", name());
         uint64_t start = dsn_now_ms();
         _manual_compact_start_time_ms.store(start);
-        _app->manual_compact();
+        _app->manual_compact(opts);
         uint64_t finish = dsn_now_ms();
         ddebug("%s: finish to execute manual compaction, time_used = %" PRId64 "ms",
                name(),

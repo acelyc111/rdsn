@@ -61,6 +61,9 @@ class test_checker;
 
 DEFINE_TASK_CODE(LPC_DEFAULT_CALLBACK, TASK_PRIORITY_COMMON, dsn::THREAD_POOL_DEFAULT)
 
+typedef rpc_holder<configuration_update_app_env_request, configuration_update_app_env_response>
+    app_env_rpc;
+
 class meta_service : public serverlet<meta_service>
 {
 public:
@@ -96,11 +99,11 @@ public:
     virtual void reply_message(dsn_message_t, dsn_message_t response) { dsn_rpc_reply(response); }
     virtual void send_message(const rpc_address &target, dsn_message_t request)
     {
-        dsn_rpc_call_one_way(target.c_addr(), request);
+        dsn_rpc_call_one_way(target, request);
     }
     virtual void send_request(dsn_message_t /*req*/, const rpc_address &target, task_ptr callback)
     {
-        dsn_rpc_call(target.c_addr(), callback->native_handle());
+        dsn_rpc_call(target, callback->native_handle());
     }
 
     // these two callbacks are running in fd's thread_pool, and in fd's lock
@@ -125,12 +128,15 @@ private:
     void on_propose_balancer(dsn_message_t req);
     void on_update_configuration(dsn_message_t req);
 
-    // table operations
+    // app operations
     void on_create_app(dsn_message_t req);
     void on_drop_app(dsn_message_t req);
     void on_recall_app(dsn_message_t req);
     void on_list_apps(dsn_message_t req);
     void on_list_nodes(dsn_message_t req);
+
+    // app env operations
+    void update_app_env(app_env_rpc env_rpc);
 
     // cluster info
     void on_query_cluster_info(dsn_message_t req);

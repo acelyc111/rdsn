@@ -22,7 +22,14 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
         const std::shared_ptr<app_state> &app = state->get_app(app_id);
         if (app != nullptr && app->status == app_status::AS_AVAILABLE) {
             app_available = true;
-            buffer = dsn::json::json_forwarder<app_info>::encode(*app);
+            // do not persistent envs to backup file
+            if (app->envs.empty()) {
+                buffer = dsn::json::json_forwarder<app_info>::encode(*app);
+            } else {
+                app_state tmp = *app;
+                tmp.envs.clear();
+                buffer = dsn::json::json_forwarder<app_info>::encode(tmp);
+            }
         }
     }
 
@@ -32,8 +39,8 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
         dwarn("%s: can't encode app_info for app(%d), perhaps removed, treat it as backup finished",
               _backup_sig.c_str(),
               app_id);
-        auto iter = _progress.unfished_partitions_per_app.find(app_id);
-        dassert(iter != _progress.unfished_partitions_per_app.end(),
+        auto iter = _progress.unfinished_partitions_per_app.find(app_id);
+        dassert(iter != _progress.unfinished_partitions_per_app.end(),
                 "%s: can't find app(%d) in unfished_map",
                 _backup_sig.c_str(),
                 app_id);
@@ -69,15 +76,14 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
         derror("%s: create file %s failed, restart this backup later",
                _backup_sig.c_str(),
                create_file_req.file_name.c_str());
-        tasking::enqueue(
-            LPC_DEFAULT_CALLBACK,
-            nullptr,
-            [this, app_id]() {
-                zauto_lock l(_lock);
-                start_backup_app_meta_unlocked(app_id);
-            },
-            0,
-            std::chrono::milliseconds(_backup_service->backup_option().block_retry_delay_ms));
+        tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                         nullptr,
+                         [this, app_id]() {
+                             zauto_lock l(_lock);
+                             start_backup_app_meta_unlocked(app_id);
+                         },
+                         0,
+                         _backup_service->backup_option().block_retry_delay_ms);
         return;
     }
     dassert(remote_file != nullptr,
@@ -113,8 +119,7 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
                                      start_backup_app_meta_unlocked(app_id);
                                  },
                                  0,
-                                 std::chrono::milliseconds(
-                                     _backup_service->backup_option().block_retry_delay_ms));
+                                 _backup_service->backup_option().block_retry_delay_ms);
             }
         },
         nullptr);
@@ -122,8 +127,8 @@ void policy_context::start_backup_app_meta_unlocked(int32_t app_id)
 
 void policy_context::start_backup_app_partitions_unlocked(int32_t app_id)
 {
-    auto iter = _progress.unfished_partitions_per_app.find(app_id);
-    dassert(iter != _progress.unfished_partitions_per_app.end(),
+    auto iter = _progress.unfinished_partitions_per_app.find(app_id);
+    dassert(iter != _progress.unfinished_partitions_per_app.end(),
             "%s: can't find app(%d) in unfinished apps",
             _backup_sig.c_str(),
             app_id);
@@ -175,15 +180,14 @@ void policy_context::write_backup_app_finish_flag_unlocked(int32_t app_id,
         derror("%s: create file %s failed, restart this backup later",
                _backup_sig.c_str(),
                create_file_req.file_name.c_str());
-        tasking::enqueue(
-            LPC_DEFAULT_CALLBACK,
-            nullptr,
-            [this, app_id, write_callback]() {
-                zauto_lock l(_lock);
-                write_backup_app_finish_flag_unlocked(app_id, write_callback);
-            },
-            0,
-            std::chrono::milliseconds(_backup_service->backup_option().block_retry_delay_ms));
+        tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                         nullptr,
+                         [this, app_id, write_callback]() {
+                             zauto_lock l(_lock);
+                             write_backup_app_finish_flag_unlocked(app_id, write_callback);
+                         },
+                         0,
+                         _backup_service->backup_option().block_retry_delay_ms);
         return;
     }
 
@@ -225,8 +229,7 @@ void policy_context::write_backup_app_finish_flag_unlocked(int32_t app_id,
                                      write_backup_app_finish_flag_unlocked(app_id, write_callback);
                                  },
                                  0,
-                                 std::chrono::milliseconds(
-                                     _backup_service->backup_option().block_retry_delay_ms));
+                                 _backup_service->backup_option().block_retry_delay_ms);
             }
         });
 }
@@ -289,15 +292,14 @@ void policy_context::write_backup_info_unlocked(const backup_info &b_info,
         derror("%s: create file %s failed, restart this backup later",
                _backup_sig.c_str(),
                create_file_req.file_name.c_str());
-        tasking::enqueue(
-            LPC_DEFAULT_CALLBACK,
-            nullptr,
-            [this, b_info, write_callback]() {
-                zauto_lock l(_lock);
-                write_backup_info_unlocked(b_info, write_callback);
-            },
-            0,
-            std::chrono::milliseconds(_backup_service->backup_option().block_retry_delay_ms));
+        tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                         nullptr,
+                         [this, b_info, write_callback]() {
+                             zauto_lock l(_lock);
+                             write_backup_info_unlocked(b_info, write_callback);
+                         },
+                         0,
+                         _backup_service->backup_option().block_retry_delay_ms);
         return;
     }
 
@@ -330,8 +332,7 @@ void policy_context::write_backup_info_unlocked(const backup_info &b_info,
                                        write_backup_info_unlocked(b_info, write_callback);
                                    },
                                    0,
-                                   std::chrono::milliseconds(
-                                       _backup_service->backup_option().block_retry_delay_ms));
+                                   _backup_service->backup_option().block_retry_delay_ms);
                            }
                        });
 }
@@ -377,10 +378,10 @@ bool policy_context::update_partition_progress_unlocked(gpid pid,
                pid.get_app_id(),
                pid.get_partition_index(),
                source.to_string(),
-               _progress.unfished_partitions_per_app[pid.get_app_id()]);
+               _progress.unfinished_partitions_per_app[pid.get_app_id()]);
 
         // let's update the progress-chain: partition => app => current_backup_instance
-        if (--_progress.unfished_partitions_per_app[pid.get_app_id()] == 0) {
+        if (--_progress.unfinished_partitions_per_app[pid.get_app_id()] == 0) {
             dsn::task_ptr task_after_write_finish_flag =
                 tasking::create_task(LPC_DEFAULT_CALLBACK, nullptr, [this, pid]() {
                     zauto_lock l(_lock);
@@ -433,8 +434,7 @@ void policy_context::start_backup_partition_unlocked(gpid pid)
                                  start_backup_partition_unlocked(pid);
                              },
                              0,
-                             std::chrono::milliseconds(
-                                 _backup_service->backup_option().reconfiguration_retry_delay_ms));
+                             _backup_service->backup_option().reconfiguration_retry_delay_ms);
         } else {
             backup_request req;
             req.pid = pid;
@@ -519,15 +519,14 @@ void policy_context::on_backup_reply(error_code err,
     }
 
     // start another turn of backup no matter we encounter error or not finished
-    tasking::enqueue(
-        LPC_DEFAULT_CALLBACK,
-        nullptr,
-        [this, pid]() {
-            zauto_lock l(_lock);
-            start_backup_partition_unlocked(pid);
-        },
-        0,
-        std::chrono::milliseconds(_backup_service->backup_option().request_backup_period_ms));
+    tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                     nullptr,
+                     [this, pid]() {
+                         zauto_lock l(_lock);
+                         start_backup_partition_unlocked(pid);
+                     },
+                     0,
+                     _backup_service->backup_option().request_backup_period_ms);
 }
 
 void policy_context::initialize_backup_progress_unlocked()
@@ -553,7 +552,7 @@ void policy_context::initialize_backup_progress_unlocked()
         } else {
             // NOTICE: only available apps have entry in
             // unfinished_partitions_per_app & partition_progress & app_chkpt_size
-            _progress.unfished_partitions_per_app[app_id] = app->partition_count;
+            _progress.unfinished_partitions_per_app[app_id] = app->partition_count;
             std::map<int, int64_t> partition_chkpt_size;
             for (const partition_configuration &pc : app->partitions) {
                 _progress.partition_progress[pc.pid] = 0;
@@ -601,16 +600,15 @@ void policy_context::sync_backup_to_remote_storage_unlocked(const backup_info &b
             derror("%s: sync backup info(" PRId64 ") to remote storage got timeout, retry it later",
                    _policy.policy_name.c_str(),
                    b_info.backup_id);
-            tasking::enqueue(
-                LPC_DEFAULT_CALLBACK,
-                nullptr,
-                [this, b_info, sync_callback, create_new_node]() {
-                    zauto_lock l(_lock);
-                    sync_backup_to_remote_storage_unlocked(
-                        std::move(b_info), std::move(sync_callback), create_new_node);
-                },
-                0,
-                std::chrono::milliseconds(_backup_service->backup_option().meta_retry_delay_ms));
+            tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                             nullptr,
+                             [this, b_info, sync_callback, create_new_node]() {
+                                 zauto_lock l(_lock);
+                                 sync_backup_to_remote_storage_unlocked(
+                                     std::move(b_info), std::move(sync_callback), create_new_node);
+                             },
+                             0,
+                             _backup_service->backup_option().meta_retry_delay_ms);
         } else {
             dassert(false,
                     "%s: we can't handle this right now, error(%s)",
@@ -631,8 +629,8 @@ void policy_context::sync_backup_to_remote_storage_unlocked(const backup_info &b
 void policy_context::continue_current_backup_unlocked()
 {
     for (const int32_t &app : _cur_backup.app_ids) {
-        if (_progress.unfished_partitions_per_app.find(app) !=
-            _progress.unfished_partitions_per_app.end()) {
+        if (_progress.unfinished_partitions_per_app.find(app) !=
+            _progress.unfinished_partitions_per_app.end()) {
             start_backup_app_meta_unlocked(app);
         } else {
             dsn::task_ptr task_after_write_finish_flag =
@@ -705,49 +703,46 @@ void policy_context::issue_new_backup_unlocked()
     if (_policy.is_disable) {
         ddebug("%s: policy is disable, just ignore backup, try it later",
                _policy.policy_name.c_str());
-        tasking::enqueue(
-            LPC_DEFAULT_CALLBACK,
-            nullptr,
-            [this]() {
-                zauto_lock l(_lock);
-                issue_new_backup_unlocked();
-            },
-            0,
-            std::chrono::milliseconds(_backup_service->backup_option().issue_backup_interval_ms));
+        tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                         nullptr,
+                         [this]() {
+                             zauto_lock l(_lock);
+                             issue_new_backup_unlocked();
+                         },
+                         0,
+                         _backup_service->backup_option().issue_backup_interval_ms);
         return;
     }
 
     if (!should_start_backup_unlocked()) {
-        tasking::enqueue(
-            LPC_DEFAULT_CALLBACK,
-            nullptr,
-            [this]() {
-                zauto_lock l(_lock);
-                issue_new_backup_unlocked();
-            },
-            0,
-            std::chrono::milliseconds(_backup_service->backup_option().issue_backup_interval_ms));
+        tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                         nullptr,
+                         [this]() {
+                             zauto_lock l(_lock);
+                             issue_new_backup_unlocked();
+                         },
+                         0,
+                         _backup_service->backup_option().issue_backup_interval_ms);
         ddebug("%s: start issue new backup %" PRId64 "ms later",
                _policy.policy_name.c_str(),
-               _backup_service->backup_option().issue_backup_interval_ms);
+               _backup_service->backup_option().issue_backup_interval_ms.count());
         return;
     }
 
     prepare_current_backup_on_new_unlocked();
     // if all apps are dropped, we don't issue a new backup
-    if (_progress.unfished_partitions_per_app.empty()) {
+    if (_progress.unfinished_partitions_per_app.empty()) {
         // TODO: just ignore this backup and wait next backup
         dwarn("%s: all apps have been dropped, ignore this backup and retry it later",
               _backup_sig.c_str());
-        tasking::enqueue(
-            LPC_DEFAULT_CALLBACK,
-            nullptr,
-            [this]() {
-                zauto_lock l(_lock);
-                issue_new_backup_unlocked();
-            },
-            0,
-            std::chrono::milliseconds(_backup_service->backup_option().issue_backup_interval_ms));
+        tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                         nullptr,
+                         [this]() {
+                             zauto_lock l(_lock);
+                             issue_new_backup_unlocked();
+                         },
+                         0,
+                         _backup_service->backup_option().issue_backup_interval_ms);
     } else {
         task_ptr continue_to_backup = tasking::create_task(LPC_DEFAULT_CALLBACK, nullptr, [this]() {
             zauto_lock l(_lock);
@@ -933,7 +928,8 @@ void policy_context::gc_backup_info_unlocked(const backup_info &info_to_gc)
 void policy_context::issue_gc_backup_info_task_unlocked()
 {
     if (_backup_history.size() > _policy.backup_history_count_to_keep) {
-        const backup_info &info = _backup_history.begin()->second;
+        backup_info &info = _backup_history.begin()->second;
+        info.info_status = backup_info_status::type::DELETING;
         ddebug("%s: start to gc backup info with id(%" PRId64 ")",
                _policy.policy_name.c_str(),
                info.backup_id);
@@ -989,7 +985,7 @@ void policy_context::sync_remove_backup_info(const backup_info &info, dsn::task_
                 nullptr,
                 [this, info, sync_callback]() { sync_remove_backup_info(info, sync_callback); },
                 0,
-                std::chrono::milliseconds(_backup_service->backup_option().meta_retry_delay_ms));
+                _backup_service->backup_option().meta_retry_delay_ms);
         } else {
             dassert(false,
                     "%s: we can't handle this right now, error(%s)",
@@ -1013,12 +1009,12 @@ backup_service::backup_service(meta_service *meta_svc,
 {
     _state = _meta_svc->get_server_state();
 
-    _opt.meta_retry_delay_ms = 10000;
-    _opt.block_retry_delay_ms = 60000;
-    _opt.app_dropped_retry_delay_ms = 600000;
-    _opt.reconfiguration_retry_delay_ms = 15000;
-    _opt.request_backup_period_ms = 10000;
-    _opt.issue_backup_interval_ms = 300000;
+    _opt.meta_retry_delay_ms = 10000_ms;
+    _opt.block_retry_delay_ms = 60000_ms;
+    _opt.app_dropped_retry_delay_ms = 600000_ms;
+    _opt.reconfiguration_retry_delay_ms = 15000_ms;
+    _opt.request_backup_period_ms = 10000_ms;
+    _opt.issue_backup_interval_ms = 300000_ms;
 
     _in_initialize.store(true);
 }
@@ -1041,7 +1037,7 @@ void backup_service::start_create_policy_meta_root(dsn::task_ptr callback)
                     nullptr,
                     std::bind(&backup_service::start_create_policy_meta_root, this, callback),
                     0,
-                    std::chrono::milliseconds(_opt.meta_retry_delay_ms));
+                    _opt.meta_retry_delay_ms);
             } else {
                 dassert(false, "we can't handle this error(%s) right now", err.to_string());
             }
@@ -1069,7 +1065,7 @@ void backup_service::start_sync_policies()
                               nullptr,
                               std::bind(&backup_service::start_sync_policies, this),
                               0,
-                              std::chrono::milliseconds(_opt.meta_retry_delay_ms));
+                              _opt.meta_retry_delay_ms);
     } else {
         dassert(false,
                 "sync policies from remote storage encounter error(%s), we can't handle "
@@ -1310,13 +1306,14 @@ void backup_service::do_add_policy(dsn_message_t req,
                 }
                 p->start();
             } else if (err == ERR_TIMEOUT) {
-                derror("create backup policy on remote storage timeout, retry after %d(ms)",
-                       _opt.meta_retry_delay_ms);
+                derror("create backup policy on remote storage timeout, retry after %" PRId64
+                       "(ms)",
+                       _opt.meta_retry_delay_ms.count());
                 tasking::enqueue(LPC_DEFAULT_CALLBACK,
                                  nullptr,
                                  std::bind(&backup_service::do_add_policy, this, req, p, hint_msg),
                                  0,
-                                 std::chrono::seconds(_opt.meta_retry_delay_ms));
+                                 _opt.meta_retry_delay_ms);
                 return;
             } else {
                 dassert(false,
@@ -1344,9 +1341,9 @@ void backup_service::do_update_policy_to_remote_storage(
                 dsn_msg_release_ref(req);
             } else if (err == ERR_TIMEOUT) {
                 derror("update backup policy to remote storage failed, policy_name = %s, retry "
-                       "after %d(ms)",
+                       "after %" PRId64 "(ms)",
                        p.policy_name.c_str(),
-                       _opt.meta_retry_delay_ms);
+                       _opt.meta_retry_delay_ms.count());
                 tasking::enqueue(LPC_DEFAULT_CALLBACK,
                                  nullptr,
                                  std::bind(&backup_service::do_update_policy_to_remote_storage,
@@ -1355,7 +1352,7 @@ void backup_service::do_update_policy_to_remote_storage(
                                            p,
                                            p_context_ptr),
                                  0,
-                                 std::chrono::seconds(_opt.meta_retry_delay_ms));
+                                 _opt.meta_retry_delay_ms);
             } else {
                 dassert(false,
                         "we can't handle this when create backup policy, err(%s)",

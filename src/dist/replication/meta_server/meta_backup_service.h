@@ -172,7 +172,7 @@ struct backup_progress
     int32_t unfinished_apps;
     std::map<gpid, int32_t> partition_progress;
     std::map<gpid, dsn::task_ptr> backup_requests;
-    std::map<app_id, int32_t> unfished_partitions_per_app;
+    std::map<app_id, int32_t> unfinished_partitions_per_app;
     // <app_id, <partition_id, checkpoint size>>
     std::map<app_id, std::map<int, int64_t>> app_chkpt_size;
     // if app is dropped when starting a new backup or under backuping, we just skip backup this app
@@ -185,7 +185,7 @@ struct backup_progress
         unfinished_apps = 0;
         partition_progress.clear();
         backup_requests.clear();
-        unfished_partitions_per_app.clear();
+        unfinished_partitions_per_app.clear();
         app_chkpt_size.clear();
         is_app_skipped.clear();
     }
@@ -293,12 +293,12 @@ class backup_service
 public:
     struct backup_opt
     {
-        uint64_t meta_retry_delay_ms;
-        uint64_t block_retry_delay_ms;
-        uint64_t app_dropped_retry_delay_ms;
-        uint64_t reconfiguration_retry_delay_ms;
-        uint64_t request_backup_period_ms; // period that meta send backup command to replica
-        uint64_t issue_backup_interval_ms; // interval that meta try to issue a new backup
+        std::chrono::milliseconds meta_retry_delay_ms;
+        std::chrono::milliseconds block_retry_delay_ms;
+        std::chrono::milliseconds app_dropped_retry_delay_ms;
+        std::chrono::milliseconds reconfiguration_retry_delay_ms;
+        std::chrono::milliseconds request_backup_period_ms; // period that meta send backup command to replica
+        std::chrono::milliseconds issue_backup_interval_ms; // interval that meta try to issue a new backup
     };
 
     typedef std::function<std::shared_ptr<policy_context>(backup_service *)> policy_factory;

@@ -24,76 +24,33 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #pragma once
 
-#include <dsn/service_api_c.h>
+#include <dsn/utility/transient_memory.h>
 
 namespace dsn {
 
-typedef void *(*t_allocate)(uint32_t);
+typedef void *(*t_allocate)(size_t);
 typedef void (*t_deallocate)(void *);
 
+/// callocate_object overrides the operator "new" and "delete", which may be useful for objects
+/// who want to use custom new/delete to boost performance
 template <t_allocate a, t_deallocate d>
 class callocator_object
 {
 public:
-    void *operator new(size_t size) { return a(uint32_t(size)); }
+    void *operator new(size_t size) { return a(size); }
 
     void operator delete(void *p) { d(p); }
 
-    void *operator new[](size_t size) { return a((uint32_t)size); }
+    void *operator new[](size_t size) { return a(size); }
 
     void operator delete[](void *p) { d(p); }
 };
 
-typedef callocator_object<dsn_transient_malloc, dsn_transient_free> transient_object;
-
-template <typename T, t_allocate a, t_deallocate d>
-class callocator
-{
-public:
-    typedef T value_type;
-    typedef size_t size_type;
-    typedef const T *const_pointer;
-
-    template <typename _Tp1>
-    struct rebind
-    {
-        typedef callocator<_Tp1, a, d> other;
-    };
-
-    static T *allocate(size_type n) { return static_cast<T *>(a(uint32_t(n * sizeof(T)))); }
-
-    static void deallocate(T *p, size_type n) { d(p); }
-
-    callocator() throw() {}
-    template <typename U>
-    callocator(const callocator<U, a, d> &ac) throw()
-    {
-    }
-    ~callocator() throw() {}
-};
-
-template <typename T>
-using transient_allocator = callocator<T, dsn_transient_malloc, dsn_transient_free>;
-
-template <class T, class U>
-bool operator==(const transient_allocator<T> &, const transient_allocator<U> &)
-{
-    return true;
-}
-template <class T, class U>
-bool operator!=(const transient_allocator<T> &, const transient_allocator<U> &)
-{
-    return false;
-}
+/// transient_object uses tls_trans_malloc/tls_trans_free as custom memory allocate.
+/// in rdsn, serveral frequenctly allocated objects(task, rpc_message, etc.)
+/// are derived from transient_objects,
+/// so that their memory can be mamanged by trans_memory_allocator
+typedef callocator_object<tls_trans_malloc, tls_trans_free> transient_object;
 }

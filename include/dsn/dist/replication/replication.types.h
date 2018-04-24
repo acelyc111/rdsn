@@ -83,5 +83,7 @@ namespace dsn { namespace replication {
     GENERATED_TYPE_SERIALIZATION(configuration_modify_compact_policy_response, THRIFT)
     GENERATED_TYPE_SERIALIZATION(compact_request, THRIFT)
     GENERATED_TYPE_SERIALIZATION(compact_response, THRIFT)
+    GENERATED_TYPE_SERIALIZATION(configuration_update_app_env_request, THRIFT)
+    GENERATED_TYPE_SERIALIZATION(configuration_update_app_env_response, THRIFT)
 
 } } 

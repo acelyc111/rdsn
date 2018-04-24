@@ -42,6 +42,7 @@
 // which is binded to this replication partition
 //
 
+#include <dsn/tool-api/uniq_timestamp_us.h>
 #include <dsn/cpp/serverlet.h>
 #include <dsn/cpp/perf_counter_wrapper.h>
 #include "dist/replication/client_lib/replication_common.h"
@@ -95,7 +96,7 @@ public:
     //    messages and tools from/for meta server
     //
     void on_config_proposal(configuration_update_request &proposal);
-    void on_config_sync(const partition_configuration &config);
+    void on_config_sync(const app_info &info, const partition_configuration &config);
     void on_cold_backup(const backup_request &request, /*out*/ backup_response &response);
 
     void on_policy_compact(const compact_request &request, /*out*/ compact_response &response);
@@ -228,6 +229,8 @@ private:
                                               partition_status::type news);
 
     // return false when update fails or replica is going to be closed
+    bool update_app_envs(const std::map<std::string, std::string> &envs);
+    bool query_app_envs(/*out*/ std::map<std::string, std::string> &envs);
     bool update_configuration(const partition_configuration &config);
     bool update_local_configuration(const replica_configuration &config, bool same_ballot = false);
 
@@ -295,14 +298,14 @@ private:
 
     void send_compact_request_to_secondary(const compact_request &request,
                                            compact_context_ptr compact_context);
-    void check_and_compact();
+    void check_and_compact(const std::map<std::string, std::string> &opts);
 
     void policy_compact(compact_status compact_status,
                         compact_context_ptr compact_context,
                         compact_response &response);
     bool could_start_manual_compact();
 
-    void manual_compact();
+    void manual_compact(const std::map<std::string, std::string> &opts);
 
     std::string get_compact_state();
 
@@ -337,6 +340,19 @@ private:
     replication_options *_options;
     const app_info _app_info;
     std::map<std::string, std::string> _extra_envs;
+
+    // uniq timestamp generator for this replica.
+    //
+    // we use it to generate an increasing timestamp for current replica
+    // and replicate it to secondary in preparing mutations, and secodaries'
+    // timestamp value will also updated if value from primary is larger
+    //
+    // as the timestamp is recorded in mutation log with mutations, we also update the value
+    // when do replaying
+    //
+    // in addition, as a replica can only be accessed by one thread,
+    // so the "thread-unsafe" generator works fine
+    uniq_timestamp_us _uniq_timestamp_us;
 
     // replica status specific states
     primary_context _primary_states;
