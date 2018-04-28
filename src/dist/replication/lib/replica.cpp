@@ -438,19 +438,19 @@ void replica::close()
     _counter_private_log_size.clear();
 }
 
-void replica::do_policy_compact(compact_status compact_status,
+void replica::do_policy_compact(compact_status cs,
                                 compact_context_ptr compact_context,
                                 const std::map<std::string, std::string> &opts,
                                 compact_response &response)
 {
-    if (compact_status == compact_status::kCompacting) {
+    if (cs == compact_status::kCompacting) {
         // do nothing
         ddebug_f("{}: compact is on going, compact_status = {}",
                  compact_context->name,
-                 compact_status_to_string(compact_status));
+                 compact_status_to_string(cs));
         response.err = dsn::ERR_BUSY;
         response.finish = false;
-    } else if (compact_status == compact_status::KInvalid) {
+    } else if (cs == compact_status::KInvalid) {
         // execute compact task async
         ddebug_f("{}: start check_and_compact", compact_context->name);
         compact_context->start_compact();
@@ -463,7 +463,7 @@ void replica::do_policy_compact(compact_status compact_status,
         });
         response.err = dsn::ERR_BUSY;
         response.finish = false;
-    } else if (compact_status == compact_status::kCompleted) {
+    } else if (cs == compact_status::kCompleted) {
         // finished
         response.err = dsn::ERR_OK;
         if (status() == partition_status::PS_SECONDARY) {
@@ -487,7 +487,7 @@ void replica::do_policy_compact(compact_status compact_status,
         dassert_f(false,
                   "{}: unhandled case, compact_status = {}",
                   compact_context->name,
-                  compact_status_to_string(compact_status));
+                  compact_status_to_string(cs));
     }
 }
 
@@ -511,14 +511,14 @@ void replica::on_policy_compact(const compact_request &request,
         }
 
         dassert(compact_context != nullptr, "");
-        compact_status compact_status = compact_context->status();
+        compact_status cs = compact_context->status();
 
         // obsoleted compact exist
         if (compact_context->request.id < req_id) {
             ddebug_f("{}: obsoleted compact exist, old compact id = {}, compact_status = {}",
                      new_context->name,
                      compact_context->request.id,
-                     compact_status_to_string(compact_status));
+                     compact_status_to_string(cs));
             _compact_contexts.erase(policy_name);
             on_policy_compact(request, response);
             return;
@@ -530,7 +530,7 @@ void replica::on_policy_compact(const compact_request &request,
             derror_f("{}: outdated compact request, current compact id = {}, compact_status = {}",
                      new_context->name,
                      compact_context->request.id,
-                     compact_status_to_string(compact_status));
+                     compact_status_to_string(cs));
             response.err = dsn::ERR_VERSION_OUTDATED;
             response.finish = false;
             return;
@@ -541,7 +541,7 @@ void replica::on_policy_compact(const compact_request &request,
             send_compact_request_to_secondary(request, compact_context);
         }
 
-        do_policy_compact(compact_status, compact_context, request.opts, response);
+        do_policy_compact(cs, compact_context, request.opts, response);
     } else {
         derror_f("{}: invalid state for compaction, partition_status = {}",
                  new_context->name,
