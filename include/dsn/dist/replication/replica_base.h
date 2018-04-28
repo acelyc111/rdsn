@@ -24,28 +24,29 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     What is this file about?
- *
- * Revision history:
- *     xxxx-xx-xx, author, first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #pragma once
-#include <dsn/dist/replication/replication.codes.h>
+
+#include <dsn/tool-api/gpid.h>
+#include <dsn/utility/string_view.h>
 
 namespace dsn {
 namespace replication {
-namespace application {
 
-DEFINE_STORAGE_READ_RPC_CODE(RPC_SIMPLE_KV_SIMPLE_KV_READ)
-DEFINE_STORAGE_WRITE_RPC_CODE(RPC_SIMPLE_KV_SIMPLE_KV_WRITE, true)
-DEFINE_STORAGE_WRITE_RPC_CODE(RPC_SIMPLE_KV_SIMPLE_KV_APPEND, true)
+/// Base class for types that are one-instance-per-replica.
+struct replica_base
+{
+    replica_base(gpid id, string_view name) : _gpid(id), _name(name) {}
 
-// test timer task code
-DEFINE_TASK_CODE(LPC_SIMPLE_KV_TEST_TIMER, TASK_PRIORITY_COMMON, ::dsn::THREAD_POOL_DEFAULT)
-}
-}
-}
+    replica_base(const replica_base &rhs) : replica_base(rhs.get_gpid(), rhs.replica_name()) {}
+
+    gpid get_gpid() const { return _gpid; }
+
+    const char *replica_name() const { return _name.c_str(); }
+
+private:
+    const gpid _gpid;
+    const std::string _name;
+};
+
+} // namespace replication
+} // namespace dsn

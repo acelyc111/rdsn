@@ -24,22 +24,15 @@
  * THE SOFTWARE.
  */
 
-/*
- * Description:
- *     helper functions in replica object
- *
- * Revision history:
- *     Mar., 2015, @imzhenyu (Zhenyu Guo), first version
- *     xxxx-xx-xx, author, fix bug about xxx
- */
-
 #include "replica.h"
 #include "mutation.h"
 #include "mutation_log.h"
 #include "replica_stub.h"
+
 #include <dsn/cpp/json_helper.h>
 #include <dsn/dist/fmt_logging.h>
 #include <dsn/dist/replication/replication_app_base.h>
+#include <dsn/dist/fmt_logging.h>
 
 namespace dsn {
 namespace replication {
@@ -47,6 +40,7 @@ namespace replication {
 replica::replica(
     replica_stub *stub, gpid gpid, const app_info &app, const char *dir, bool need_restore)
     : serverlet<replica>("replica"),
+      replica_base(gpid, fmt::format("{}@{}", gpid, stub->_primary_address.to_string())),
       _app_info(app),
       _primary_states(
           gpid, stub->options().staleness_for_commit, stub->options().batch_write_disabled),
@@ -66,11 +60,6 @@ replica::replica(
     dassert(stub != nullptr, "");
     _stub = stub;
     _dir = dir;
-    sprintf(_name,
-            "%d.%d@%s",
-            gpid.get_app_id(),
-            gpid.get_partition_index(),
-            stub->_primary_address.to_string());
     _options = &stub->options();
     init_state();
     _config.pid = gpid;
