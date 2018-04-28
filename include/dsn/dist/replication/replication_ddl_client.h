@@ -158,13 +158,13 @@ public:
 
     dsn::error_code add_compact_policy(const std::string &policy_name,
                                        const std::set<int32_t> &app_ids,
-                                       int64_t interval_seconds,
+                                       int32_t interval_seconds,
                                        int32_t start_time,
                                        const std::map<std::string, std::string> &opts);
 
     dsn::error_code modify_compact_policy(const std::string &policy_name,
                                           const std::set<int32_t> &app_ids,
-                                          int64_t interval_seconds,
+                                          int32_t interval_seconds,
                                           int32_t start_time,
                                           const std::map<std::string, std::string> &opts);
 
@@ -194,7 +194,7 @@ private:
 
     dsn::error_code do_modify_compact_policy(const std::string &policy_name,
                                              const std::set<int32_t>* app_ids,
-                                             int64_t* interval_seconds,
+                                             int32_t* interval_seconds,
                                              int32_t* start_time,
                                              bool* enable,
                                              const std::map<std::string, std::string>* opts);

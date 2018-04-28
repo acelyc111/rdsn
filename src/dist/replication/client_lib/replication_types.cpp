@@ -9967,7 +9967,7 @@ void compact_policy_entry::__set_policy_name(const std::string& val) {
   this->policy_name = val;
 }
 
-void compact_policy_entry::__set_interval_seconds(const int64_t val) {
+void compact_policy_entry::__set_interval_seconds(const int32_t val) {
   this->interval_seconds = val;
 __isset.interval_seconds = true;
 }
@@ -10022,8 +10022,8 @@ uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot
         }
         break;
       case 2:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->interval_seconds);
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->interval_seconds);
           this->__isset.interval_seconds = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -10111,8 +10111,8 @@ uint32_t compact_policy_entry::write(::apache::thrift::protocol::TProtocol* opro
   xfer += oprot->writeFieldEnd();
 
   if (this->__isset.interval_seconds) {
-    xfer += oprot->writeFieldBegin("interval_seconds", ::apache::thrift::protocol::T_I64, 2);
-    xfer += oprot->writeI64(this->interval_seconds);
+    xfer += oprot->writeFieldBegin("interval_seconds", ::apache::thrift::protocol::T_I32, 2);
+    xfer += oprot->writeI32(this->interval_seconds);
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.app_ids) {

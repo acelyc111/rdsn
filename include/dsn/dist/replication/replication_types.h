@@ -4289,7 +4289,7 @@ class compact_policy_entry {
 
   virtual ~compact_policy_entry() throw();
   std::string policy_name;
-  int64_t interval_seconds;
+  int32_t interval_seconds;
   std::set<int32_t>  app_ids;
   int32_t start_time;
   bool enable;
@@ -4299,7 +4299,7 @@ class compact_policy_entry {
 
   void __set_policy_name(const std::string& val);
 
-  void __set_interval_seconds(const int64_t val);
+  void __set_interval_seconds(const int32_t val);
 
   void __set_app_ids(const std::set<int32_t> & val);
 

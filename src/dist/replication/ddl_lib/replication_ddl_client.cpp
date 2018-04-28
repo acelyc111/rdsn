@@ -1047,7 +1047,7 @@ dsn::error_code replication_ddl_client::enable_backup_policy(const std::string &
 
 dsn::error_code replication_ddl_client::add_compact_policy(const std::string &policy_name,
                                                            const std::set<int32_t> &app_ids,
-                                                           int64_t interval_seconds,
+                                                           int32_t interval_seconds,
                                                            int32_t start_time,
                                                            const std::map<std::string, std::string> &opts) {
     std::shared_ptr<configuration_add_compact_policy_request> req =
@@ -1085,7 +1085,7 @@ dsn::error_code replication_ddl_client::add_compact_policy(const std::string &po
 dsn::error_code
 replication_ddl_client::do_modify_compact_policy(const std::string &policy_name,
                                                  const std::set<int32_t>* app_ids,
-                                                 int64_t* interval_seconds,
+                                                 int32_t* interval_seconds,
                                                  int32_t* start_time,
                                                  bool* enable,
                                                  const std::map<std::string, std::string>* opts) {
@@ -1133,7 +1133,7 @@ replication_ddl_client::do_modify_compact_policy(const std::string &policy_name,
 
 dsn::error_code replication_ddl_client::modify_compact_policy(const std::string &policy_name,
                                                               const std::set<int32_t> &app_ids,
-                                                              int64_t interval_seconds,
+                                                              int32_t interval_seconds,
                                                               int32_t start_time,
                                                               const std::map<std::string, std::string>& opts) {
     return do_modify_compact_policy(policy_name,

@@ -565,7 +565,7 @@ struct configuration_query_restore_response
 struct compact_policy_entry
 {
     1:string                        policy_name;
-    2:optional i64                  interval_seconds;
+    2:optional i32                  interval_seconds;
     3:optional set<i32>             app_ids;
     4:optional i32                  start_time;
     5:optional bool                 enable;
