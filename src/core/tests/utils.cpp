@@ -208,3 +208,41 @@ TEST(core, ref_ptr)
     z = std::move(foo_ptr());
     EXPECT_TRUE(count == 0);
 }
+
+TEST(utils, time_to_date) {
+    time_t t = time(NULL);
+    struct tm lt = {0};
+    localtime_r(&t, &lt);
+
+    // std::string time_to_date(uint64_t ts_s); // yyyy-MM-dd hh:mm:ss
+    ASSERT_EQ(time_to_date(0 - lt.tm_gmtoff), "1970-01-01 00:00:00");
+    ASSERT_EQ(time_to_date(1524833734 - lt.tm_gmtoff), "2018-04-27 12:55:34");
+}
+
+TEST(utils, hm_of_day_to_sec) {
+    // int32_t hm_of_day_to_sec(const std::string &hm)
+    ASSERT_EQ(hm_of_day_to_sec("00:00"), 0);
+    ASSERT_EQ(hm_of_day_to_sec("23:59"), 86340);
+    ASSERT_EQ(hm_of_day_to_sec("1:1"), 3660);
+    ASSERT_EQ(hm_of_day_to_sec("23"), -1);
+    ASSERT_EQ(hm_of_day_to_sec("23:"), -1);
+    ASSERT_EQ(hm_of_day_to_sec(":59"), -1);
+    ASSERT_EQ(hm_of_day_to_sec("-1:00"), -1);
+    ASSERT_EQ(hm_of_day_to_sec("24:00"), -1);
+    ASSERT_EQ(hm_of_day_to_sec("01:-1"), -1);
+    ASSERT_EQ(hm_of_day_to_sec("01:60"), -1);
+    ASSERT_EQ(hm_of_day_to_sec("a:00"), -1);
+    ASSERT_EQ(hm_of_day_to_sec("01:b"), -1);
+    ASSERT_EQ(hm_of_day_to_sec("01b"), -1);
+}
+
+TEST(utils, sec_of_day_to_hm) {
+    // std::string sec_of_day_to_hm(int32_t sec)
+    ASSERT_EQ(sec_of_day_to_hm(0), "00:00");
+    ASSERT_EQ(sec_of_day_to_hm(59), "00:00");
+    ASSERT_EQ(sec_of_day_to_hm(60), "00:01");
+    ASSERT_EQ(sec_of_day_to_hm(86340), "23:59");
+    ASSERT_EQ(sec_of_day_to_hm(86399), "23:59");
+    ASSERT_EQ(sec_of_day_to_hm(86400), "00:00");
+    ASSERT_EQ(sec_of_day_to_hm(3600), "01:00");
+}

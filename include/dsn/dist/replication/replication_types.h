@@ -4473,11 +4473,11 @@ class configuration_query_compact_policy_request {
   }
 
   virtual ~configuration_query_compact_policy_request() throw();
-  std::vector<std::string>  policy_names;
+  std::set<std::string>  policy_names;
 
   _configuration_query_compact_policy_request__isset __isset;
 
-  void __set_policy_names(const std::vector<std::string> & val);
+  void __set_policy_names(const std::set<std::string> & val);
 
   bool operator == (const configuration_query_compact_policy_request & rhs) const
   {
@@ -4790,11 +4790,10 @@ inline std::ostream& operator<<(std::ostream& out, const configuration_modify_co
 }
 
 typedef struct _compact_request__isset {
-  _compact_request__isset() : id(false), pid(false), policy_name(false), app_name(false), opts(false) {}
+  _compact_request__isset() : id(false), pid(false), policy_name(false), opts(false) {}
   bool id :1;
   bool pid :1;
   bool policy_name :1;
-  bool app_name :1;
   bool opts :1;
 } _compact_request__isset;
 
@@ -4805,14 +4804,13 @@ class compact_request {
   compact_request(compact_request&&);
   compact_request& operator=(const compact_request&);
   compact_request& operator=(compact_request&&);
-  compact_request() : id(0), policy_name(), app_name() {
+  compact_request() : id(0), policy_name() {
   }
 
   virtual ~compact_request() throw();
   int64_t id;
    ::dsn::gpid pid;
   std::string policy_name;
-  std::string app_name;
   std::map<std::string, std::string>  opts;
 
   _compact_request__isset __isset;
@@ -4823,8 +4821,6 @@ class compact_request {
 
   void __set_policy_name(const std::string& val);
 
-  void __set_app_name(const std::string& val);
-
   void __set_opts(const std::map<std::string, std::string> & val);
 
   bool operator == (const compact_request & rhs) const
@@ -4834,8 +4830,6 @@ class compact_request {
     if (!(pid == rhs.pid))
       return false;
     if (!(policy_name == rhs.policy_name))
-      return false;
-    if (!(app_name == rhs.app_name))
       return false;
     if (!(opts == rhs.opts))
       return false;

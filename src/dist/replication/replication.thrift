@@ -585,7 +585,7 @@ struct configuration_add_compact_policy_response
 
 struct configuration_query_compact_policy_request
 {
-    1:list<string>      policy_names;
+    1:set<string>      policy_names;
 }
 
 struct compact_record
@@ -625,8 +625,7 @@ struct compact_request
     1:i64                   id;
     2:dsn.gpid              pid;
     3:string                policy_name;
-    4:string                app_name;
-    5:map<string, string>   opts;
+    4:map<string, string>   opts;
 }
 
 struct compact_response

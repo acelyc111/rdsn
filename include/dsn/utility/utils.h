@@ -64,8 +64,7 @@ void time_ms_to_date_time(uint64_t ts_ms,
 
 int sec_of_day();
 
-void hm_of_day_to_sec(const std::string &hm,
-                      int32_t &sec);
+int32_t hm_of_day_to_sec(const std::string &hm);
 std::string sec_of_day_to_hm(int32_t sec);
 
 uint64_t get_current_physical_time_ns();

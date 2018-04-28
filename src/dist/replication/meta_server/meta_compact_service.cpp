@@ -114,7 +114,6 @@ void compact_policy_context::start_compact_primary(gpid pid,
     req.id = _cur_record.id;
     req.pid = pid;
     req.policy_name = _policy.policy_name;
-    req.app_name = _policy.app_id_names[pid.get_app_id()];
     req.opts = _policy.opts;
     dsn_message_t request = dsn_msg_create_request(RPC_POLICY_COMPACT,
                                                    0,
@@ -319,7 +318,6 @@ void compact_policy_context::init_current_record()
 {
     _cur_record.id = _cur_record.start_time = static_cast<int64_t>(dsn_now_s());
     _cur_record.app_ids = _policy.app_ids;
-    _cur_record.app_id_names = _policy.app_id_names;
 
     init_progress();
     _record_sig = _policy.policy_name
@@ -840,7 +838,6 @@ void compact_service::add_policy(dsn_message_t msg)
     ::dsn::unmarshall(msg, request);
     const compact_policy_entry &policy = request.policy;
     std::set<int32_t> app_ids;
-    std::map<int32_t, std::string> app_id_names;
     {
         zauto_read_lock l;
         _state->lock_read(l);
@@ -854,7 +851,6 @@ void compact_service::add_policy(dsn_message_t msg)
                 response.hint_message += "invalid app_id(" + std::to_string(app_id) + ")\n";
             } else {
                 app_ids.insert(app_id);
-                app_id_names.insert(std::make_pair(app_id, app->app_name));            // emplace
             }
         }
     }
@@ -878,7 +874,6 @@ void compact_service::add_policy(dsn_message_t msg)
         tmp.start_time = policy.start_time;
         tmp.interval_seconds = policy.interval_seconds;
         tmp.app_ids = app_ids;
-        tmp.app_id_names = app_id_names;
         tmp.opts = policy.opts;
         policy_ctx->set_policy(tmp);
 
@@ -975,7 +970,7 @@ void compact_service::modify_policy(dsn_message_t msg)
 
     // modify app_ids
     if (req_policy.__isset.app_ids) {
-        std::map<int32_t, std::string> app_id_names;
+        std::set<int32_t> app_ids;
         {
             zauto_read_lock l;
             _state->lock_read(l);
@@ -987,24 +982,20 @@ void compact_service::modify_policy(dsn_message_t msg)
                             app_id,
                             cur_policy.policy_name.c_str());
                 } else {
-                    app_id_names.emplace(app_id, app->app_name);
+                    app_ids.insert(app_id);
                     have_modify_policy = true;
                 }
             }
         }
 
-        if (!app_id_names.empty()) {
-            cur_policy.app_ids.clear();
-            cur_policy.app_id_names.clear();
+        if (!app_ids.empty()) {
             std::stringstream sslog;
-            sslog << "set policy(" << cur_policy.policy_name << ")'s app_ids as ";
-            for (const auto &app_id_name : app_id_names) {
-                sslog << app_id_name.first << " (" << app_id_name.second << ")";
-                cur_policy.app_ids.insert(app_id_name.first);
-                cur_policy.app_id_names.insert(app_id_name);
-                have_modify_policy = true;
-            }
+            sslog << "set policy(" << cur_policy.policy_name << ")'s app_ids as ("
+                  << ::dsn::utils::sequence_container_to_string(app_ids, ',') << ")";
             ddebug_f("{}", sslog.str().c_str());
+
+            cur_policy.app_ids = app_ids;
+            have_modify_policy = true;
         }
     }
 
@@ -1133,12 +1124,12 @@ void compact_service::query_policy(dsn_message_t msg)
 
     ::dsn::unmarshall(msg, request);
 
-    std::vector<std::string> policy_names = request.policy_names;
+    std::set<std::string> policy_names = request.policy_names;
     if (policy_names.empty()) {
         // default all the policy
         zauto_lock l(_lock);
         for (const auto &name_cxt : _policy_cxts) {
-            policy_names.emplace_back(name_cxt.first);
+            policy_names.emplace(name_cxt.first);
         }
     }
 

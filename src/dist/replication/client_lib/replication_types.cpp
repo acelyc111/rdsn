@@ -10435,7 +10435,7 @@ configuration_query_compact_policy_request::~configuration_query_compact_policy_
 }
 
 
-void configuration_query_compact_policy_request::__set_policy_names(const std::vector<std::string> & val) {
+void configuration_query_compact_policy_request::__set_policy_names(const std::set<std::string> & val) {
   this->policy_names = val;
 }
 
@@ -10461,19 +10461,20 @@ uint32_t configuration_query_compact_policy_request::read(::apache::thrift::prot
     switch (fid)
     {
       case 1:
-        if (ftype == ::apache::thrift::protocol::T_LIST) {
+        if (ftype == ::apache::thrift::protocol::T_SET) {
           {
             this->policy_names.clear();
             uint32_t _size461;
             ::apache::thrift::protocol::TType _etype464;
-            xfer += iprot->readListBegin(_etype464, _size461);
-            this->policy_names.resize(_size461);
+            xfer += iprot->readSetBegin(_etype464, _size461);
             uint32_t _i465;
             for (_i465 = 0; _i465 < _size461; ++_i465)
             {
-              xfer += iprot->readString(this->policy_names[_i465]);
+              std::string _elem466;
+              xfer += iprot->readString(_elem466);
+              this->policy_names.insert(_elem466);
             }
-            xfer += iprot->readListEnd();
+            xfer += iprot->readSetEnd();
           }
           this->__isset.policy_names = true;
         } else {
@@ -10497,15 +10498,15 @@ uint32_t configuration_query_compact_policy_request::write(::apache::thrift::pro
   apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("configuration_query_compact_policy_request");
 
-  xfer += oprot->writeFieldBegin("policy_names", ::apache::thrift::protocol::T_LIST, 1);
+  xfer += oprot->writeFieldBegin("policy_names", ::apache::thrift::protocol::T_SET, 1);
   {
-    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->policy_names.size()));
-    std::vector<std::string> ::const_iterator _iter466;
-    for (_iter466 = this->policy_names.begin(); _iter466 != this->policy_names.end(); ++_iter466)
+    xfer += oprot->writeSetBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->policy_names.size()));
+    std::set<std::string> ::const_iterator _iter467;
+    for (_iter467 = this->policy_names.begin(); _iter467 != this->policy_names.end(); ++_iter467)
     {
-      xfer += oprot->writeString((*_iter466));
+      xfer += oprot->writeString((*_iter467));
     }
-    xfer += oprot->writeListEnd();
+    xfer += oprot->writeSetEnd();
   }
   xfer += oprot->writeFieldEnd();
 
@@ -10520,22 +10521,22 @@ void swap(configuration_query_compact_policy_request &a, configuration_query_com
   swap(a.__isset, b.__isset);
 }
 
-configuration_query_compact_policy_request::configuration_query_compact_policy_request(const configuration_query_compact_policy_request& other467) {
-  policy_names = other467.policy_names;
-  __isset = other467.__isset;
+configuration_query_compact_policy_request::configuration_query_compact_policy_request(const configuration_query_compact_policy_request& other468) {
+  policy_names = other468.policy_names;
+  __isset = other468.__isset;
 }
-configuration_query_compact_policy_request::configuration_query_compact_policy_request( configuration_query_compact_policy_request&& other468) {
-  policy_names = std::move(other468.policy_names);
-  __isset = std::move(other468.__isset);
+configuration_query_compact_policy_request::configuration_query_compact_policy_request( configuration_query_compact_policy_request&& other469) {
+  policy_names = std::move(other469.policy_names);
+  __isset = std::move(other469.__isset);
 }
-configuration_query_compact_policy_request& configuration_query_compact_policy_request::operator=(const configuration_query_compact_policy_request& other469) {
-  policy_names = other469.policy_names;
-  __isset = other469.__isset;
+configuration_query_compact_policy_request& configuration_query_compact_policy_request::operator=(const configuration_query_compact_policy_request& other470) {
+  policy_names = other470.policy_names;
+  __isset = other470.__isset;
   return *this;
 }
-configuration_query_compact_policy_request& configuration_query_compact_policy_request::operator=(configuration_query_compact_policy_request&& other470) {
-  policy_names = std::move(other470.policy_names);
-  __isset = std::move(other470.__isset);
+configuration_query_compact_policy_request& configuration_query_compact_policy_request::operator=(configuration_query_compact_policy_request&& other471) {
+  policy_names = std::move(other471.policy_names);
+  __isset = std::move(other471.__isset);
   return *this;
 }
 void configuration_query_compact_policy_request::printTo(std::ostream& out) const {
@@ -10615,15 +10616,15 @@ uint32_t compact_record::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_SET) {
           {
             this->app_ids.clear();
-            uint32_t _size471;
-            ::apache::thrift::protocol::TType _etype474;
-            xfer += iprot->readSetBegin(_etype474, _size471);
-            uint32_t _i475;
-            for (_i475 = 0; _i475 < _size471; ++_i475)
+            uint32_t _size472;
+            ::apache::thrift::protocol::TType _etype475;
+            xfer += iprot->readSetBegin(_etype475, _size472);
+            uint32_t _i476;
+            for (_i476 = 0; _i476 < _size472; ++_i476)
             {
-              int32_t _elem476;
-              xfer += iprot->readI32(_elem476);
-              this->app_ids.insert(_elem476);
+              int32_t _elem477;
+              xfer += iprot->readI32(_elem477);
+              this->app_ids.insert(_elem477);
             }
             xfer += iprot->readSetEnd();
           }
@@ -10664,10 +10665,10 @@ uint32_t compact_record::write(::apache::thrift::protocol::TProtocol* oprot) con
   xfer += oprot->writeFieldBegin("app_ids", ::apache::thrift::protocol::T_SET, 4);
   {
     xfer += oprot->writeSetBegin(::apache::thrift::protocol::T_I32, static_cast<uint32_t>(this->app_ids.size()));
-    std::set<int32_t> ::const_iterator _iter477;
-    for (_iter477 = this->app_ids.begin(); _iter477 != this->app_ids.end(); ++_iter477)
+    std::set<int32_t> ::const_iterator _iter478;
+    for (_iter478 = this->app_ids.begin(); _iter478 != this->app_ids.end(); ++_iter478)
     {
-      xfer += oprot->writeI32((*_iter477));
+      xfer += oprot->writeI32((*_iter478));
     }
     xfer += oprot->writeSetEnd();
   }
@@ -10687,34 +10688,34 @@ void swap(compact_record &a, compact_record &b) {
   swap(a.__isset, b.__isset);
 }
 
-compact_record::compact_record(const compact_record& other478) {
-  id = other478.id;
-  start_time = other478.start_time;
-  end_time = other478.end_time;
-  app_ids = other478.app_ids;
-  __isset = other478.__isset;
+compact_record::compact_record(const compact_record& other479) {
+  id = other479.id;
+  start_time = other479.start_time;
+  end_time = other479.end_time;
+  app_ids = other479.app_ids;
+  __isset = other479.__isset;
 }
-compact_record::compact_record( compact_record&& other479) {
-  id = std::move(other479.id);
-  start_time = std::move(other479.start_time);
-  end_time = std::move(other479.end_time);
-  app_ids = std::move(other479.app_ids);
-  __isset = std::move(other479.__isset);
+compact_record::compact_record( compact_record&& other480) {
+  id = std::move(other480.id);
+  start_time = std::move(other480.start_time);
+  end_time = std::move(other480.end_time);
+  app_ids = std::move(other480.app_ids);
+  __isset = std::move(other480.__isset);
 }
-compact_record& compact_record::operator=(const compact_record& other480) {
-  id = other480.id;
-  start_time = other480.start_time;
-  end_time = other480.end_time;
-  app_ids = other480.app_ids;
-  __isset = other480.__isset;
+compact_record& compact_record::operator=(const compact_record& other481) {
+  id = other481.id;
+  start_time = other481.start_time;
+  end_time = other481.end_time;
+  app_ids = other481.app_ids;
+  __isset = other481.__isset;
   return *this;
 }
-compact_record& compact_record::operator=(compact_record&& other481) {
-  id = std::move(other481.id);
-  start_time = std::move(other481.start_time);
-  end_time = std::move(other481.end_time);
-  app_ids = std::move(other481.app_ids);
-  __isset = std::move(other481.__isset);
+compact_record& compact_record::operator=(compact_record&& other482) {
+  id = std::move(other482.id);
+  start_time = std::move(other482.start_time);
+  end_time = std::move(other482.end_time);
+  app_ids = std::move(other482.app_ids);
+  __isset = std::move(other482.__isset);
   return *this;
 }
 void compact_record::printTo(std::ostream& out) const {
@@ -10773,14 +10774,14 @@ uint32_t compact_policy_records::read(::apache::thrift::protocol::TProtocol* ipr
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->records.clear();
-            uint32_t _size482;
-            ::apache::thrift::protocol::TType _etype485;
-            xfer += iprot->readListBegin(_etype485, _size482);
-            this->records.resize(_size482);
-            uint32_t _i486;
-            for (_i486 = 0; _i486 < _size482; ++_i486)
+            uint32_t _size483;
+            ::apache::thrift::protocol::TType _etype486;
+            xfer += iprot->readListBegin(_etype486, _size483);
+            this->records.resize(_size483);
+            uint32_t _i487;
+            for (_i487 = 0; _i487 < _size483; ++_i487)
             {
-              xfer += this->records[_i486].read(iprot);
+              xfer += this->records[_i487].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
@@ -10813,10 +10814,10 @@ uint32_t compact_policy_records::write(::apache::thrift::protocol::TProtocol* op
   xfer += oprot->writeFieldBegin("records", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->records.size()));
-    std::vector<compact_record> ::const_iterator _iter487;
-    for (_iter487 = this->records.begin(); _iter487 != this->records.end(); ++_iter487)
+    std::vector<compact_record> ::const_iterator _iter488;
+    for (_iter488 = this->records.begin(); _iter488 != this->records.end(); ++_iter488)
     {
-      xfer += (*_iter487).write(oprot);
+      xfer += (*_iter488).write(oprot);
     }
     xfer += oprot->writeListEnd();
   }
@@ -10834,26 +10835,26 @@ void swap(compact_policy_records &a, compact_policy_records &b) {
   swap(a.__isset, b.__isset);
 }
 
-compact_policy_records::compact_policy_records(const compact_policy_records& other488) {
-  policy = other488.policy;
-  records = other488.records;
-  __isset = other488.__isset;
+compact_policy_records::compact_policy_records(const compact_policy_records& other489) {
+  policy = other489.policy;
+  records = other489.records;
+  __isset = other489.__isset;
 }
-compact_policy_records::compact_policy_records( compact_policy_records&& other489) {
-  policy = std::move(other489.policy);
-  records = std::move(other489.records);
-  __isset = std::move(other489.__isset);
+compact_policy_records::compact_policy_records( compact_policy_records&& other490) {
+  policy = std::move(other490.policy);
+  records = std::move(other490.records);
+  __isset = std::move(other490.__isset);
 }
-compact_policy_records& compact_policy_records::operator=(const compact_policy_records& other490) {
-  policy = other490.policy;
-  records = other490.records;
-  __isset = other490.__isset;
+compact_policy_records& compact_policy_records::operator=(const compact_policy_records& other491) {
+  policy = other491.policy;
+  records = other491.records;
+  __isset = other491.__isset;
   return *this;
 }
-compact_policy_records& compact_policy_records::operator=(compact_policy_records&& other491) {
-  policy = std::move(other491.policy);
-  records = std::move(other491.records);
-  __isset = std::move(other491.__isset);
+compact_policy_records& compact_policy_records::operator=(compact_policy_records&& other492) {
+  policy = std::move(other492.policy);
+  records = std::move(other492.records);
+  __isset = std::move(other492.__isset);
   return *this;
 }
 void compact_policy_records::printTo(std::ostream& out) const {
@@ -10915,14 +10916,14 @@ uint32_t configuration_query_compact_policy_response::read(::apache::thrift::pro
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->policy_records.clear();
-            uint32_t _size492;
-            ::apache::thrift::protocol::TType _etype495;
-            xfer += iprot->readListBegin(_etype495, _size492);
-            this->policy_records.resize(_size492);
-            uint32_t _i496;
-            for (_i496 = 0; _i496 < _size492; ++_i496)
+            uint32_t _size493;
+            ::apache::thrift::protocol::TType _etype496;
+            xfer += iprot->readListBegin(_etype496, _size493);
+            this->policy_records.resize(_size493);
+            uint32_t _i497;
+            for (_i497 = 0; _i497 < _size493; ++_i497)
             {
-              xfer += this->policy_records[_i496].read(iprot);
+              xfer += this->policy_records[_i497].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
@@ -10963,10 +10964,10 @@ uint32_t configuration_query_compact_policy_response::write(::apache::thrift::pr
   xfer += oprot->writeFieldBegin("policy_records", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->policy_records.size()));
-    std::vector<compact_policy_records> ::const_iterator _iter497;
-    for (_iter497 = this->policy_records.begin(); _iter497 != this->policy_records.end(); ++_iter497)
+    std::vector<compact_policy_records> ::const_iterator _iter498;
+    for (_iter498 = this->policy_records.begin(); _iter498 != this->policy_records.end(); ++_iter498)
     {
-      xfer += (*_iter497).write(oprot);
+      xfer += (*_iter498).write(oprot);
     }
     xfer += oprot->writeListEnd();
   }
@@ -10990,30 +10991,30 @@ void swap(configuration_query_compact_policy_response &a, configuration_query_co
   swap(a.__isset, b.__isset);
 }
 
-configuration_query_compact_policy_response::configuration_query_compact_policy_response(const configuration_query_compact_policy_response& other498) {
-  err = other498.err;
-  policy_records = other498.policy_records;
-  hint_msg = other498.hint_msg;
-  __isset = other498.__isset;
+configuration_query_compact_policy_response::configuration_query_compact_policy_response(const configuration_query_compact_policy_response& other499) {
+  err = other499.err;
+  policy_records = other499.policy_records;
+  hint_msg = other499.hint_msg;
+  __isset = other499.__isset;
 }
-configuration_query_compact_policy_response::configuration_query_compact_policy_response( configuration_query_compact_policy_response&& other499) {
-  err = std::move(other499.err);
-  policy_records = std::move(other499.policy_records);
-  hint_msg = std::move(other499.hint_msg);
-  __isset = std::move(other499.__isset);
+configuration_query_compact_policy_response::configuration_query_compact_policy_response( configuration_query_compact_policy_response&& other500) {
+  err = std::move(other500.err);
+  policy_records = std::move(other500.policy_records);
+  hint_msg = std::move(other500.hint_msg);
+  __isset = std::move(other500.__isset);
 }
-configuration_query_compact_policy_response& configuration_query_compact_policy_response::operator=(const configuration_query_compact_policy_response& other500) {
-  err = other500.err;
-  policy_records = other500.policy_records;
-  hint_msg = other500.hint_msg;
-  __isset = other500.__isset;
+configuration_query_compact_policy_response& configuration_query_compact_policy_response::operator=(const configuration_query_compact_policy_response& other501) {
+  err = other501.err;
+  policy_records = other501.policy_records;
+  hint_msg = other501.hint_msg;
+  __isset = other501.__isset;
   return *this;
 }
-configuration_query_compact_policy_response& configuration_query_compact_policy_response::operator=(configuration_query_compact_policy_response&& other501) {
-  err = std::move(other501.err);
-  policy_records = std::move(other501.policy_records);
-  hint_msg = std::move(other501.hint_msg);
-  __isset = std::move(other501.__isset);
+configuration_query_compact_policy_response& configuration_query_compact_policy_response::operator=(configuration_query_compact_policy_response&& other502) {
+  err = std::move(other502.err);
+  policy_records = std::move(other502.policy_records);
+  hint_msg = std::move(other502.hint_msg);
+  __isset = std::move(other502.__isset);
   return *this;
 }
 void configuration_query_compact_policy_response::printTo(std::ostream& out) const {
@@ -11095,22 +11096,22 @@ void swap(configuration_modify_compact_policy_request &a, configuration_modify_c
   swap(a.__isset, b.__isset);
 }
 
-configuration_modify_compact_policy_request::configuration_modify_compact_policy_request(const configuration_modify_compact_policy_request& other502) {
-  policy = other502.policy;
-  __isset = other502.__isset;
+configuration_modify_compact_policy_request::configuration_modify_compact_policy_request(const configuration_modify_compact_policy_request& other503) {
+  policy = other503.policy;
+  __isset = other503.__isset;
 }
-configuration_modify_compact_policy_request::configuration_modify_compact_policy_request( configuration_modify_compact_policy_request&& other503) {
-  policy = std::move(other503.policy);
-  __isset = std::move(other503.__isset);
+configuration_modify_compact_policy_request::configuration_modify_compact_policy_request( configuration_modify_compact_policy_request&& other504) {
+  policy = std::move(other504.policy);
+  __isset = std::move(other504.__isset);
 }
-configuration_modify_compact_policy_request& configuration_modify_compact_policy_request::operator=(const configuration_modify_compact_policy_request& other504) {
-  policy = other504.policy;
-  __isset = other504.__isset;
+configuration_modify_compact_policy_request& configuration_modify_compact_policy_request::operator=(const configuration_modify_compact_policy_request& other505) {
+  policy = other505.policy;
+  __isset = other505.__isset;
   return *this;
 }
-configuration_modify_compact_policy_request& configuration_modify_compact_policy_request::operator=(configuration_modify_compact_policy_request&& other505) {
-  policy = std::move(other505.policy);
-  __isset = std::move(other505.__isset);
+configuration_modify_compact_policy_request& configuration_modify_compact_policy_request::operator=(configuration_modify_compact_policy_request&& other506) {
+  policy = std::move(other506.policy);
+  __isset = std::move(other506.__isset);
   return *this;
 }
 void configuration_modify_compact_policy_request::printTo(std::ostream& out) const {
@@ -11207,26 +11208,26 @@ void swap(configuration_modify_compact_policy_response &a, configuration_modify_
   swap(a.__isset, b.__isset);
 }
 
-configuration_modify_compact_policy_response::configuration_modify_compact_policy_response(const configuration_modify_compact_policy_response& other506) {
-  err = other506.err;
-  hint_message = other506.hint_message;
-  __isset = other506.__isset;
+configuration_modify_compact_policy_response::configuration_modify_compact_policy_response(const configuration_modify_compact_policy_response& other507) {
+  err = other507.err;
+  hint_message = other507.hint_message;
+  __isset = other507.__isset;
 }
-configuration_modify_compact_policy_response::configuration_modify_compact_policy_response( configuration_modify_compact_policy_response&& other507) {
-  err = std::move(other507.err);
-  hint_message = std::move(other507.hint_message);
-  __isset = std::move(other507.__isset);
+configuration_modify_compact_policy_response::configuration_modify_compact_policy_response( configuration_modify_compact_policy_response&& other508) {
+  err = std::move(other508.err);
+  hint_message = std::move(other508.hint_message);
+  __isset = std::move(other508.__isset);
 }
-configuration_modify_compact_policy_response& configuration_modify_compact_policy_response::operator=(const configuration_modify_compact_policy_response& other508) {
-  err = other508.err;
-  hint_message = other508.hint_message;
-  __isset = other508.__isset;
+configuration_modify_compact_policy_response& configuration_modify_compact_policy_response::operator=(const configuration_modify_compact_policy_response& other509) {
+  err = other509.err;
+  hint_message = other509.hint_message;
+  __isset = other509.__isset;
   return *this;
 }
-configuration_modify_compact_policy_response& configuration_modify_compact_policy_response::operator=(configuration_modify_compact_policy_response&& other509) {
-  err = std::move(other509.err);
-  hint_message = std::move(other509.hint_message);
-  __isset = std::move(other509.__isset);
+configuration_modify_compact_policy_response& configuration_modify_compact_policy_response::operator=(configuration_modify_compact_policy_response&& other510) {
+  err = std::move(other510.err);
+  hint_message = std::move(other510.hint_message);
+  __isset = std::move(other510.__isset);
   return *this;
 }
 void configuration_modify_compact_policy_response::printTo(std::ostream& out) const {
@@ -11252,10 +11253,6 @@ void compact_request::__set_pid(const  ::dsn::gpid& val) {
 
 void compact_request::__set_policy_name(const std::string& val) {
   this->policy_name = val;
-}
-
-void compact_request::__set_app_name(const std::string& val) {
-  this->app_name = val;
 }
 
 void compact_request::__set_opts(const std::map<std::string, std::string> & val) {
@@ -11308,28 +11305,20 @@ uint32_t compact_request::read(::apache::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 4:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->app_name);
-          this->__isset.app_name = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 5:
         if (ftype == ::apache::thrift::protocol::T_MAP) {
           {
             this->opts.clear();
-            uint32_t _size510;
-            ::apache::thrift::protocol::TType _ktype511;
-            ::apache::thrift::protocol::TType _vtype512;
-            xfer += iprot->readMapBegin(_ktype511, _vtype512, _size510);
-            uint32_t _i514;
-            for (_i514 = 0; _i514 < _size510; ++_i514)
+            uint32_t _size511;
+            ::apache::thrift::protocol::TType _ktype512;
+            ::apache::thrift::protocol::TType _vtype513;
+            xfer += iprot->readMapBegin(_ktype512, _vtype513, _size511);
+            uint32_t _i515;
+            for (_i515 = 0; _i515 < _size511; ++_i515)
             {
-              std::string _key515;
-              xfer += iprot->readString(_key515);
-              std::string& _val516 = this->opts[_key515];
-              xfer += iprot->readString(_val516);
+              std::string _key516;
+              xfer += iprot->readString(_key516);
+              std::string& _val517 = this->opts[_key516];
+              xfer += iprot->readString(_val517);
             }
             xfer += iprot->readMapEnd();
           }
@@ -11367,18 +11356,14 @@ uint32_t compact_request::write(::apache::thrift::protocol::TProtocol* oprot) co
   xfer += oprot->writeString(this->policy_name);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("app_name", ::apache::thrift::protocol::T_STRING, 4);
-  xfer += oprot->writeString(this->app_name);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("opts", ::apache::thrift::protocol::T_MAP, 5);
+  xfer += oprot->writeFieldBegin("opts", ::apache::thrift::protocol::T_MAP, 4);
   {
     xfer += oprot->writeMapBegin(::apache::thrift::protocol::T_STRING, ::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->opts.size()));
-    std::map<std::string, std::string> ::const_iterator _iter517;
-    for (_iter517 = this->opts.begin(); _iter517 != this->opts.end(); ++_iter517)
+    std::map<std::string, std::string> ::const_iterator _iter518;
+    for (_iter518 = this->opts.begin(); _iter518 != this->opts.end(); ++_iter518)
     {
-      xfer += oprot->writeString(_iter517->first);
-      xfer += oprot->writeString(_iter517->second);
+      xfer += oprot->writeString(_iter518->first);
+      xfer += oprot->writeString(_iter518->second);
     }
     xfer += oprot->writeMapEnd();
   }
@@ -11394,43 +11379,38 @@ void swap(compact_request &a, compact_request &b) {
   swap(a.id, b.id);
   swap(a.pid, b.pid);
   swap(a.policy_name, b.policy_name);
-  swap(a.app_name, b.app_name);
   swap(a.opts, b.opts);
   swap(a.__isset, b.__isset);
 }
 
-compact_request::compact_request(const compact_request& other518) {
-  id = other518.id;
-  pid = other518.pid;
-  policy_name = other518.policy_name;
-  app_name = other518.app_name;
-  opts = other518.opts;
-  __isset = other518.__isset;
+compact_request::compact_request(const compact_request& other519) {
+  id = other519.id;
+  pid = other519.pid;
+  policy_name = other519.policy_name;
+  opts = other519.opts;
+  __isset = other519.__isset;
 }
-compact_request::compact_request( compact_request&& other519) {
-  id = std::move(other519.id);
-  pid = std::move(other519.pid);
-  policy_name = std::move(other519.policy_name);
-  app_name = std::move(other519.app_name);
-  opts = std::move(other519.opts);
-  __isset = std::move(other519.__isset);
+compact_request::compact_request( compact_request&& other520) {
+  id = std::move(other520.id);
+  pid = std::move(other520.pid);
+  policy_name = std::move(other520.policy_name);
+  opts = std::move(other520.opts);
+  __isset = std::move(other520.__isset);
 }
-compact_request& compact_request::operator=(const compact_request& other520) {
-  id = other520.id;
-  pid = other520.pid;
-  policy_name = other520.policy_name;
-  app_name = other520.app_name;
-  opts = other520.opts;
-  __isset = other520.__isset;
+compact_request& compact_request::operator=(const compact_request& other521) {
+  id = other521.id;
+  pid = other521.pid;
+  policy_name = other521.policy_name;
+  opts = other521.opts;
+  __isset = other521.__isset;
   return *this;
 }
-compact_request& compact_request::operator=(compact_request&& other521) {
-  id = std::move(other521.id);
-  pid = std::move(other521.pid);
-  policy_name = std::move(other521.policy_name);
-  app_name = std::move(other521.app_name);
-  opts = std::move(other521.opts);
-  __isset = std::move(other521.__isset);
+compact_request& compact_request::operator=(compact_request&& other522) {
+  id = std::move(other522.id);
+  pid = std::move(other522.pid);
+  policy_name = std::move(other522.policy_name);
+  opts = std::move(other522.opts);
+  __isset = std::move(other522.__isset);
   return *this;
 }
 void compact_request::printTo(std::ostream& out) const {
@@ -11439,7 +11419,6 @@ void compact_request::printTo(std::ostream& out) const {
   out << "id=" << to_string(id);
   out << ", " << "pid=" << to_string(pid);
   out << ", " << "policy_name=" << to_string(policy_name);
-  out << ", " << "app_name=" << to_string(app_name);
   out << ", " << "opts=" << to_string(opts);
   out << ")";
 }
@@ -11582,38 +11561,38 @@ void swap(compact_response &a, compact_response &b) {
   swap(a.__isset, b.__isset);
 }
 
-compact_response::compact_response(const compact_response& other522) {
-  err = other522.err;
-  id = other522.id;
-  pid = other522.pid;
-  finish = other522.finish;
-  policy_name = other522.policy_name;
-  __isset = other522.__isset;
+compact_response::compact_response(const compact_response& other523) {
+  err = other523.err;
+  id = other523.id;
+  pid = other523.pid;
+  finish = other523.finish;
+  policy_name = other523.policy_name;
+  __isset = other523.__isset;
 }
-compact_response::compact_response( compact_response&& other523) {
-  err = std::move(other523.err);
-  id = std::move(other523.id);
-  pid = std::move(other523.pid);
-  finish = std::move(other523.finish);
-  policy_name = std::move(other523.policy_name);
-  __isset = std::move(other523.__isset);
+compact_response::compact_response( compact_response&& other524) {
+  err = std::move(other524.err);
+  id = std::move(other524.id);
+  pid = std::move(other524.pid);
+  finish = std::move(other524.finish);
+  policy_name = std::move(other524.policy_name);
+  __isset = std::move(other524.__isset);
 }
-compact_response& compact_response::operator=(const compact_response& other524) {
-  err = other524.err;
-  id = other524.id;
-  pid = other524.pid;
-  finish = other524.finish;
-  policy_name = other524.policy_name;
-  __isset = other524.__isset;
+compact_response& compact_response::operator=(const compact_response& other525) {
+  err = other525.err;
+  id = other525.id;
+  pid = other525.pid;
+  finish = other525.finish;
+  policy_name = other525.policy_name;
+  __isset = other525.__isset;
   return *this;
 }
-compact_response& compact_response::operator=(compact_response&& other525) {
-  err = std::move(other525.err);
-  id = std::move(other525.id);
-  pid = std::move(other525.pid);
-  finish = std::move(other525.finish);
-  policy_name = std::move(other525.policy_name);
-  __isset = std::move(other525.__isset);
+compact_response& compact_response::operator=(compact_response&& other526) {
+  err = std::move(other526.err);
+  id = std::move(other526.id);
+  pid = std::move(other526.pid);
+  finish = std::move(other526.finish);
+  policy_name = std::move(other526.policy_name);
+  __isset = std::move(other526.__isset);
   return *this;
 }
 void compact_response::printTo(std::ostream& out) const {
@@ -11686,9 +11665,9 @@ uint32_t configuration_update_app_env_request::read(::apache::thrift::protocol::
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast526;
-          xfer += iprot->readI32(ecast526);
-          this->op = (app_env_operation::type)ecast526;
+          int32_t ecast527;
+          xfer += iprot->readI32(ecast527);
+          this->op = (app_env_operation::type)ecast527;
           this->__isset.op = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -11698,14 +11677,14 @@ uint32_t configuration_update_app_env_request::read(::apache::thrift::protocol::
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->keys.clear();
-            uint32_t _size527;
-            ::apache::thrift::protocol::TType _etype530;
-            xfer += iprot->readListBegin(_etype530, _size527);
-            this->keys.resize(_size527);
-            uint32_t _i531;
-            for (_i531 = 0; _i531 < _size527; ++_i531)
+            uint32_t _size528;
+            ::apache::thrift::protocol::TType _etype531;
+            xfer += iprot->readListBegin(_etype531, _size528);
+            this->keys.resize(_size528);
+            uint32_t _i532;
+            for (_i532 = 0; _i532 < _size528; ++_i532)
             {
-              xfer += iprot->readString(this->keys[_i531]);
+              xfer += iprot->readString(this->keys[_i532]);
             }
             xfer += iprot->readListEnd();
           }
@@ -11718,14 +11697,14 @@ uint32_t configuration_update_app_env_request::read(::apache::thrift::protocol::
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->values.clear();
-            uint32_t _size532;
-            ::apache::thrift::protocol::TType _etype535;
-            xfer += iprot->readListBegin(_etype535, _size532);
-            this->values.resize(_size532);
-            uint32_t _i536;
-            for (_i536 = 0; _i536 < _size532; ++_i536)
+            uint32_t _size533;
+            ::apache::thrift::protocol::TType _etype536;
+            xfer += iprot->readListBegin(_etype536, _size533);
+            this->values.resize(_size533);
+            uint32_t _i537;
+            for (_i537 = 0; _i537 < _size533; ++_i537)
             {
-              xfer += iprot->readString(this->values[_i536]);
+              xfer += iprot->readString(this->values[_i537]);
             }
             xfer += iprot->readListEnd();
           }
@@ -11771,10 +11750,10 @@ uint32_t configuration_update_app_env_request::write(::apache::thrift::protocol:
     xfer += oprot->writeFieldBegin("keys", ::apache::thrift::protocol::T_LIST, 3);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->keys.size()));
-      std::vector<std::string> ::const_iterator _iter537;
-      for (_iter537 = this->keys.begin(); _iter537 != this->keys.end(); ++_iter537)
+      std::vector<std::string> ::const_iterator _iter538;
+      for (_iter538 = this->keys.begin(); _iter538 != this->keys.end(); ++_iter538)
       {
-        xfer += oprot->writeString((*_iter537));
+        xfer += oprot->writeString((*_iter538));
       }
       xfer += oprot->writeListEnd();
     }
@@ -11784,10 +11763,10 @@ uint32_t configuration_update_app_env_request::write(::apache::thrift::protocol:
     xfer += oprot->writeFieldBegin("values", ::apache::thrift::protocol::T_LIST, 4);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->values.size()));
-      std::vector<std::string> ::const_iterator _iter538;
-      for (_iter538 = this->values.begin(); _iter538 != this->values.end(); ++_iter538)
+      std::vector<std::string> ::const_iterator _iter539;
+      for (_iter539 = this->values.begin(); _iter539 != this->values.end(); ++_iter539)
       {
-        xfer += oprot->writeString((*_iter538));
+        xfer += oprot->writeString((*_iter539));
       }
       xfer += oprot->writeListEnd();
     }
@@ -11813,38 +11792,38 @@ void swap(configuration_update_app_env_request &a, configuration_update_app_env_
   swap(a.__isset, b.__isset);
 }
 
-configuration_update_app_env_request::configuration_update_app_env_request(const configuration_update_app_env_request& other539) {
-  app_name = other539.app_name;
-  op = other539.op;
-  keys = other539.keys;
-  values = other539.values;
-  clear_prefix = other539.clear_prefix;
-  __isset = other539.__isset;
+configuration_update_app_env_request::configuration_update_app_env_request(const configuration_update_app_env_request& other540) {
+  app_name = other540.app_name;
+  op = other540.op;
+  keys = other540.keys;
+  values = other540.values;
+  clear_prefix = other540.clear_prefix;
+  __isset = other540.__isset;
 }
-configuration_update_app_env_request::configuration_update_app_env_request( configuration_update_app_env_request&& other540) {
-  app_name = std::move(other540.app_name);
-  op = std::move(other540.op);
-  keys = std::move(other540.keys);
-  values = std::move(other540.values);
-  clear_prefix = std::move(other540.clear_prefix);
-  __isset = std::move(other540.__isset);
+configuration_update_app_env_request::configuration_update_app_env_request( configuration_update_app_env_request&& other541) {
+  app_name = std::move(other541.app_name);
+  op = std::move(other541.op);
+  keys = std::move(other541.keys);
+  values = std::move(other541.values);
+  clear_prefix = std::move(other541.clear_prefix);
+  __isset = std::move(other541.__isset);
 }
-configuration_update_app_env_request& configuration_update_app_env_request::operator=(const configuration_update_app_env_request& other541) {
-  app_name = other541.app_name;
-  op = other541.op;
-  keys = other541.keys;
-  values = other541.values;
-  clear_prefix = other541.clear_prefix;
-  __isset = other541.__isset;
+configuration_update_app_env_request& configuration_update_app_env_request::operator=(const configuration_update_app_env_request& other542) {
+  app_name = other542.app_name;
+  op = other542.op;
+  keys = other542.keys;
+  values = other542.values;
+  clear_prefix = other542.clear_prefix;
+  __isset = other542.__isset;
   return *this;
 }
-configuration_update_app_env_request& configuration_update_app_env_request::operator=(configuration_update_app_env_request&& other542) {
-  app_name = std::move(other542.app_name);
-  op = std::move(other542.op);
-  keys = std::move(other542.keys);
-  values = std::move(other542.values);
-  clear_prefix = std::move(other542.clear_prefix);
-  __isset = std::move(other542.__isset);
+configuration_update_app_env_request& configuration_update_app_env_request::operator=(configuration_update_app_env_request&& other543) {
+  app_name = std::move(other543.app_name);
+  op = std::move(other543.op);
+  keys = std::move(other543.keys);
+  values = std::move(other543.values);
+  clear_prefix = std::move(other543.clear_prefix);
+  __isset = std::move(other543.__isset);
   return *this;
 }
 void configuration_update_app_env_request::printTo(std::ostream& out) const {
@@ -11945,26 +11924,26 @@ void swap(configuration_update_app_env_response &a, configuration_update_app_env
   swap(a.__isset, b.__isset);
 }
 
-configuration_update_app_env_response::configuration_update_app_env_response(const configuration_update_app_env_response& other543) {
-  err = other543.err;
-  hint_message = other543.hint_message;
-  __isset = other543.__isset;
+configuration_update_app_env_response::configuration_update_app_env_response(const configuration_update_app_env_response& other544) {
+  err = other544.err;
+  hint_message = other544.hint_message;
+  __isset = other544.__isset;
 }
-configuration_update_app_env_response::configuration_update_app_env_response( configuration_update_app_env_response&& other544) {
-  err = std::move(other544.err);
-  hint_message = std::move(other544.hint_message);
-  __isset = std::move(other544.__isset);
+configuration_update_app_env_response::configuration_update_app_env_response( configuration_update_app_env_response&& other545) {
+  err = std::move(other545.err);
+  hint_message = std::move(other545.hint_message);
+  __isset = std::move(other545.__isset);
 }
-configuration_update_app_env_response& configuration_update_app_env_response::operator=(const configuration_update_app_env_response& other545) {
-  err = other545.err;
-  hint_message = other545.hint_message;
-  __isset = other545.__isset;
+configuration_update_app_env_response& configuration_update_app_env_response::operator=(const configuration_update_app_env_response& other546) {
+  err = other546.err;
+  hint_message = other546.hint_message;
+  __isset = other546.__isset;
   return *this;
 }
-configuration_update_app_env_response& configuration_update_app_env_response::operator=(configuration_update_app_env_response&& other546) {
-  err = std::move(other546.err);
-  hint_message = std::move(other546.hint_message);
-  __isset = std::move(other546.__isset);
+configuration_update_app_env_response& configuration_update_app_env_response::operator=(configuration_update_app_env_response&& other547) {
+  err = std::move(other547.err);
+  hint_message = std::move(other547.hint_message);
+  __isset = std::move(other547.__isset);
   return *this;
 }
 void configuration_update_app_env_response::printTo(std::ostream& out) const {

@@ -1070,7 +1070,6 @@ dsn::error_code replication_ddl_client::add_compact_policy(const std::string &po
     ::dsn::unmarshall(resp_task->response(), resp);
 
     if (resp.err != ERR_OK) {
-        std::cout << "not ok" << std::endl;
         return resp.err;
     } else {
         std::cout << "Add policy result: " << resp.err.to_string() << std::endl;
@@ -1445,7 +1444,8 @@ dsn::error_code replication_ddl_client::query_restore(int32_t restore_app_id, bo
     return ERR_OK;
 }
 
-dsn::error_code replication_ddl_client::query_compact_policy(const std::vector<std::string> &policy_names)
+dsn::error_code replication_ddl_client::query_compact_policy(const std::set<std::string> &policy_names,
+                                                             std::vector<compact_policy_records>* policy_records)
 {
     std::shared_ptr<configuration_query_compact_policy_request> req =
         std::make_shared<configuration_query_compact_policy_request>();
@@ -1465,8 +1465,12 @@ dsn::error_code replication_ddl_client::query_compact_policy(const std::vector<s
     if (resp.err != ERR_OK) {
         return resp.err;
     } else if (resp.policy_records.empty()) {
-        std::cout << "empty policy!" << std::endl;
+        std::cout << "Query policy ok, but empty compact records" << std::endl;
+        if (policy_records != nullptr) {
+            policy_records->clear();
+        }
     } else {
+        std::cout << "Query policy ok" << std::endl;
         for (const auto& policy_records : resp.policy_records) {
             std::cout << "policy_info:" << std::endl;
             print_compact_policy_entry(policy_records.policy);
@@ -1477,6 +1481,10 @@ dsn::error_code replication_ddl_client::query_compact_policy(const std::vector<s
                 std::cout << std::endl;
             }
             std::cout << "************************" << std::endl;
+        }
+
+        if (policy_records != nullptr) {
+            *policy_records = resp.policy_records;
         }
     }
     return ERR_OK;

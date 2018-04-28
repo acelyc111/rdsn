@@ -18,13 +18,11 @@ struct policy_record
                                             // a new compact task is generated.
                                             // The policy's app set may be changed,
                                             // but policy_record.app_ids never change.
-    std::map<int32_t, std::string> app_id_names;
 
     DEFINE_JSON_SERIALIZATION(id,
                               start_time,
                               end_time,
-                              app_ids,
-                              app_id_names)
+                              app_ids)
 };
 
 class compact_policy {
@@ -33,9 +31,8 @@ public:
     int32_t start_time = 0;
     int32_t interval_seconds = 0;
     std::string policy_name;
-    std::map<std::string, std::string> opts;
     std::set<int32_t> app_ids;
-    std::map<int32_t, std::string> app_id_names;
+    std::map<std::string, std::string> opts;
 
     static const int32_t history_count_to_keep = 7;
 
@@ -44,7 +41,7 @@ public:
                               interval_seconds,
                               policy_name,
                               app_ids,
-                              app_id_names)
+                              opts)
 };
 
 struct compact_progress {

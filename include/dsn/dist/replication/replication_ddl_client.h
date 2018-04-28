@@ -168,7 +168,8 @@ public:
                                           int32_t start_time,
                                           const std::map<std::string, std::string> &opts);
 
-    dsn::error_code query_compact_policy(const std::vector<std::string> &policy_names);
+    dsn::error_code query_compact_policy(const std::set<std::string> &policy_names,
+                                         std::vector<compact_policy_records>* policy_records = nullptr);
 
     dsn::error_code switch_compact_policy(const std::string &policy_name, bool enable);
 

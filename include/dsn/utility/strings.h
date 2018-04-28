@@ -5,6 +5,7 @@
 #include <list>
 #include <map>
 #include <iostream>
+#include <sstream>
 
 namespace dsn {
 namespace utils {
@@ -36,6 +37,21 @@ void kv_map_to_stream(const std::map<std::string, std::string> &kv_map,
 std::string kv_map_to_string(const std::map<std::string, std::string> &kv_map,
                              char item_splitter,
                              char kv_splitter);
+template<typename T>
+std::string sequence_container_to_string(const T &o,
+                                         char item_splitter) {
+    std::stringstream ss;
+    int i = 0;
+    for (auto &itor : o) {
+        if (i > 0) {
+            ss << item_splitter;
+        }
+        ss << itor;
+        i++;
+    }
+
+    return ss.str();
+}
 
 std::string
 replace_string(std::string subject, const std::string &search, const std::string &replace);
