@@ -91,9 +91,8 @@ bool compact_policy_context::skip_compact_app(int32_t app_id)
 
 void compact_policy_context::start_compact_partition(gpid pid)
 {
-    ddebug_f("start to compact gpid({}.{})",
-             pid.get_app_id(),
-             pid.get_partition_index());
+    ddebug_f("start to compact gpid({})",
+             pid);
     dsn::rpc_address primary;
     // check the partition status
     {
@@ -116,10 +115,9 @@ void compact_policy_context::start_compact_partition(gpid pid)
     }
 
     if (primary.is_invalid()) {
-        dwarn_f("{}: gpid({}.{})'s replica is invalid right now, retry this partition later",
+        dwarn_f("{}: gpid({})'s replica is invalid right now, retry this partition later",
                 _record_sig.c_str(),
-                pid.get_app_id(),
-                pid.get_partition_index());
+                pid);
         tasking::enqueue(
             LPC_DEFAULT_CALLBACK,
             nullptr,
@@ -153,10 +151,9 @@ void compact_policy_context::start_compact_primary(gpid pid,
                                                            compact_response &&response) {
                 on_compact_reply(err, std::move(response), pid, primary);
             });
-    ddebug_f("{}: send compact_request to {}.{}@{}",
+    ddebug_f("{}: send compact_request to {}@{}",
              _record_sig.c_str(),
-             pid.get_app_id(),
-             pid.get_partition_index(),
+             pid,
              primary.to_string());
     _compact_service->get_meta_service()->send_request(request, primary, rpc_task);
 }
@@ -172,34 +169,29 @@ void compact_policy_context::on_compact_reply(error_code err,
         zauto_lock l(_lock);
 
         dassert_f(response.policy_name == _policy.policy_name,
-                  "policy name({} vs {}) doesn't match, {}.{}@{}",
+                  "policy name({} vs {}) doesn't match, {}@{}",
                   _policy.policy_name.c_str(),
                   response.policy_name.c_str(),
-                  pid.get_app_id(),
-                  pid.get_partition_index(),
+                  pid,
                   primary.to_string());
         dassert_f(response.pid == pid,
-                  "{}: compact pid[({}.{}) vs ({}.{})] doesn't match @{}",
+                  "{}: compact pid({} vs {}) doesn't match @{}",
                   _policy.policy_name.c_str(),
-                  response.pid.get_app_id(),
-                  response.pid.get_partition_index(),
-                  pid.get_app_id(),
-                  pid.get_partition_index(),
+                  response.pid,
+                  pid,
                   primary.to_string());
         dassert_f(response.id <= _cur_record.id,
-                  "{}: {}.{}@{} has bigger id({} vs {})",
+                  "{}: {}@{} has bigger id({} vs {})",
                   _record_sig.c_str(),
-                  pid.get_app_id(),
-                  pid.get_partition_index(),
+                  pid,
                   primary.to_string(),
                   response.id,
                   _cur_record.id);
 
         if (response.id < _cur_record.id) {
-            dwarn_f("{}: {}.{}@{} got a lower id({} vs {}), ignore it",
+            dwarn_f("{}: {}@{} got a lower id({} vs {}), ignore it",
                     _record_sig.c_str(),
-                    pid.get_app_id(),
-                    pid.get_partition_index(),
+                    pid,
                     primary.to_string(),
                     response.id,
                     _cur_record.id);
@@ -210,10 +202,9 @@ void compact_policy_context::on_compact_reply(error_code err,
             }
         }
     } else {
-        dwarn_f("{}: compact got error {}.{}@{}, rpc({}), logic({})",
+        dwarn_f("{}: compact got error {}@{}, rpc({}), logic({})",
                 _record_sig.c_str(),
-                pid.get_app_id(),
-                pid.get_partition_index(),
+                pid,
                 primary.to_string(),
                 err.to_string(),
                 response.err.to_string());
@@ -235,35 +226,31 @@ bool compact_policy_context::finish_compact_partition(gpid pid,
                                                       const dsn::rpc_address &source)
 {
     if (_progress.gpid_finish[pid]) {
-        dwarn_f("{}: pid({}.{}) has finished, ignore the response from({})",
+        dwarn_f("{}: pid({}) has finished, ignore the response from {}",
                 _record_sig.c_str(),
-                pid.get_app_id(),
-                pid.get_partition_index(),
+                pid,
                 source.to_string());
         return true;
     }
 
     if (!finish) {
-        dwarn_f("{}: compaction on {}.{}@{} is not finish",
+        dwarn_f("{}: compaction on {}@{} is not finish",
                 _record_sig.c_str(),
-                pid.get_app_id(),
-                pid.get_partition_index(),
+                pid,
                 source.to_string());
         return false;
     }
 
     _progress.gpid_finish[pid] = true;
-    dwarn_f("{}: compaction on {}.{}@{} has finished",
+    dwarn_f("{}: compaction on {}@{} has finished",
             _record_sig.c_str(),
-            pid.get_app_id(),
-            pid.get_partition_index(),
+            pid,
             source.to_string());
 
     auto app_unfinish_partition_count = --_progress.app_unfinish_partition_count[pid.get_app_id()];
-    ddebug_f("{}: finish compact for gpid({}.{}), {} partitions left on app_id({})",
+    ddebug_f("{}: finish compact for gpid({}), {} partitions left on app_id({})",
              _record_sig.c_str(),
-             pid.get_app_id(),
-             pid.get_partition_index(),
+             pid,
              app_unfinish_partition_count,
              pid.get_app_id());
 
