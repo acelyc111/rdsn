@@ -35,6 +35,13 @@ class meta_service;
 class server_state;
 class compact_service;
 
+typedef rpc_holder<configuration_add_compact_policy_request,
+                   configuration_add_compact_policy_response> add_compact_policy_rpc;
+typedef rpc_holder<configuration_modify_compact_policy_request,
+                   configuration_modify_compact_policy_response> modify_compact_policy_rpc;
+typedef rpc_holder<configuration_query_compact_policy_request,
+                   configuration_query_compact_policy_response> query_compact_policy_rpc;
+
 struct policy_record
 {
     int64_t id = 0;
@@ -164,9 +171,9 @@ public:
     // and start compact task from each policy
     void start();
 
-    void add_policy(dsn_message_t msg);
-    void query_policy(dsn_message_t msg);
-    void modify_policy(dsn_message_t msg);
+    void add_policy(add_compact_policy_rpc &add_rpc);
+    void query_policy(query_compact_policy_rpc &query_rpc);
+    void modify_policy(modify_compact_policy_rpc &modify_rpc);
 
     meta_service *get_meta_service() const { return _meta_svc; }
     server_state *get_state() const { return _state; }
@@ -178,10 +185,9 @@ private:
     error_code sync_policies_from_remote_storage();
 
     void create_policy_root(dsn::task_ptr callback);
-    void do_add_policy(dsn_message_t req,
-                       std::shared_ptr<compact_policy_context> policy_cxt_ptr,
-                       const std::string &hint_msg);
-    void modify_policy_on_remote_storage(dsn_message_t req,
+    void do_add_policy(add_compact_policy_rpc &add_rpc,
+                       std::shared_ptr<compact_policy_context> policy_cxt_ptr);
+    void modify_policy_on_remote_storage(modify_compact_policy_rpc &modify_rpc,
                                          const compact_policy &policy,
                                          std::shared_ptr<compact_policy_context> &policy_cxt_ptr);
 

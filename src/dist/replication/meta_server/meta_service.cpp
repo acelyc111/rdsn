@@ -207,7 +207,7 @@ void meta_service::start_service()
         ddebug("start manual compact service");
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          nullptr,
-                         std::bind(&compact_service::start, _compact_handler.get()));
+                         std::bind(&compact_service::start, _compact_svc.get()));
     }
 }
 
@@ -262,7 +262,7 @@ error_code meta_service::start()
     // init compact_service
     if (!_meta_opts.manual_compact_disabled) {
         ddebug("initialize manual compact handler");
-        _compact_handler = std::make_shared<compact_service>(
+        _compact_svc = std::make_unique<compact_service>(
             this,
             meta_options::concat_path_unix_style(_cluster_root, "compact_policy"),
             [](compact_service *cs) { return std::make_shared<compact_policy_context>(cs); });
@@ -327,11 +327,11 @@ void meta_service::register_rpc_handlers()
     register_rpc_handler(RPC_CM_QUERY_RESTORE_STATUS,
                          "query_restore_status",
                          &meta_service::on_query_restore_status);
-    register_rpc_handler(
+    register_rpc_handler_with_rpc_holder(
         RPC_CM_ADD_COMPACT_POLICY, "add_compact_policy", &meta_service::on_add_compact_policy);
-    register_rpc_handler(
+    register_rpc_handler_with_rpc_holder(
         RPC_CM_MODIFY_COMPACT_POLICY, "modify_compact_policy", &meta_service::on_modify_compact_policy);
-    register_rpc_handler(
+    register_rpc_handler_with_rpc_holder(
         RPC_CM_QUERY_COMPACT_POLICY, "query_compact_policy", &meta_service::on_query_compact_policy);
     register_rpc_handler_with_rpc_holder(
         RPC_CM_UPDATE_APP_ENV, "update_app_env(set/del/clear)", &meta_service::update_app_env);
@@ -716,60 +716,54 @@ void meta_service::on_query_restore_status(dsn_message_t req)
                      std::bind(&server_state::on_query_restore_status, _state.get(), req));
 }
 
-void meta_service::on_add_compact_policy(dsn_message_t req)
+void meta_service::on_add_compact_policy(add_compact_policy_rpc add_rpc)
 {
-    configuration_add_compact_policy_response response;
-    RPC_CHECK_STATUS(req, response);
+    auto &response = add_rpc.response();
+    RPC_CHECK_STATUS(add_rpc.dsn_request(), response);
 
-    if (_compact_handler == nullptr) {
+    if (_compact_svc == nullptr) {
         derror("meta doesn't enable compact service");
         response.err = ERR_SERVICE_NOT_ACTIVE;
-        reply(req, response);
     } else {
-        dsn_msg_add_ref(req);
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          nullptr,
                          std::bind(&compact_service::add_policy,
-                                   _compact_handler.get(),
-                                   req));
+                                   _compact_svc.get(),
+                                   add_rpc));
     }
 }
 
-void meta_service::on_modify_compact_policy(dsn_message_t req)
+void meta_service::on_modify_compact_policy(modify_compact_policy_rpc modify_rpc)
 {
-    configuration_modify_compact_policy_response response;
-    RPC_CHECK_STATUS(req, response);
+    auto &response = modify_rpc.response();
+    RPC_CHECK_STATUS(modify_rpc.dsn_request(), response);
 
-    if (_compact_handler == nullptr) {
+    if (_compact_svc == nullptr) {
         derror("meta doesn't enable compact service");
         response.err = ERR_SERVICE_NOT_ACTIVE;
-        reply(req, response);
     } else {
-        dsn_msg_add_ref(req);
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          nullptr,
                          std::bind(&compact_service::modify_policy,
-                                   _compact_handler.get(),
-                                   req));
+                                   _compact_svc.get(),
+                                   modify_rpc));
     }
 }
 
-void meta_service::on_query_compact_policy(dsn_message_t req)
+void meta_service::on_query_compact_policy(query_compact_policy_rpc query_rpc)
 {
-    configuration_query_compact_policy_response response;
-    RPC_CHECK_STATUS(req, response);
+    auto &response = query_rpc.response();
+    RPC_CHECK_STATUS(query_rpc.dsn_request(), response);
 
-    if (_compact_handler == nullptr) {
+    if (_compact_svc == nullptr) {
         derror("meta doesn't enable compact service");
         response.err = ERR_SERVICE_NOT_ACTIVE;
-        reply(req, response);
     } else {
-        dsn_msg_add_ref(req);
         tasking::enqueue(LPC_DEFAULT_CALLBACK,
                          nullptr,
                          std::bind(&compact_service::query_policy,
-                                   _compact_handler.get(),
-                                   req));
+                                   _compact_svc.get(),
+                                   query_rpc));
     }
 }
 

@@ -151,9 +151,9 @@ private:
     void on_report_restore_status(dsn_message_t req);
     void on_query_restore_status(dsn_message_t req);
 
-    void on_add_compact_policy(dsn_message_t req);
-    void on_modify_compact_policy(dsn_message_t req);
-    void on_query_compact_policy(dsn_message_t req);
+    void on_add_compact_policy(add_compact_policy_rpc add_rpc);
+    void on_modify_compact_policy(modify_compact_policy_rpc modify_rpc);
+    void on_query_compact_policy(query_compact_policy_rpc query_rpc);
 
     // common routines
     // ret:
@@ -177,7 +177,7 @@ private:
     std::shared_ptr<dist::meta_state_service> _storage;
     std::shared_ptr<server_load_balancer> _balancer;
     std::shared_ptr<backup_service> _backup_handler;
-    std::shared_ptr<compact_service> _compact_handler;
+    std::unique_ptr<compact_service> _compact_svc;
 
     // handle all the block filesystems for current meta service
     // (in other words, current service node)

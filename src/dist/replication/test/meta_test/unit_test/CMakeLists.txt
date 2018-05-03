@@ -25,8 +25,8 @@ set(MY_PROJ_LIBS dsn.replication.zookeeper_provider
                  PocoNetSSL
                  PocoJSON
                  crypto
-                 gtest
-                 fmt)
+                 fmt
+                 gtest)
 
 set(MY_PROJ_LIB_PATH "")
 

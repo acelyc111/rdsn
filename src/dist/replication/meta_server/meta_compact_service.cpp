@@ -38,6 +38,7 @@ void compact_policy_context::start_compact_app(int32_t app_id)
 {
     if (skip_compact_app(app_id)) {
         ddebug_f("skip to compact app({})", app_id);
+        return;
     }
 
     auto iter = _progress.app_unfinish_partition_count.find(app_id);
@@ -855,12 +856,10 @@ error_code compact_service::sync_policies_from_remote_storage()
     return err;
 }
 
-void compact_service::add_policy(dsn_message_t msg)
+void compact_service::add_policy(add_compact_policy_rpc &add_rpc)
 {
-    configuration_add_compact_policy_request request;
-    configuration_add_compact_policy_response response;
+    auto &request = add_rpc.request();
 
-    ::dsn::unmarshall(msg, request);
     const compact_policy_entry &policy = request.policy;
     std::set<int32_t> app_ids;
     {
@@ -873,7 +872,7 @@ void compact_service::add_policy(dsn_message_t msg)
                 derror_f("app_id({}) doesn't exist, can't add it to policy({})",
                          app_id,
                          policy.policy_name.c_str());
-                response.hint_message += "invalid app_id(" + std::to_string(app_id) + ")\n";
+                add_rpc.response().hint_message += "invalid app_id(" + std::to_string(app_id) + ")\n";
             } else {
                 app_ids.insert(app_id);
             }
@@ -902,34 +901,27 @@ void compact_service::add_policy(dsn_message_t msg)
         tmp.opts = policy.opts;
         policy_ctx->set_policy(tmp);
 
-        do_add_policy(msg, policy_ctx, response.hint_message);
+        do_add_policy(add_rpc, policy_ctx);
     } else {
-        response.err = dsn::ERR_INVALID_PARAMETERS;
-        _meta_svc->reply_data(msg, response);
-        dsn_msg_release_ref(msg);
+        add_rpc.response().err = dsn::ERR_INVALID_PARAMETERS;
     }
 }
 
-void compact_service::do_add_policy(dsn_message_t req,
-                                    std::shared_ptr<compact_policy_context> policy_ctx,
-                                    const std::string &hint_msg)
+void compact_service::do_add_policy(add_compact_policy_rpc &add_rpc,
+                                    std::shared_ptr<compact_policy_context> policy_ctx)
 {
     const compact_policy &policy = policy_ctx->get_policy();
     dsn::blob value = json::json_forwarder<compact_policy>::encode(policy);
     _meta_svc->get_remote_storage()->create_node(
         get_policy_path(policy.policy_name),
         LPC_DEFAULT_CALLBACK,
-        [this, req, policy_ctx, hint_msg, policy_name = policy.policy_name](error_code err) {
+        [this, add_rpc, policy_ctx, policy_name = policy.policy_name](error_code err) {
             if (err == dsn::ERR_OK ||
                 err == dsn::ERR_NODE_ALREADY_EXIST) {
                 ddebug_f("create compact policy({}) on remote storage succeed",
                          policy_name.c_str());
 
-                configuration_add_compact_policy_response resp;
-                resp.hint_message = hint_msg;
-                resp.err = dsn::ERR_OK;
-                _meta_svc->reply_data(req, resp);
-                dsn_msg_release_ref(req);
+                add_rpc.response().err = dsn::ERR_OK;
 
                 {
                     zauto_lock l(_lock);
@@ -946,9 +938,8 @@ void compact_service::do_add_policy(dsn_message_t req,
                     nullptr,
                     std::bind(&compact_service::do_add_policy,
                               this,
-                              req,
-                              policy_ctx,
-                              hint_msg),
+                              add_rpc,
+                              policy_ctx),
                     0,
                     _opt.meta_retry_delay);
                 return;
@@ -962,13 +953,12 @@ void compact_service::do_add_policy(dsn_message_t req,
         value);
 }
 
-void compact_service::modify_policy(dsn_message_t msg)
+void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
 {
-    configuration_modify_compact_policy_request request;
-    configuration_modify_compact_policy_response response;
+    auto &request = modify_rpc.request();
+    auto &response = modify_rpc.response();
     response.err = dsn::ERR_OK;
 
-    ::dsn::unmarshall(msg, request);
     const compact_policy_entry &req_policy = request.policy;
     std::shared_ptr<compact_policy_context> policy_ctx = nullptr;
     {
@@ -984,8 +974,6 @@ void compact_service::modify_policy(dsn_message_t msg)
     }
 
     if (policy_ctx == nullptr) {
-        _meta_svc->reply_data(msg, response);
-        dsn_msg_release_ref(msg);
         return;
     }
 
@@ -1089,14 +1077,11 @@ void compact_service::modify_policy(dsn_message_t msg)
     }
 
     if (have_modify_policy) {
-        modify_policy_on_remote_storage(msg, cur_policy, policy_ctx);
-    } else {
-        _meta_svc->reply_data(msg, response);
-        dsn_msg_release_ref(msg);
+        modify_policy_on_remote_storage(modify_rpc, cur_policy, policy_ctx);
     }
 }
 
-void compact_service::modify_policy_on_remote_storage(dsn_message_t req,
+void compact_service::modify_policy_on_remote_storage(modify_compact_policy_rpc &modify_rpc,
                                                       const compact_policy &policy,
                                                       std::shared_ptr<compact_policy_context> &policy_ctx)
 {
@@ -1106,17 +1091,13 @@ void compact_service::modify_policy_on_remote_storage(dsn_message_t req,
         policy_path,
         value,
         LPC_DEFAULT_CALLBACK,
-        [this, req, policy, policy_ctx](error_code err) {
+        [this, modify_rpc, policy, policy_ctx](error_code err) {
             if (err == dsn::ERR_OK) {
                 ddebug_f("modify compact policy({}) to remote storage succeed",
                          policy.policy_name.c_str());
 
                 policy_ctx->set_policy(policy);
-
-                configuration_modify_compact_policy_response resp;
-                resp.err = dsn::ERR_OK;
-                _meta_svc->reply_data(req, resp);
-                dsn_msg_release_ref(req);
+                modify_rpc.response().err = dsn::ERR_OK;
             } else if (err == dsn::ERR_TIMEOUT) {
                 derror_f("modify compact policy({}) to remote storage failed, retry it later",
                          policy.policy_name.c_str(),
@@ -1127,7 +1108,7 @@ void compact_service::modify_policy_on_remote_storage(dsn_message_t req,
                     nullptr,
                     std::bind(&compact_service::modify_policy_on_remote_storage,
                               this,
-                              req,
+                              modify_rpc,
                               policy,
                               policy_ctx),
                     0,
@@ -1141,15 +1122,12 @@ void compact_service::modify_policy_on_remote_storage(dsn_message_t req,
         });
 }
 
-void compact_service::query_policy(dsn_message_t msg)
+void compact_service::query_policy(query_compact_policy_rpc &query_rpc)
 {
-    configuration_query_compact_policy_request request;
-    configuration_query_compact_policy_response response;
+    auto &response = query_rpc.response();
     response.err = dsn::ERR_OK;
 
-    ::dsn::unmarshall(msg, request);
-
-    std::set<std::string> policy_names = request.policy_names;
+    std::set<std::string> policy_names = query_rpc.request().policy_names;
     if (policy_names.empty()) {
         // default all the policy
         zauto_lock l(_lock);
@@ -1199,9 +1177,6 @@ void compact_service::query_policy(dsn_message_t msg)
     if (!response.hint_msg.empty()) {
         response.__isset.hint_msg = true;
     }
-
-    _meta_svc->reply_data(msg, response);
-    dsn_msg_release_ref(msg);
 }
 
 bool compact_service::is_valid_policy_name(const std::string &policy_name)
