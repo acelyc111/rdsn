@@ -301,7 +301,7 @@ private:
                                            compact_context_ptr compact_context);
     void check_and_compact(const std::map<std::string, std::string> &opts);
 
-    void do_policy_compact(compact_status compact_status,
+    void do_policy_compact(compact_status::type compact_status,
                            compact_context_ptr compact_context,
                            const std::map<std::string, std::string> &opts,
                            compact_response &response);

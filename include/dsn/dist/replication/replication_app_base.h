@@ -216,7 +216,7 @@ public:
                                           dsn_message_t *requests,
                                           int request_length);
 
-    virtual uint64_t last_compact_finish_time() = 0;
+    virtual std::chrono::milliseconds last_compact_finish_time() = 0;
     // do full compaction manually.
     virtual void manual_compact(const std::map<std::string, std::string> &opts) = 0;
     // update app envs.

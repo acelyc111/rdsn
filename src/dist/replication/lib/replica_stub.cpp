@@ -861,11 +861,10 @@ void replica_stub::on_cold_backup(const backup_request &request, /*out*/ backup_
 void replica_stub::on_policy_compact(const compact_request &request,
                                      compact_response &response)
 {
-    ddebug_f("receive policy compact request: {}.{}.{}.{}",
-             request.policy_name.c_str(),
+    ddebug_f("receive policy compact request: {}.{}.{}",
+             request.policy_name,
              request.id,
-             request.pid.get_app_id(),
-             request.pid.get_partition_index());
+             request.pid);
     response.pid = request.pid;
     response.policy_name = request.policy_name;
     response.id = request.id;
@@ -874,11 +873,10 @@ void replica_stub::on_policy_compact(const compact_request &request,
     if (rep != nullptr) {
         rep->on_policy_compact(request, response);
     } else {
-        derror_f("{}.{}.{}.{} replica not found",
-                 request.policy_name.c_str(),
+        derror_f("{}.{}.{} replica not found",
+                 request.policy_name,
                  request.id,
-                 request.pid.get_app_id(),
-                 request.pid.get_partition_index());
+                 request.pid);
         response.err = dsn::ERR_OBJECT_NOT_FOUND;
     }
 }

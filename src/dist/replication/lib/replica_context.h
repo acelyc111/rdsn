@@ -517,21 +517,11 @@ private:
 
 typedef dsn::ref_ptr<cold_backup_context> cold_backup_context_ptr;
 
-enum class compact_status
-{
-    KInvalid = 0,
-    kCompacting,
-    kCompleted
-};
-typedef std::underlying_type<compact_status>::type compact_status_under;
-
-const char* compact_status_to_string(compact_status s);
-
 class compact_context : public ref_counter {
 public:
     explicit compact_context(const compact_request &req)
         : request(req),
-          _status((compact_status_under)compact_status::KInvalid)
+          _status(compact_status::COMPACT_STATUS_INVALID)
     {
         std::stringstream ss;
         ss << "compact("
@@ -546,15 +536,15 @@ public:
 
     void start_compact()
     {
-        _status.store((compact_status_under)compact_status::kCompacting);
+        _status.store(compact_status::COMPACT_STATUS_COMPACTING);
     }
 
     void finish_compact()
     {
-        _status.store((compact_status_under)compact_status::kCompleted);
+        _status.store(compact_status::COMPACT_STATUS_COMPACTED);
     }
 
-    compact_status status() const { return (compact_status)_status.load(); }
+    compact_status::type status() const { return (compact_status::type)_status.load(); }
 
 public:
     std::string name;

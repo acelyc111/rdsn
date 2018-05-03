@@ -62,10 +62,10 @@ void time_ms_to_date_time(uint64_t ts_ms,
                           int32_t &min,
                           int32_t &sec); // time to hour, min, sec
 
-int sec_of_day();
+int sec_of_day();       // how many seconds past in a day
 
-int32_t hm_of_day_to_sec(const std::string &hm);
-std::string sec_of_day_to_hm(int32_t sec);
+int32_t hm_of_day_to_sec(const std::string &hm);    // hh:mm (range in [00:00, 23:59]) to seconds
+std::string sec_of_day_to_hm(int32_t sec);          // seconds to hh:mm, which will range in [00:00, 23:59]
 
 uint64_t get_current_physical_time_ns();
 

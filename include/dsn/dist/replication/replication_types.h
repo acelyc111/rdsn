@@ -109,6 +109,16 @@ struct meta_function_level {
 
 extern const std::map<int, const char*> _meta_function_level_VALUES_TO_NAMES;
 
+struct compact_status {
+  enum type {
+    COMPACT_STATUS_INVALID = 0,
+    COMPACT_STATUS_COMPACTING = 1,
+    COMPACT_STATUS_COMPACTED = 2
+  };
+};
+
+extern const std::map<int, const char*> _compact_status_VALUES_TO_NAMES;
+
 struct app_env_operation {
   enum type {
     APP_ENV_OP_INVALID = 0,

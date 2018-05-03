@@ -637,6 +637,13 @@ struct compact_response
     5:string            policy_name;
 }
 
+enum compact_status
+{
+    COMPACT_STATUS_INVALID,
+    COMPACT_STATUS_COMPACTING,
+    COMPACT_STATUS_COMPACTED
+}
+
 enum app_env_operation
 {
     APP_ENV_OP_INVALID,

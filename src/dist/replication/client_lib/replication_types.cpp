@@ -135,6 +135,18 @@ const char* _kmeta_function_levelNames[] = {
 };
 const std::map<int, const char*> _meta_function_level_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(6, _kmeta_function_levelValues, _kmeta_function_levelNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
 
+int _kcompact_statusValues[] = {
+  compact_status::COMPACT_STATUS_INVALID,
+  compact_status::COMPACT_STATUS_COMPACTING,
+  compact_status::COMPACT_STATUS_COMPACTED
+};
+const char* _kcompact_statusNames[] = {
+  "COMPACT_STATUS_INVALID",
+  "COMPACT_STATUS_COMPACTING",
+  "COMPACT_STATUS_COMPACTED"
+};
+const std::map<int, const char*> _compact_status_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(3, _kcompact_statusValues, _kcompact_statusNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
+
 int _kapp_env_operationValues[] = {
   app_env_operation::APP_ENV_OP_INVALID,
   app_env_operation::APP_ENV_OP_SET,
