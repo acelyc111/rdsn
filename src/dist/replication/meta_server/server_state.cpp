@@ -2751,5 +2751,41 @@ void server_state::clear_app_envs(const app_env_rpc &env_rpc)
             }
         });
 }
+
+bool server_state::is_app_available(int32_t app_id) {
+    zauto_read_lock l(_lock);
+    std::shared_ptr<app_state> app = get_app(app_id);
+    return (app != nullptr &&
+            app->status == app_status::AS_AVAILABLE);
+}
+
+bool server_state::get_primary(gpid pid,
+                               dsn::rpc_address &addr) {
+    zauto_read_lock l(_lock);
+    std::shared_ptr<app_state> app = get_app(pid.get_app_id());
+    if (app == nullptr ||
+        app->status != app_status::AS_AVAILABLE) {
+        return false;
+    }
+
+    addr = app->partitions[pid.get_partition_index()].primary;
+
+    return true;
+}
+
+bool server_state::get_partition_config(int32_t app_id,
+                                        std::vector<partition_configuration> &partitions) {
+    zauto_read_lock l(_lock);
+    std::shared_ptr<app_state> app = get_app(app_id);
+    if (app == nullptr ||
+        app->status != app_status::AS_AVAILABLE) {
+        return false;
+    }
+
+    partitions = app->partitions;
+
+    return true;
+}
+
 }
 }

@@ -189,6 +189,12 @@ public:
     clientlet *tracker() { return &_tracker; }
     void wait_all_task() { dsn_task_tracker_wait_all(_tracker.tracker()); }
 
+    bool is_app_available(int32_t app_id);
+    bool get_primary(gpid pid,
+                     dsn::rpc_address &addr);
+    bool get_partition_config(int32_t app_id,
+                              std::vector<partition_configuration> &partitions);
+
 private:
     //-1 means waiting forever
     bool spin_wait_staging(int timeout_seconds = -1);

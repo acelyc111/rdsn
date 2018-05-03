@@ -56,16 +56,7 @@ void compact_policy_context::start_compact_app(int32_t app_id)
 
 bool compact_policy_context::skip_compact_app(int32_t app_id)
 {
-    bool app_available = false;
-    {
-        zauto_read_lock l;
-        _compact_service->get_state()->lock_read(l);
-        const std::shared_ptr<app_state> &app = _compact_service->get_state()->get_app(app_id);
-        if (app != nullptr &&
-            app->status == app_status::AS_AVAILABLE) {
-            app_available = true;
-        }
-    }
+    bool app_available = _compact_service->get_state()->is_app_available(app_id);
 
     // if app is dropped when app start to compact, we just skip compact this app this time
     if (!app_available) {
@@ -91,27 +82,19 @@ bool compact_policy_context::skip_compact_app(int32_t app_id)
 
 void compact_policy_context::start_compact_partition(gpid pid)
 {
-    ddebug_f("start to compact gpid({})",
-             pid);
+    ddebug_f("start to compact gpid({})", pid);
     dsn::rpc_address primary;
-    // check the partition status
-    {
-        zauto_read_lock l;
-        _compact_service->get_state()->lock_read(l);
-        const std::shared_ptr<app_state> &app = _compact_service->get_state()->get_app(pid.get_app_id());
-        if (app == nullptr ||
-            app->status != app_status::AS_AVAILABLE) {
-            dwarn_f("{}: app({}) is not available, just ignore it",
-                    _record_sig.c_str(),
-                    pid.get_app_id());
-            _progress.skipped_app[pid.get_app_id()] = true;
-            finish_compact_partition(pid,
-                                     true,
-                                     dsn::rpc_address());
-            return;
-        }
 
-        primary = app->partitions[pid.get_partition_index()].primary;
+    // check the partition status
+    if (!_compact_service->get_state()->get_primary(pid, primary)) {
+        dwarn_f("{}: app({}) is not available, just ignore it",
+                _record_sig.c_str(),
+                pid.get_app_id());
+        _progress.skipped_app[pid.get_app_id()] = true;
+        finish_compact_partition(pid,
+                                 true,
+                                 dsn::rpc_address());
+        return;
     }
 
     if (primary.is_invalid()) {
@@ -298,32 +281,24 @@ void compact_policy_context::init_progress()
 {
     _progress.reset();
 
-    zauto_read_lock l;
-    _compact_service->get_state()->lock_read(l);
-
     // NOTICE: the unfinish_apps_count is initialized with the app-set's size
     // even if some apps are not available.
     _progress.unfinish_apps_count = _cur_record.app_ids.size();
     for (const int32_t &app_id : _cur_record.app_ids) {
-        const std::shared_ptr<app_state> &app = _compact_service->get_state()->get_app(app_id);
-        _progress.skipped_app[app_id] = true;
-        if (app == nullptr) {
-            dwarn_f("{}: app id({}) is invalid",
-                    _policy.policy_name.c_str(),
-                    app_id);
-        } else if (app->status != app_status::AS_AVAILABLE) {
-            dwarn_f("{}: {} is not available, status({})",
-                    _policy.policy_name.c_str(),
-                    app->get_logname(),
-                    enum_to_string(app->status));
-        } else {
+        std::vector<partition_configuration> partitions;
+        if (_compact_service->get_state()->get_partition_config(app_id, partitions)) {
             _progress.skipped_app[app_id] = false;
             // NOTICE: only available apps have entry in
             // app_unfinish_partition_count & gpid_finish
-            _progress.app_unfinish_partition_count[app_id] = app->partition_count;
-            for (const auto &pc : app->partitions) {
+            _progress.app_unfinish_partition_count[app_id] = partitions.size();
+            for (const auto &pc : partitions) {
                 _progress.gpid_finish[pc.pid] = false;
             }
+        } else {
+            _progress.skipped_app[app_id] = true;
+            dwarn_f("{}: app({}) is not available",
+                    _policy.policy_name.c_str(),
+                    app_id);
         }
     }
 }
@@ -849,20 +824,14 @@ void compact_service::add_policy(add_compact_policy_rpc &add_rpc)
 
     const compact_policy_entry &policy = request.policy;
     std::set<int32_t> app_ids;
-    {
-        zauto_read_lock l;
-        _state->lock_read(l);
-
-        for (auto &app_id : policy.app_ids) {
-            const std::shared_ptr<app_state> &app = _state->get_app(app_id);
-            if (app == nullptr) {
-                derror_f("app_id({}) doesn't exist, can't add it to policy({})",
-                         app_id,
-                         policy.policy_name.c_str());
-                add_rpc.response().hint_message += "invalid app_id(" + std::to_string(app_id) + ")\n";
-            } else {
-                app_ids.insert(app_id);
-            }
+    for (const auto &app_id : policy.app_ids) {
+        if (_state->is_app_available(app_id)) {
+            app_ids.insert(app_id);
+        } else {
+            derror_f("app_id({}) is not available, can't add it to policy({})",
+                     app_id,
+                     policy.policy_name.c_str());
+            add_rpc.response().hint_message += "invalid app_id(" + std::to_string(app_id) + ")\n";
         }
     }
 
@@ -971,20 +940,14 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
     // modify app_ids
     if (req_policy.__isset.app_ids) {
         std::set<int32_t> app_ids;
-        {
-            zauto_read_lock l;
-            _state->lock_read(l);
-
-            for (const auto &app_id : req_policy.app_ids) {
-                const auto &app = _state->get_app(app_id);
-                if (app == nullptr) {
-                    dwarn_f("add invalid app_id({}) to policy({}), ignore it",
-                            app_id,
-                            cur_policy.policy_name.c_str());
-                } else {
-                    app_ids.insert(app_id);
-                    have_modify_policy = true;
-                }
+        for (const auto &app_id : req_policy.app_ids) {
+            if (_state->is_app_available(app_id)) {
+                app_ids.insert(app_id);
+                have_modify_policy = true;
+            } else {
+                derror_f("app_id({}) is not available, can't add it to policy({})",
+                         app_id,
+                         req_policy.policy_name.c_str());
             }
         }
 
