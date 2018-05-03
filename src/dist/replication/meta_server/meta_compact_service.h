@@ -94,6 +94,9 @@ public:
     void set_policy(compact_policy &&p);
     void set_policy(const compact_policy &p);
 
+    // continue to execute an unfinished compact task if needed,
+    // check whether a compact task is executable for every issue_new_op_interval
+    // start a compact task when it's executable
     void start();
 
 private:
@@ -153,10 +156,12 @@ public:
     };
     typedef std::function<std::shared_ptr<compact_policy_context>(compact_service *)> policy_factory;
 
-    explicit compact_service(meta_service *meta_svc,
-                             const std::string &policy_meta_root,
-                             const policy_factory &factory);
+    compact_service(meta_service *meta_svc,
+                    const std::string &policy_meta_root,
+                    const policy_factory &factory);
 
+    // sync compact policies from remote storage,
+    // and start compact task from each policy
     void start();
 
     void add_policy(dsn_message_t msg);

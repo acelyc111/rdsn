@@ -532,8 +532,6 @@ public:
         name = ss.str();
     }
 
-    ~compact_context() {}
-
     void start_compact()
     {
         _status.store(compact_status::COMPACT_STATUS_COMPACTING);

@@ -473,8 +473,7 @@ void replica::do_policy_compact(compact_status::type cs,
         }
     } else {
         // bad case
-        dassert_f(false,
-                  "{}: unhandled case, compact_status = {}",
+        dfatal_f("{}: unhandled case, compact_status = {}",
                   compact_context->name,
                   _compact_status_VALUES_TO_NAMES.at(cs));
     }
