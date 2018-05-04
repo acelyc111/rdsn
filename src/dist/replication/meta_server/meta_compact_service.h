@@ -190,7 +190,7 @@ private:
                        std::shared_ptr<compact_policy_context> policy_cxt_ptr);
     void modify_policy_on_remote_storage(modify_compact_policy_rpc &modify_rpc,
                                          const compact_policy &policy,
-                                         std::shared_ptr<compact_policy_context> &policy_cxt_ptr);
+                                         std::shared_ptr<compact_policy_context> policy_cxt_ptr);
 
     std::string get_policy_path(const std::string &policy_name);
     bool is_valid_policy_name(const std::string &policy_name);

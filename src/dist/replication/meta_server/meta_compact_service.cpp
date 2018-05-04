@@ -653,12 +653,12 @@ void compact_service::create_policy_root(dsn::task_ptr sync_task)
             } else if (err == dsn::ERR_TIMEOUT) {
                 derror_f("create policy root({}) timeout, try it later",
                          _policy_root.c_str());
-                dsn::tasking::enqueue(
+                tasking::enqueue(
                     LPC_DEFAULT_CALLBACK,
                     nullptr,
-                    std::bind(&compact_service::create_policy_root,
-                              this,
-                              sync_task),
+                    [this, sync_task]() {
+                        create_policy_root(sync_task);
+                    },
                     0,
                     _opt.meta_retry_delay);
             } else {
@@ -680,13 +680,15 @@ void compact_service::start_sync_policies()
         }
     } else if (err == dsn::ERR_TIMEOUT) {
         derror("sync policies got timeout, retry it later");
-        dsn::tasking::enqueue(
+        tasking::enqueue(
             LPC_DEFAULT_CALLBACK,
             nullptr,
-            std::bind(&compact_service::start_sync_policies,
-                      this),
+            [this]() {
+                start_sync_policies();
+            },
             0,
-            _opt.meta_retry_delay);
+            _opt.meta_retry_delay
+            );
     } else {
         dassert(false,
                 "sync policies from remote storage encounter error({})",
@@ -889,10 +891,9 @@ void compact_service::do_add_policy(add_compact_policy_rpc &add_rpc,
                 tasking::enqueue(
                     LPC_DEFAULT_CALLBACK,
                     nullptr,
-                    std::bind(&compact_service::do_add_policy,
-                              this,
-                              add_rpc,
-                              policy_ctx),
+                    [this, add_rpc = std::move(add_rpc), policy_ctx]() mutable {
+                        do_add_policy(add_rpc, policy_ctx);
+                    },
                     0,
                     _opt.meta_retry_delay);
                 return;
@@ -1030,7 +1031,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
 
 void compact_service::modify_policy_on_remote_storage(modify_compact_policy_rpc &modify_rpc,
                                                       const compact_policy &policy,
-                                                      std::shared_ptr<compact_policy_context> &policy_ctx)
+                                                      std::shared_ptr<compact_policy_context> policy_ctx)
 {
     std::string policy_path = get_policy_path(policy.policy_name);
     dsn::blob value = json::json_forwarder<compact_policy_ext>::encode(policy);
@@ -1053,11 +1054,9 @@ void compact_service::modify_policy_on_remote_storage(modify_compact_policy_rpc 
                 tasking::enqueue(
                     LPC_DEFAULT_CALLBACK,
                     nullptr,
-                    std::bind(&compact_service::modify_policy_on_remote_storage,
-                              this,
-                              modify_rpc,
-                              policy,
-                              policy_ctx),
+                    [this, modify_rpc = std::move(modify_rpc), policy, policy_ctx]() mutable {
+                        modify_policy_on_remote_storage(modify_rpc, policy, policy_ctx);
+                    },
                     0,
                     _opt.meta_retry_delay);
             } else {

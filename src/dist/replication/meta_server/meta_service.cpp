@@ -725,11 +725,12 @@ void meta_service::on_add_compact_policy(add_compact_policy_rpc add_rpc)
         derror("meta doesn't enable compact service");
         response.err = ERR_SERVICE_NOT_ACTIVE;
     } else {
-        tasking::enqueue(LPC_DEFAULT_CALLBACK,
-                         nullptr,
-                         std::bind(&compact_service::add_policy,
-                                   _compact_svc.get(),
-                                   add_rpc));
+        tasking::enqueue(
+            LPC_DEFAULT_CALLBACK,
+            nullptr,
+            [this, add_rpc = std::move(add_rpc)]() mutable {
+                _compact_svc->add_policy(add_rpc);
+            });
     }
 }
 
@@ -742,11 +743,12 @@ void meta_service::on_modify_compact_policy(modify_compact_policy_rpc modify_rpc
         derror("meta doesn't enable compact service");
         response.err = ERR_SERVICE_NOT_ACTIVE;
     } else {
-        tasking::enqueue(LPC_DEFAULT_CALLBACK,
-                         nullptr,
-                         std::bind(&compact_service::modify_policy,
-                                   _compact_svc.get(),
-                                   modify_rpc));
+        tasking::enqueue(
+            LPC_DEFAULT_CALLBACK,
+            nullptr,
+            [this, modify_rpc = std::move(modify_rpc)]() mutable {
+                _compact_svc->modify_policy(modify_rpc);
+            });
     }
 }
 
@@ -759,11 +761,12 @@ void meta_service::on_query_compact_policy(query_compact_policy_rpc query_rpc)
         derror("meta doesn't enable compact service");
         response.err = ERR_SERVICE_NOT_ACTIVE;
     } else {
-        tasking::enqueue(LPC_DEFAULT_CALLBACK,
-                         nullptr,
-                         std::bind(&compact_service::query_policy,
-                                   _compact_svc.get(),
-                                   query_rpc));
+        tasking::enqueue(
+            LPC_DEFAULT_CALLBACK,
+            nullptr,
+            [this, query_rpc = std::move(query_rpc)]() mutable {
+                _compact_svc->query_policy(query_rpc);
+            });
     }
 }
 
