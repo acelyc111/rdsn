@@ -1196,7 +1196,7 @@ static void print_policy_entry(const policy_entry &entry)
               << " : " << entry.backup_history_count_to_keep << std::endl;
 }
 
-static void print_compact_policy_entry(const compact_policy_entry &entry)
+static void print_compact_policy_entry(const compact_policy &entry)
 {
     int width = strlen("start_time");           // the max length title
 

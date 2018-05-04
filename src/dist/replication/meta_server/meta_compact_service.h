@@ -42,15 +42,10 @@ typedef rpc_holder<configuration_modify_compact_policy_request,
 typedef rpc_holder<configuration_query_compact_policy_request,
                    configuration_query_compact_policy_response> query_compact_policy_rpc;
 
-struct policy_record
-{
-    int64_t id = 0;
-    int64_t start_time = 0;
-    int64_t end_time = 0;
-    std::set<int32_t> app_ids;              // "app_ids" is copied from policy.app_ids when
-                                            // a new compact task is generated.
-                                            // The policy's app set may be changed,
-                                            // but policy_record.app_ids never change.
+class compact_record_ext: public compact_record {
+public:
+    compact_record_ext() = default;
+    compact_record_ext(const compact_record &o): compact_record(o) {}
 
     DEFINE_JSON_SERIALIZATION(id,
                               start_time,
@@ -58,21 +53,27 @@ struct policy_record
                               app_ids)
 };
 
-class compact_policy {
+class compact_policy_ext: public compact_policy {
 public:
-    bool enable = true;
-    int32_t start_time = 0;
-    int32_t interval_seconds = 0;
-    std::string policy_name;
-    std::set<int32_t> app_ids;
-    std::map<std::string, std::string> opts;
+    compact_policy_ext() = default;
+    compact_policy_ext(const compact_policy &o): compact_policy(o) {}
+    compact_policy_ext(compact_policy&&o): compact_policy(o) {}
+
+    void enable_isset() {
+        __isset.policy_name = true;
+        __isset.enable = true;
+        __isset.start_time = true;
+        __isset.interval_seconds = true;
+        __isset.app_ids = true;
+        __isset.opts = true;
+    }
 
     static const int32_t history_count_to_keep = 7;
 
-    DEFINE_JSON_SERIALIZATION(enable,
+    DEFINE_JSON_SERIALIZATION(policy_name,
+                              enable,
                               start_time,
                               interval_seconds,
-                              policy_name,
                               app_ids,
                               opts)
 };
@@ -130,13 +131,13 @@ private:
     void finish_compact_app(int32_t app_id);
     void finish_compact_policy();
 
-    void sync_record_to_remote_storage(const policy_record &record,
+    void sync_record_to_remote_storage(const compact_record &record,
                                        task_ptr sync_task,
                                        bool create_new_node);
-    void remove_record_on_remote_storage(const policy_record &record);
+    void remove_record_on_remote_storage(const compact_record &record);
 
-    void add_record(const policy_record &record);
-    std::list<policy_record> get_compact_records();
+    void add_record(const compact_record &record);
+    std::vector<compact_record> get_compact_records();
     bool is_under_compacting();
     compact_policy get_policy();
 
@@ -145,9 +146,9 @@ private:
     compact_service *_compact_service;
 
     dsn::service::zlock _lock;
-    compact_policy _policy;
-    policy_record _cur_record;
-    std::map<int64_t, policy_record> _history_records;
+    compact_policy_ext _policy;
+    compact_record _cur_record;
+    std::map<int64_t, compact_record> _history_records;
     compact_progress _progress;
 
     std::string _record_sig;                // policy_name@record_id, used for logging

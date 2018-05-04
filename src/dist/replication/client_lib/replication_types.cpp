@@ -9971,40 +9971,40 @@ void configuration_query_restore_response::printTo(std::ostream& out) const {
 }
 
 
-compact_policy_entry::~compact_policy_entry() throw() {
+compact_policy::~compact_policy() throw() {
 }
 
 
-void compact_policy_entry::__set_policy_name(const std::string& val) {
+void compact_policy::__set_policy_name(const std::string& val) {
   this->policy_name = val;
 }
 
-void compact_policy_entry::__set_interval_seconds(const int32_t val) {
-  this->interval_seconds = val;
-__isset.interval_seconds = true;
-}
-
-void compact_policy_entry::__set_app_ids(const std::set<int32_t> & val) {
-  this->app_ids = val;
-__isset.app_ids = true;
-}
-
-void compact_policy_entry::__set_start_time(const int32_t val) {
-  this->start_time = val;
-__isset.start_time = true;
-}
-
-void compact_policy_entry::__set_enable(const bool val) {
+void compact_policy::__set_enable(const bool val) {
   this->enable = val;
 __isset.enable = true;
 }
 
-void compact_policy_entry::__set_opts(const std::map<std::string, std::string> & val) {
+void compact_policy::__set_start_time(const int32_t val) {
+  this->start_time = val;
+__isset.start_time = true;
+}
+
+void compact_policy::__set_interval_seconds(const int32_t val) {
+  this->interval_seconds = val;
+__isset.interval_seconds = true;
+}
+
+void compact_policy::__set_app_ids(const std::set<int32_t> & val) {
+  this->app_ids = val;
+__isset.app_ids = true;
+}
+
+void compact_policy::__set_opts(const std::map<std::string, std::string> & val) {
   this->opts = val;
 __isset.opts = true;
 }
 
-uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t compact_policy::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
   uint32_t xfer = 0;
@@ -10034,6 +10034,22 @@ uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot
         }
         break;
       case 2:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->enable);
+          this->__isset.enable = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->start_time);
+          this->__isset.start_time = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
         if (ftype == ::apache::thrift::protocol::T_I32) {
           xfer += iprot->readI32(this->interval_seconds);
           this->__isset.interval_seconds = true;
@@ -10041,7 +10057,7 @@ uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot
           xfer += iprot->skip(ftype);
         }
         break;
-      case 3:
+      case 5:
         if (ftype == ::apache::thrift::protocol::T_SET) {
           {
             this->app_ids.clear();
@@ -10058,22 +10074,6 @@ uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot
             xfer += iprot->readSetEnd();
           }
           this->__isset.app_ids = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->start_time);
-          this->__isset.start_time = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 5:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->enable);
-          this->__isset.enable = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -10113,22 +10113,32 @@ uint32_t compact_policy_entry::read(::apache::thrift::protocol::TProtocol* iprot
   return xfer;
 }
 
-uint32_t compact_policy_entry::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t compact_policy::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("compact_policy_entry");
+  xfer += oprot->writeStructBegin("compact_policy");
 
   xfer += oprot->writeFieldBegin("policy_name", ::apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->policy_name);
   xfer += oprot->writeFieldEnd();
 
+  if (this->__isset.enable) {
+    xfer += oprot->writeFieldBegin("enable", ::apache::thrift::protocol::T_BOOL, 2);
+    xfer += oprot->writeBool(this->enable);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.start_time) {
+    xfer += oprot->writeFieldBegin("start_time", ::apache::thrift::protocol::T_I32, 3);
+    xfer += oprot->writeI32(this->start_time);
+    xfer += oprot->writeFieldEnd();
+  }
   if (this->__isset.interval_seconds) {
-    xfer += oprot->writeFieldBegin("interval_seconds", ::apache::thrift::protocol::T_I32, 2);
+    xfer += oprot->writeFieldBegin("interval_seconds", ::apache::thrift::protocol::T_I32, 4);
     xfer += oprot->writeI32(this->interval_seconds);
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.app_ids) {
-    xfer += oprot->writeFieldBegin("app_ids", ::apache::thrift::protocol::T_SET, 3);
+    xfer += oprot->writeFieldBegin("app_ids", ::apache::thrift::protocol::T_SET, 5);
     {
       xfer += oprot->writeSetBegin(::apache::thrift::protocol::T_I32, static_cast<uint32_t>(this->app_ids.size()));
       std::set<int32_t> ::const_iterator _iter447;
@@ -10138,16 +10148,6 @@ uint32_t compact_policy_entry::write(::apache::thrift::protocol::TProtocol* opro
       }
       xfer += oprot->writeSetEnd();
     }
-    xfer += oprot->writeFieldEnd();
-  }
-  if (this->__isset.start_time) {
-    xfer += oprot->writeFieldBegin("start_time", ::apache::thrift::protocol::T_I32, 4);
-    xfer += oprot->writeI32(this->start_time);
-    xfer += oprot->writeFieldEnd();
-  }
-  if (this->__isset.enable) {
-    xfer += oprot->writeFieldBegin("enable", ::apache::thrift::protocol::T_BOOL, 5);
-    xfer += oprot->writeBool(this->enable);
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.opts) {
@@ -10169,63 +10169,63 @@ uint32_t compact_policy_entry::write(::apache::thrift::protocol::TProtocol* opro
   return xfer;
 }
 
-void swap(compact_policy_entry &a, compact_policy_entry &b) {
+void swap(compact_policy &a, compact_policy &b) {
   using ::std::swap;
   swap(a.policy_name, b.policy_name);
+  swap(a.enable, b.enable);
+  swap(a.start_time, b.start_time);
   swap(a.interval_seconds, b.interval_seconds);
   swap(a.app_ids, b.app_ids);
-  swap(a.start_time, b.start_time);
-  swap(a.enable, b.enable);
   swap(a.opts, b.opts);
   swap(a.__isset, b.__isset);
 }
 
-compact_policy_entry::compact_policy_entry(const compact_policy_entry& other449) {
+compact_policy::compact_policy(const compact_policy& other449) {
   policy_name = other449.policy_name;
+  enable = other449.enable;
+  start_time = other449.start_time;
   interval_seconds = other449.interval_seconds;
   app_ids = other449.app_ids;
-  start_time = other449.start_time;
-  enable = other449.enable;
   opts = other449.opts;
   __isset = other449.__isset;
 }
-compact_policy_entry::compact_policy_entry( compact_policy_entry&& other450) {
+compact_policy::compact_policy( compact_policy&& other450) {
   policy_name = std::move(other450.policy_name);
+  enable = std::move(other450.enable);
+  start_time = std::move(other450.start_time);
   interval_seconds = std::move(other450.interval_seconds);
   app_ids = std::move(other450.app_ids);
-  start_time = std::move(other450.start_time);
-  enable = std::move(other450.enable);
   opts = std::move(other450.opts);
   __isset = std::move(other450.__isset);
 }
-compact_policy_entry& compact_policy_entry::operator=(const compact_policy_entry& other451) {
+compact_policy& compact_policy::operator=(const compact_policy& other451) {
   policy_name = other451.policy_name;
+  enable = other451.enable;
+  start_time = other451.start_time;
   interval_seconds = other451.interval_seconds;
   app_ids = other451.app_ids;
-  start_time = other451.start_time;
-  enable = other451.enable;
   opts = other451.opts;
   __isset = other451.__isset;
   return *this;
 }
-compact_policy_entry& compact_policy_entry::operator=(compact_policy_entry&& other452) {
+compact_policy& compact_policy::operator=(compact_policy&& other452) {
   policy_name = std::move(other452.policy_name);
+  enable = std::move(other452.enable);
+  start_time = std::move(other452.start_time);
   interval_seconds = std::move(other452.interval_seconds);
   app_ids = std::move(other452.app_ids);
-  start_time = std::move(other452.start_time);
-  enable = std::move(other452.enable);
   opts = std::move(other452.opts);
   __isset = std::move(other452.__isset);
   return *this;
 }
-void compact_policy_entry::printTo(std::ostream& out) const {
+void compact_policy::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
-  out << "compact_policy_entry(";
+  out << "compact_policy(";
   out << "policy_name=" << to_string(policy_name);
+  out << ", " << "enable="; (__isset.enable ? (out << to_string(enable)) : (out << "<null>"));
+  out << ", " << "start_time="; (__isset.start_time ? (out << to_string(start_time)) : (out << "<null>"));
   out << ", " << "interval_seconds="; (__isset.interval_seconds ? (out << to_string(interval_seconds)) : (out << "<null>"));
   out << ", " << "app_ids="; (__isset.app_ids ? (out << to_string(app_ids)) : (out << "<null>"));
-  out << ", " << "start_time="; (__isset.start_time ? (out << to_string(start_time)) : (out << "<null>"));
-  out << ", " << "enable="; (__isset.enable ? (out << to_string(enable)) : (out << "<null>"));
   out << ", " << "opts="; (__isset.opts ? (out << to_string(opts)) : (out << "<null>"));
   out << ")";
 }
@@ -10235,7 +10235,7 @@ configuration_add_compact_policy_request::~configuration_add_compact_policy_requ
 }
 
 
-void configuration_add_compact_policy_request::__set_policy(const compact_policy_entry& val) {
+void configuration_add_compact_policy_request::__set_policy(const compact_policy& val) {
   this->policy = val;
 }
 
@@ -10745,7 +10745,7 @@ compact_policy_records::~compact_policy_records() throw() {
 }
 
 
-void compact_policy_records::__set_policy(const compact_policy_entry& val) {
+void compact_policy_records::__set_policy(const compact_policy& val) {
   this->policy = val;
 }
 
@@ -11043,7 +11043,7 @@ configuration_modify_compact_policy_request::~configuration_modify_compact_polic
 }
 
 
-void configuration_modify_compact_policy_request::__set_policy(const compact_policy_entry& val) {
+void configuration_modify_compact_policy_request::__set_policy(const compact_policy& val) {
   this->policy = val;
 }
 

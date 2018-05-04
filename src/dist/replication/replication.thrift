@@ -562,19 +562,19 @@ struct configuration_query_restore_response
     3:list<i32>             restore_progress;
 }
 
-struct compact_policy_entry
+struct compact_policy
 {
     1:string                        policy_name;
-    2:optional i32                  interval_seconds;
-    3:optional set<i32>             app_ids;
-    4:optional i32                  start_time;
-    5:optional bool                 enable;
+    2:optional bool                 enable;
+    3:optional i32                  start_time;
+    4:optional i32                  interval_seconds;
+    5:optional set<i32>             app_ids;
     6:optional map<string, string>  opts;
 }
 
 struct configuration_add_compact_policy_request
 {
-    1:compact_policy_entry  policy;
+    1:compact_policy  policy;
 }
 
 struct configuration_add_compact_policy_response
@@ -598,7 +598,7 @@ struct compact_record
 
 struct compact_policy_records
 {
-    1:compact_policy_entry  policy;
+    1:compact_policy        policy;
     2:list<compact_record>  records;
 }
 
@@ -611,7 +611,7 @@ struct configuration_query_compact_policy_response
 
 struct configuration_modify_compact_policy_request
 {
-    1:compact_policy_entry  policy;
+    1:compact_policy  policy;
 }
 
 struct configuration_modify_compact_policy_response

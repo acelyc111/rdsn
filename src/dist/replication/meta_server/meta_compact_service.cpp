@@ -314,14 +314,14 @@ void compact_policy_context::init_current_record()
                    + boost::lexical_cast<std::string>(_cur_record.id);
 }
 
-void compact_policy_context::sync_record_to_remote_storage(const policy_record &record,
+void compact_policy_context::sync_record_to_remote_storage(const compact_record &record,
                                                            task_ptr sync_task,
                                                            bool create_new_node)
 {
     auto callback = [this, record, sync_task, create_new_node](dsn::error_code err) {
         if (dsn::ERR_OK == err ||
             (create_new_node && dsn::ERR_NODE_ALREADY_EXIST == err)) {
-            ddebug_f("{}: synced policy_record({}) to remote storage successfully.",
+            ddebug_f("{}: synced compact_record({}) to remote storage successfully.",
                      _policy.policy_name.c_str(),
                      record.id);
             if (sync_task != nullptr) {
@@ -353,10 +353,10 @@ void compact_policy_context::sync_record_to_remote_storage(const policy_record &
     };
 
     std::string record_path = _compact_service->get_record_path(_policy.policy_name, record.id);
-    dsn::blob record_data = dsn::json::json_forwarder<policy_record>::encode(record);
+    dsn::blob record_data = dsn::json::json_forwarder<compact_record_ext>::encode(record);
     if (create_new_node) {
         if (_history_records.size() > _policy.history_count_to_keep) {
-            const policy_record &record = _history_records.begin()->second;
+            const compact_record &record = _history_records.begin()->second;
             ddebug_f("{}: start to gc compact record({})",
                      _policy.policy_name.c_str(),
                      record.id);
@@ -483,11 +483,11 @@ void compact_policy_context::start()
     }
 }
 
-void compact_policy_context::add_record(const policy_record &record)
+void compact_policy_context::add_record(const compact_record &record)
 {
     zauto_lock l(_lock);
     if (record.end_time <= 0) {
-        ddebug_f("{}: encounter an unfinished policy_record({}), start_time({}), continue it later",
+        ddebug_f("{}: encounter an unfinished compact_record({}), start_time({}), continue it later",
                  _policy.policy_name.c_str(),
                  record.id,
                  record.start_time);
@@ -526,16 +526,16 @@ void compact_policy_context::add_record(const policy_record &record)
     }
 }
 
-std::list<policy_record> compact_policy_context::get_compact_records()
+std::vector<compact_record> compact_policy_context::get_compact_records()
 {
     zauto_lock l(_lock);
 
-    std::list<policy_record> records;
+    std::vector<compact_record> records;
+    if (_cur_record.start_time > 0) {
+        records.emplace_back(_cur_record);
+    }
     for (const auto &record : _history_records) {
         records.emplace_back(record.second);
-    }
-    if (_cur_record.start_time > 0) {
-        records.emplace_front(_cur_record);
     }
 
     return records;
@@ -568,9 +568,9 @@ compact_policy compact_policy_context::get_policy()
     return _policy;
 }
 
-void compact_policy_context::remove_record_on_remote_storage(const policy_record &record)
+void compact_policy_context::remove_record_on_remote_storage(const compact_record &record)
 {
-    ddebug_f("{}: start to gc policy_record: id({}), start_time({}), end_time({})",
+    ddebug_f("{}: start to gc compact_record: id({}), start_time({}), end_time({})",
          _policy.policy_name.c_str(),
          record.id,
          ::dsn::utils::time_to_date(record.start_time).c_str(),
@@ -579,14 +579,14 @@ void compact_policy_context::remove_record_on_remote_storage(const policy_record
     auto callback = [this, record](dsn::error_code err) {
         if (err == dsn::ERR_OK ||
             err == dsn::ERR_OBJECT_NOT_FOUND) {
-            ddebug_f("{}: remove policy_record on remote storage successfully, record_id({})",
+            ddebug_f("{}: remove compact_record on remote storage successfully, record_id({})",
                      _policy.policy_name.c_str(),
                      record.id);
 
             zauto_lock l(_lock);
             _history_records.erase(record.id);
         } else if (err == dsn::ERR_TIMEOUT) {
-            derror_f("{}: remove policy_record on remote storage got timeout, retry it later",
+            derror_f("{}: remove compact_record on remote storage got timeout, retry it later",
                      _policy.policy_name.c_str());
             tasking::enqueue(
                 LPC_DEFAULT_CALLBACK,
@@ -713,7 +713,7 @@ error_code compact_service::sync_policies_from_remote_storage()
                     dinfo_f("sync a policy record string({}) from remote storage",
                             value.data());
                     ::dsn::json::string_tokenizer tokenizer(value);
-                    policy_record tcompact_record;
+                    compact_record_ext tcompact_record;
                     tcompact_record.decode_json_state(tokenizer);
 
                     std::shared_ptr<compact_policy_context> policy_ctx = nullptr;
@@ -726,7 +726,7 @@ error_code compact_service::sync_policies_from_remote_storage()
                     policy_ctx->add_record(tcompact_record);
                 } else {
                     err = ec;
-                    ddebug_f("init policy_record from remote storage failed({})",
+                    ddebug_f("init compact_record_ext from remote storage failed({})",
                              ec.to_string());
                 }
             };
@@ -777,8 +777,9 @@ error_code compact_service::sync_policies_from_remote_storage()
                                                                   const dsn::blob &value) {
                     if (ec == dsn::ERR_OK) {
                         ::dsn::json::string_tokenizer tokenizer(value);
-                        compact_policy tpolicy;
+                        compact_policy_ext tpolicy;
                         tpolicy.decode_json_state(tokenizer);
+                        tpolicy.enable_isset();
                         std::shared_ptr<compact_policy_context> policy_ctx = _factory(this);
                         policy_ctx->set_policy(std::move(tpolicy));
 
@@ -822,7 +823,7 @@ void compact_service::add_policy(add_compact_policy_rpc &add_rpc)
 {
     auto &request = add_rpc.request();
 
-    const compact_policy_entry &policy = request.policy;
+    auto &policy = request.policy;
     std::set<int32_t> app_ids;
     for (const auto &app_id : policy.app_ids) {
         if (_state->is_app_available(app_id)) {
@@ -849,13 +850,9 @@ void compact_service::add_policy(add_compact_policy_rpc &add_rpc)
 
     if (valid_policy) {
         ddebug_f("add compact policy({})", policy.policy_name.c_str());
-        compact_policy tmp;
-        tmp.policy_name = policy.policy_name;
-        tmp.start_time = policy.start_time;
-        tmp.interval_seconds = policy.interval_seconds;
-        tmp.app_ids = app_ids;
-        tmp.opts = policy.opts;
-        policy_ctx->set_policy(tmp);
+        compact_policy tmp(policy);
+        tmp.__set_app_ids(app_ids);
+        policy_ctx->set_policy(policy);
 
         do_add_policy(add_rpc, policy_ctx);
     } else {
@@ -867,7 +864,7 @@ void compact_service::do_add_policy(add_compact_policy_rpc &add_rpc,
                                     std::shared_ptr<compact_policy_context> policy_ctx)
 {
     const compact_policy &policy = policy_ctx->get_policy();
-    dsn::blob value = json::json_forwarder<compact_policy>::encode(policy);
+    dsn::blob value = json::json_forwarder<compact_policy_ext>::encode(policy);
     _meta_svc->get_remote_storage()->create_node(
         get_policy_path(policy.policy_name),
         LPC_DEFAULT_CALLBACK,
@@ -915,7 +912,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
     auto &response = modify_rpc.response();
     response.err = dsn::ERR_OK;
 
-    const compact_policy_entry &req_policy = request.policy;
+    const compact_policy &req_policy = request.policy;
     std::shared_ptr<compact_policy_context> policy_ctx = nullptr;
     {
         zauto_lock (_lock);
@@ -957,7 +954,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
                   << ::dsn::utils::sequence_container_to_string(app_ids, ',') << ")";
             ddebug_f("{}", sslog.str().c_str());
 
-            cur_policy.app_ids = app_ids;
+            cur_policy.__set_app_ids(app_ids);
             have_modify_policy = true;
         }
     }
@@ -971,7 +968,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
                 response.hint_message = std::string("policy has been enabled already");
             } else {
                 ddebug_f("policy({}) is marked to enabled", cur_policy.policy_name.c_str());
-                cur_policy.enable = true;
+                cur_policy.__set_enable(true);
                 have_modify_policy = true;
             }
         } else {
@@ -981,7 +978,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
                 response.err = dsn::ERR_BUSY;
             } else if (cur_policy.enable) {
                 ddebug_f("policy({}) is marked to disabled", cur_policy.policy_name.c_str());
-                cur_policy.enable = false;
+                cur_policy.__set_enable(false);
                 have_modify_policy = true;
             } else {
                 ddebug_f("policy({}) has been disabled already", cur_policy.policy_name.c_str());
@@ -998,7 +995,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
                      cur_policy.policy_name.c_str(),
                      cur_policy.interval_seconds,
                      req_policy.interval_seconds);
-            cur_policy.interval_seconds = req_policy.interval_seconds;
+            cur_policy.__set_interval_seconds(req_policy.interval_seconds);
             have_modify_policy = true;
         } else {
             dwarn_f("ignore policy({}) invalid interval_seconds({})",
@@ -1013,7 +1010,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
                  cur_policy.policy_name.c_str(),
                  ::dsn::utils::sec_of_day_to_hm(cur_policy.start_time).c_str(),
                  ::dsn::utils::sec_of_day_to_hm(req_policy.start_time).c_str());
-        cur_policy.start_time = req_policy.start_time;
+        cur_policy.__set_start_time(req_policy.start_time);
         have_modify_policy = true;
     }
 
@@ -1022,7 +1019,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
                  cur_policy.policy_name.c_str(),
                  ::dsn::utils::kv_map_to_string(cur_policy.opts, ',', '=').c_str(),
                  ::dsn::utils::kv_map_to_string(req_policy.opts, ',', '=').c_str());
-        cur_policy.opts = req_policy.opts;
+        cur_policy.__set_opts(req_policy.opts);
         have_modify_policy = true;
     }
 
@@ -1036,7 +1033,7 @@ void compact_service::modify_policy_on_remote_storage(modify_compact_policy_rpc 
                                                       std::shared_ptr<compact_policy_context> &policy_ctx)
 {
     std::string policy_path = get_policy_path(policy.policy_name);
-    dsn::blob value = json::json_forwarder<compact_policy>::encode(policy);
+    dsn::blob value = json::json_forwarder<compact_policy_ext>::encode(policy);
     _meta_svc->get_remote_storage()->set_data(
         policy_path,
         value,
@@ -1103,24 +1100,9 @@ void compact_service::query_policy(query_compact_policy_rpc &query_rpc)
             continue;
         }
 
-        const compact_policy &cur_policy = policy_ctx->get_policy();
         compact_policy_records t_policy;
-        t_policy.policy.__set_policy_name(cur_policy.policy_name);
-        t_policy.policy.__set_interval_seconds(cur_policy.interval_seconds);
-        t_policy.policy.__set_app_ids(cur_policy.app_ids);
-        t_policy.policy.__set_start_time(cur_policy.start_time);
-        t_policy.policy.__set_enable(cur_policy.enable);
-        t_policy.policy.__set_opts(cur_policy.opts);
-        const std::list<policy_record> &records =
-            policy_ctx->get_compact_records();
-        for (const auto &record : records) {
-            compact_record t_record;
-            t_record.id = record.id;
-            t_record.start_time = record.start_time;
-            t_record.end_time = record.end_time;
-            t_record.app_ids = record.app_ids;
-            t_policy.records.emplace_back(t_record);
-        }
+        t_policy.policy = policy_ctx->get_policy();
+        t_policy.records = policy_ctx->get_compact_records();
         response.policy_records.emplace_back(std::move(t_policy));
     }
 

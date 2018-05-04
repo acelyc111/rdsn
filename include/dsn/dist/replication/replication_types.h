@@ -260,7 +260,7 @@ class configuration_query_restore_request;
 
 class configuration_query_restore_response;
 
-class compact_policy_entry;
+class compact_policy;
 
 class configuration_add_compact_policy_request;
 
@@ -4277,51 +4277,59 @@ inline std::ostream& operator<<(std::ostream& out, const configuration_query_res
   return out;
 }
 
-typedef struct _compact_policy_entry__isset {
-  _compact_policy_entry__isset() : policy_name(false), interval_seconds(false), app_ids(false), start_time(false), enable(false), opts(false) {}
+typedef struct _compact_policy__isset {
+  _compact_policy__isset() : policy_name(false), enable(false), start_time(false), interval_seconds(false), app_ids(false), opts(false) {}
   bool policy_name :1;
+  bool enable :1;
+  bool start_time :1;
   bool interval_seconds :1;
   bool app_ids :1;
-  bool start_time :1;
-  bool enable :1;
   bool opts :1;
-} _compact_policy_entry__isset;
+} _compact_policy__isset;
 
-class compact_policy_entry {
+class compact_policy {
  public:
 
-  compact_policy_entry(const compact_policy_entry&);
-  compact_policy_entry(compact_policy_entry&&);
-  compact_policy_entry& operator=(const compact_policy_entry&);
-  compact_policy_entry& operator=(compact_policy_entry&&);
-  compact_policy_entry() : policy_name(), interval_seconds(0), start_time(0), enable(0) {
+  compact_policy(const compact_policy&);
+  compact_policy(compact_policy&&);
+  compact_policy& operator=(const compact_policy&);
+  compact_policy& operator=(compact_policy&&);
+  compact_policy() : policy_name(), enable(0), start_time(0), interval_seconds(0) {
   }
 
-  virtual ~compact_policy_entry() throw();
+  virtual ~compact_policy() throw();
   std::string policy_name;
+  bool enable;
+  int32_t start_time;
   int32_t interval_seconds;
   std::set<int32_t>  app_ids;
-  int32_t start_time;
-  bool enable;
   std::map<std::string, std::string>  opts;
 
-  _compact_policy_entry__isset __isset;
+  _compact_policy__isset __isset;
 
   void __set_policy_name(const std::string& val);
+
+  void __set_enable(const bool val);
+
+  void __set_start_time(const int32_t val);
 
   void __set_interval_seconds(const int32_t val);
 
   void __set_app_ids(const std::set<int32_t> & val);
 
-  void __set_start_time(const int32_t val);
-
-  void __set_enable(const bool val);
-
   void __set_opts(const std::map<std::string, std::string> & val);
 
-  bool operator == (const compact_policy_entry & rhs) const
+  bool operator == (const compact_policy & rhs) const
   {
     if (!(policy_name == rhs.policy_name))
+      return false;
+    if (__isset.enable != rhs.__isset.enable)
+      return false;
+    else if (__isset.enable && !(enable == rhs.enable))
+      return false;
+    if (__isset.start_time != rhs.__isset.start_time)
+      return false;
+    else if (__isset.start_time && !(start_time == rhs.start_time))
       return false;
     if (__isset.interval_seconds != rhs.__isset.interval_seconds)
       return false;
@@ -4331,25 +4339,17 @@ class compact_policy_entry {
       return false;
     else if (__isset.app_ids && !(app_ids == rhs.app_ids))
       return false;
-    if (__isset.start_time != rhs.__isset.start_time)
-      return false;
-    else if (__isset.start_time && !(start_time == rhs.start_time))
-      return false;
-    if (__isset.enable != rhs.__isset.enable)
-      return false;
-    else if (__isset.enable && !(enable == rhs.enable))
-      return false;
     if (__isset.opts != rhs.__isset.opts)
       return false;
     else if (__isset.opts && !(opts == rhs.opts))
       return false;
     return true;
   }
-  bool operator != (const compact_policy_entry &rhs) const {
+  bool operator != (const compact_policy &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const compact_policy_entry & ) const;
+  bool operator < (const compact_policy & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -4357,9 +4357,9 @@ class compact_policy_entry {
   virtual void printTo(std::ostream& out) const;
 };
 
-void swap(compact_policy_entry &a, compact_policy_entry &b);
+void swap(compact_policy &a, compact_policy &b);
 
-inline std::ostream& operator<<(std::ostream& out, const compact_policy_entry& obj)
+inline std::ostream& operator<<(std::ostream& out, const compact_policy& obj)
 {
   obj.printTo(out);
   return out;
@@ -4381,11 +4381,11 @@ class configuration_add_compact_policy_request {
   }
 
   virtual ~configuration_add_compact_policy_request() throw();
-  compact_policy_entry policy;
+  compact_policy policy;
 
   _configuration_add_compact_policy_request__isset __isset;
 
-  void __set_policy(const compact_policy_entry& val);
+  void __set_policy(const compact_policy& val);
 
   bool operator == (const configuration_add_compact_policy_request & rhs) const
   {
@@ -4598,12 +4598,12 @@ class compact_policy_records {
   }
 
   virtual ~compact_policy_records() throw();
-  compact_policy_entry policy;
+  compact_policy policy;
   std::vector<compact_record>  records;
 
   _compact_policy_records__isset __isset;
 
-  void __set_policy(const compact_policy_entry& val);
+  void __set_policy(const compact_policy& val);
 
   void __set_records(const std::vector<compact_record> & val);
 
@@ -4713,11 +4713,11 @@ class configuration_modify_compact_policy_request {
   }
 
   virtual ~configuration_modify_compact_policy_request() throw();
-  compact_policy_entry policy;
+  compact_policy policy;
 
   _configuration_modify_compact_policy_request__isset __isset;
 
-  void __set_policy(const compact_policy_entry& val);
+  void __set_policy(const compact_policy& val);
 
   bool operator == (const configuration_modify_compact_policy_request & rhs) const
   {
