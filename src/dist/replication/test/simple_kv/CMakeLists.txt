@@ -28,7 +28,8 @@ set(MY_PROJ_LIBS gtest
                  PocoNetSSL
                  PocoJSON
                  crypto
-                 fmt)
+                 fmt
+                 )
 
 set(MY_PROJ_LIB_PATH 
         ${GTEST_LIB_DIR}

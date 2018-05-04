@@ -32,7 +32,8 @@ set(MY_PROJ_LIBS
     PocoJSON
     crypto
     fmt
-    ${MY_PROJ_LIBS})
+    ${MY_PROJ_LIBS}
+    )
 
 set(MY_BOOST_PACKAGES system filesystem)
 
