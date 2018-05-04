@@ -573,8 +573,8 @@ void compact_policy_context::remove_record_on_remote_storage(const compact_recor
     ddebug_f("{}: start to gc compact_record: id({}), start_time({}), end_time({})",
          _policy.policy_name.c_str(),
          record.id,
-         ::dsn::utils::time_to_date(record.start_time).c_str(),
-         ::dsn::utils::time_to_date(record.end_time).c_str());
+         ::dsn::utils::time_s_to_date_time(record.start_time).c_str(),
+         ::dsn::utils::time_s_to_date_time(record.end_time).c_str());
 
     auto callback = [this, record](dsn::error_code err) {
         if (err == dsn::ERR_OK ||
@@ -951,7 +951,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
         if (!app_ids.empty()) {
             std::stringstream sslog;
             sslog << "set policy(" << cur_policy.policy_name << ")'s app_ids as ("
-                  << ::dsn::utils::sequence_container_to_string(app_ids, ',') << ")";
+                  << ::dsn::utils::sequence_container_to_string(app_ids, ",") << ")";
             ddebug_f("{}", sslog.str().c_str());
 
             cur_policy.__set_app_ids(app_ids);

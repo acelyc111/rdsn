@@ -51,9 +51,9 @@ std::shared_ptr<T> make_shared_array(size_t size)
 
 void time_ms_to_string(uint64_t ts_ms, char *str); // yyyy-MM-dd hh:mm:ss.SSS
 
-std::string time_to_date(uint64_t ts_s); // yyyy-MM-dd hh:mm:ss
-
 void time_ms_to_date(uint64_t ts_ms, char *str, int len); // yyyy-MM-dd
+
+std::string time_s_to_date_time(uint64_t ts_s); // yyyy-MM-dd hh:mm:ss
 
 void time_ms_to_date_time(uint64_t ts_ms, char *str, int len); // yyyy-MM-dd hh:mm:ss
 
@@ -64,8 +64,8 @@ void time_ms_to_date_time(uint64_t ts_ms,
 
 int sec_of_day();       // how many seconds past in a day
 
-int32_t hm_of_day_to_sec(const std::string &hm);    // hh:mm (range in [00:00, 23:59]) to seconds
-std::string sec_of_day_to_hm(int32_t sec);          // seconds to hh:mm, which will range in [00:00, 23:59]
+int hm_of_day_to_sec(const std::string &hm);    // hh:mm (range in [00:00, 23:59]) to seconds
+std::string sec_of_day_to_hm(int sec);          // seconds to hh:mm, which will range in [00:00, 23:59]
 
 uint64_t get_current_physical_time_ns();
 

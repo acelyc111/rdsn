@@ -217,10 +217,13 @@ public:
                                           int request_length);
 
     virtual std::chrono::milliseconds last_compact_finish_time() = 0;
+
     // do full compaction manually.
     virtual void manual_compact(const std::map<std::string, std::string> &opts) = 0;
+
     // update app envs.
     virtual void update_app_envs(const std::map<std::string, std::string> &envs) = 0;
+
     // query app envs.
     virtual void query_app_envs(/*out*/ std::map<std::string, std::string> &envs) = 0;
 

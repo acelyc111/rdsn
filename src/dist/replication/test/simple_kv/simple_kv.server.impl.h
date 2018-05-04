@@ -81,9 +81,12 @@ public:
     virtual ::dsn::error_code storage_apply_checkpoint(chkpt_apply_mode mode,
                                                        const learn_state &state) override;
 
-    virtual std::chrono::milliseconds last_compact_finish_time() { return std::chrono::milliseconds(0); }
+    virtual std::chrono::milliseconds last_compact_finish_time() { return 0_ms; }
+
     virtual void manual_compact(const std::map<std::string, std::string> &opts) {}
+
     virtual void update_app_envs(const std::map<std::string, std::string> &envs) {}
+
     virtual void query_app_envs(/*out*/ std::map<std::string, std::string> &envs) {}
 
 private:

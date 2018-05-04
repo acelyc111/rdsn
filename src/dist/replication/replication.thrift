@@ -633,7 +633,7 @@ struct compact_response
     1:dsn.error_code    err;
     2:i64               id;
     3:dsn.gpid          pid;
-    4:bool              finish;
+    4:bool              is_finished;
     5:string            policy_name;
 }
 

@@ -99,7 +99,7 @@ void time_ms_to_string(uint64_t ts_ms, char *str)
             static_cast<uint32_t>(ts_ms % 1000));
 }
 
-std::string time_to_date(uint64_t ts_s) // yyyy-MM-dd hh:mm:ss
+std::string time_s_to_date_time(uint64_t ts_s)  // yyyy-MM-dd hh:mm:ss
 {
     auto t = (time_t)ts_s;
     struct tm tmp;
@@ -151,7 +151,7 @@ int sec_of_day()
            tms.tm_sec;
 }
 
-int32_t hm_of_day_to_sec(const std::string &hm)
+int hm_of_day_to_sec(const std::string &hm)
 {
     int32_t sec = -1;
     int hour = 0, min = 0;
@@ -163,7 +163,7 @@ int32_t hm_of_day_to_sec(const std::string &hm)
     return sec;
 }
 
-std::string sec_of_day_to_hm(int32_t sec)
+std::string sec_of_day_to_hm(int sec)
 {
     sec %= 86400;
     int hour = sec / 3600;

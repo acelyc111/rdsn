@@ -209,14 +209,14 @@ TEST(core, ref_ptr)
     EXPECT_TRUE(count == 0);
 }
 
-TEST(utils, time_to_date) {
+TEST(utils, time_s_to_date_time) {
     time_t t = time(NULL);
     struct tm lt = {0};
     localtime_r(&t, &lt);
 
-    // std::string time_to_date(uint64_t ts_s); // yyyy-MM-dd hh:mm:ss
-    ASSERT_EQ(time_to_date(0 - lt.tm_gmtoff), "1970-01-01 00:00:00");
-    ASSERT_EQ(time_to_date(1524833734 - lt.tm_gmtoff), "2018-04-27 12:55:34");
+    // std::string time_s_to_date_time(uint64_t ts_s); // yyyy-MM-dd hh:mm:ss
+    ASSERT_EQ(time_s_to_date_time(0 - lt.tm_gmtoff), "1970-01-01 00:00:00");
+    ASSERT_EQ(time_s_to_date_time(1524833734 - lt.tm_gmtoff), "2018-04-27 12:55:34");
 }
 
 TEST(utils, hm_of_day_to_sec) {

@@ -1222,9 +1222,9 @@ static void print_compact_record(const compact_record &record)
     std::cout << "    " << std::setw(width) << std::left << "id"
               << " : " << record.id << std::endl
               << "    " << std::setw(width) << std::left << "start_time"
-              << " : " << ::dsn::utils::time_to_date(record.start_time) << std::endl
+              << " : " << ::dsn::utils::time_s_to_date_time(record.start_time) << std::endl
               << "    " << std::setw(width) << std::left << "end_time"
-              << " : " << ::dsn::utils::time_to_date(record.end_time) << std::endl
+              << " : " << ::dsn::utils::time_s_to_date_time(record.end_time) << std::endl
               << "    " << std::setw(width) << std::left << "app_ids"
               << " : " << print_set(record.app_ids) << std::endl;
 }

@@ -39,8 +39,8 @@ std::string kv_map_to_string(const std::map<std::string, std::string> &kv_map,
                              char kv_splitter);
 template<typename T>
 std::string sequence_container_to_string(const T &o,
-                                         char item_splitter) {
-    std::stringstream ss;
+                                         const std::string &item_splitter) {
+    std::ostringstream ss;
     int i = 0;
     for (auto &itor : o) {
         if (i > 0) {
