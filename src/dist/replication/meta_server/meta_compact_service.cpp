@@ -34,40 +34,86 @@
 namespace dsn {
 namespace replication {
 
-void compact_policy_context::start_compact_app(int32_t app_id)
-{
+void comapct_policy_executor::init(const compact_policy &policy,
+                                   int64_t start_time) {
+    _policy = policy;
+    _cur_record.id = _cur_record.start_time = start_time;
+    _cur_record.app_ids = _policy.app_ids;
+    _record_sig = _policy.policy_name
+                  + "@"
+                  + boost::lexical_cast<std::string>(_cur_record.id);
+    init_progress();
+}
+
+void comapct_policy_executor::execute() {
+    for (const int32_t &app_id : _cur_record.app_ids) {
+        if (_progress.app_unfinish_partition_count.count(app_id) != 0) {
+            start_compact_app(app_id);
+        } else {
+            finish_compact_app(app_id);
+        }
+    }
+}
+
+bool comapct_policy_executor::on_compacting() {
+    return _cur_record.start_time > 0 &&
+           _cur_record.end_time <= 0;
+}
+
+compact_record comapct_policy_executor::get_current_record() {
+    return _cur_record;
+}
+
+void comapct_policy_executor::init_progress() {
+    zauto_lock l(_lock);
+
+    _progress.reset();
+    _progress.unfinish_apps_count = _cur_record.app_ids.size();    // all apps
+    for (const int32_t &app_id : _cur_record.app_ids) {
+        std::vector<partition_configuration> partitions;
+        if (_compact_service->get_state()->get_partition_config(app_id, partitions)) {
+            // available apps
+            _progress.skipped_app[app_id] = false;
+            _progress.app_unfinish_partition_count[app_id] = partitions.size();
+            for (const auto &pc : partitions) {
+                _progress.gpid_finish[pc.pid] = false;
+            }
+        } else {
+            // unavailable apps
+            _progress.skipped_app[app_id] = true;
+            dwarn_compact_record("app({}) is not available", app_id);
+        }
+    }
+}
+
+void comapct_policy_executor::start_compact_app(int32_t app_id) {
     if (skip_compact_app(app_id)) {
-        ddebug_f("skip to compact app({})", app_id);
+        ddebug_compact_record("skip to compact app({})", app_id);
         return;
     }
 
     auto iter = _progress.app_unfinish_partition_count.find(app_id);
-    dassert_f(iter != _progress.app_unfinish_partition_count.end(),
-              "{}: can't find app({}) in unfinished apps",
-              _record_sig.c_str(),
-              app_id);
+    dassert_compact_record(iter != _progress.app_unfinish_partition_count.end(),
+                           "can't find app({}) in policy",
+                           app_id);
 
-    ddebug_f("start to compact app({}), partition_count={}",
-             app_id, iter->second);
+    ddebug_compact_record("start to compact app({}), partition_count={}",
+                          app_id,
+                          iter->second);
     for (int32_t i = 0; i < iter->second; ++i) {
         start_compact_partition(gpid(app_id, i));
     }
 }
 
-bool compact_policy_context::skip_compact_app(int32_t app_id)
-{
-    bool app_available = _compact_service->get_state()->is_app_available(app_id);
-
-    // if app is dropped when app start to compact, we just skip compact this app this time
-    if (!app_available) {
-        dwarn_f("{}: can't compact app({}), perhaps it has been removed, treat it as compact finished",
-                _record_sig.c_str(),
-                app_id);
+bool comapct_policy_executor::skip_compact_app(int32_t app_id) {
+    if (!_compact_service->get_state()->is_app_available(app_id)) {
+        dwarn_compact_record("app({}) is not available, just ignore it",
+                             app_id);
         auto iter = _progress.app_unfinish_partition_count.find(app_id);
-        dassert_f(iter != _progress.app_unfinish_partition_count.end(),
-                  "{}: can't find app({}) in app_unfinish_partition_count",
-                  _record_sig.c_str(),
-                  app_id);
+        dassert_compact_record(iter != _progress.app_unfinish_partition_count.end(),
+                               "can't find app({}) in policy",
+                               app_id);
+
         _progress.skipped_app[app_id] = true;
         for (int32_t pidx = 0; pidx < iter->second; ++pidx) {
             finish_compact_partition(gpid(app_id, pidx),
@@ -80,16 +126,15 @@ bool compact_policy_context::skip_compact_app(int32_t app_id)
     return false;
 }
 
-void compact_policy_context::start_compact_partition(gpid pid)
+void comapct_policy_executor::start_compact_partition(gpid pid)
 {
-    ddebug_f("start to compact gpid({})", pid);
-    dsn::rpc_address primary;
+    ddebug_compact_record("start to compact gpid({})", pid);
 
-    // check the partition status
+    dsn::rpc_address primary;
     if (!_compact_service->get_state()->get_primary(pid, primary)) {
-        dwarn_f("{}: app({}) is not available, just ignore it",
-                _record_sig.c_str(),
-                pid.get_app_id());
+        dwarn_compact_record("app({}) is not available, just ignore it",
+                             pid.get_app_id());
+
         _progress.skipped_app[pid.get_app_id()] = true;
         finish_compact_partition(pid,
                                  true,
@@ -98,26 +143,23 @@ void compact_policy_context::start_compact_partition(gpid pid)
     }
 
     if (primary.is_invalid()) {
-        dwarn_f("{}: gpid({})'s replica is invalid right now, retry this partition later",
-                _record_sig.c_str(),
-                pid);
+        dwarn_compact_record("gpid({})'s replica is invalid now, retry this partition later",
+                             pid);
         tasking::enqueue(
             LPC_DEFAULT_CALLBACK,
             nullptr,
             [this, pid]() {
-                zauto_lock l(_lock);
                 start_compact_partition(pid);
             },
             0,
-            _compact_service->get_option().reconfiguration_retry_delay);
+            _compact_service->get_option().update_configuration_delay);
     } else {
         start_compact_primary(pid, primary);
     }
 }
 
-void compact_policy_context::start_compact_primary(gpid pid,
-                                                   const dsn::rpc_address &primary)
-{
+void comapct_policy_executor::start_compact_primary(gpid pid,
+                                                    const dsn::rpc_address &primary) {
     compact_request req;
     req.id = _cur_record.id;
     req.pid = pid;
@@ -127,70 +169,55 @@ void compact_policy_context::start_compact_primary(gpid pid,
                                                    0,
                                                    pid.thread_hash());
     dsn::marshall(request, req);
-    dsn::task_ptr rpc_task =
-        rpc::create_rpc_response_task(request,
-                                      nullptr,
-                                      [this, pid, primary](error_code err,
-                                                           compact_response &&response) {
-                on_compact_reply(err, std::move(response), pid, primary);
-            });
-    ddebug_f("{}: send compact_request to {}@{}",
-             _record_sig.c_str(),
-             pid,
-             primary.to_string());
-    _compact_service->get_meta_service()->send_request(request, primary, rpc_task);
+    rpc::call(primary,
+              request,
+              nullptr,
+              [this, pid, primary](error_code err,
+                     compact_response &&response) {
+                  on_compact_reply(err, std::move(response), pid, primary);
+              });
+    ddebug_compact_record("send compact_request to {}@{}",
+                          pid,
+                          primary.to_string());
 }
 
-void compact_policy_context::on_compact_reply(error_code err,
+void comapct_policy_executor::on_compact_reply(error_code err,
                                               compact_response &&response,
                                               gpid pid,
-                                              const dsn::rpc_address &primary)
-{
-    dwarn_f("on_compact_reply, pid({})", pid);
+                                              const dsn::rpc_address &primary) {
+    dwarn_compact_record("on_compact_reply, pid({})", pid);
     if (err == dsn::ERR_OK &&
         response.err == dsn::ERR_OK) {
-        zauto_lock l(_lock);
-
-        dassert_f(response.policy_name == _policy.policy_name,
-                  "policy name({} vs {}) doesn't match, {}@{}",
-                  _policy.policy_name.c_str(),
-                  response.policy_name.c_str(),
-                  pid,
-                  primary.to_string());
-        dassert_f(response.pid == pid,
-                  "{}: compact pid({} vs {}) doesn't match @{}",
-                  _policy.policy_name.c_str(),
-                  response.pid,
-                  pid,
-                  primary.to_string());
-        dassert_f(response.id <= _cur_record.id,
-                  "{}: {}@{} has bigger id({} vs {})",
-                  _record_sig.c_str(),
-                  pid,
-                  primary.to_string(),
-                  response.id,
-                  _cur_record.id);
+        dassert_compact_record(response.policy_name == _policy.policy_name,
+                               "policy name({}) doesn't match, {}@{}",
+                               response.policy_name.c_str(),
+                               pid,
+                               primary.to_string());
+        dassert_compact_record(response.pid == pid,
+                               "compact pid({} vs {}) doesn't match @{}",
+                               response.pid,
+                               pid,
+                               primary.to_string());
+        dassert_compact_record(response.id <= _cur_record.id,
+                               "{}@{} has bigger id({})",
+                               pid,
+                               primary.to_string(),
+                               response.id);
 
         if (response.id < _cur_record.id) {
-            dwarn_f("{}: {}@{} got a lower id({} vs {}), ignore it",
-                    _record_sig.c_str(),
-                    pid,
-                    primary.to_string(),
-                    response.id,
-                    _cur_record.id);
-        } else {
-            // NOTICE: if a partition is finished, we don't try to resend the command again
-            if (finish_compact_partition(pid, response.finish, primary)) {
-                return;
-            }
+            dwarn_compact_record("{}@{} got a lower id({}), ignore it",
+                                 pid,
+                                 primary.to_string(),
+                                 response.id);
+        } else if (finish_compact_partition(pid, response.finish, primary)) {
+            return;
         }
     } else {
-        dwarn_f("{}: compact got error {}@{}, rpc({}), logic({})",
-                _record_sig.c_str(),
-                pid,
-                primary.to_string(),
-                err.to_string(),
-                response.err.to_string());
+        dwarn_compact_record("compact got error {}@{}, rpc({}), logic({})",
+                             pid,
+                             primary.to_string(),
+                             err.to_string(),
+                             response.err.to_string());
     }
 
     // start another turn of compact no matter we encounter error or not finished
@@ -204,38 +231,34 @@ void compact_policy_context::on_compact_reply(error_code err,
         _compact_service->get_option().request_compact_period);
 }
 
-bool compact_policy_context::finish_compact_partition(gpid pid,
+bool comapct_policy_executor::finish_compact_partition(gpid pid,
                                                       bool finish,
-                                                      const dsn::rpc_address &source)
-{
+                                                      const dsn::rpc_address &source) {
+    zauto_lock l(_lock);
     if (_progress.gpid_finish[pid]) {
-        dwarn_f("{}: pid({}) has finished, ignore the response from {}",
-                _record_sig.c_str(),
-                pid,
-                source.to_string());
+        dwarn_compact_record("pid({}) has finished, ignore the response from {}",
+                             pid,
+                             source.to_string());
         return true;
     }
 
     if (!finish) {
-        dwarn_f("{}: compaction on {}@{} is not finish",
-                _record_sig.c_str(),
-                pid,
-                source.to_string());
+        ddebug_compact_record("compaction on {}@{} is not finish",
+                             pid,
+                             source.to_string());
         return false;
     }
 
     _progress.gpid_finish[pid] = true;
-    dwarn_f("{}: compaction on {}@{} has finished",
-            _record_sig.c_str(),
-            pid,
-            source.to_string());
+    ddebug_compact_record("compaction on {}@{} has finished",
+                         pid,
+                         source.to_string());
 
     auto app_unfinish_partition_count = --_progress.app_unfinish_partition_count[pid.get_app_id()];
-    ddebug_f("{}: finish compact for gpid({}), {} partitions left on app_id({})",
-             _record_sig.c_str(),
-             pid,
-             app_unfinish_partition_count,
-             pid.get_app_id());
+    ddebug_compact_record("finish compact for gpid({}), {} partitions left on app_id({})",
+                          pid,
+                          app_unfinish_partition_count,
+                          pid.get_app_id());
 
     if (app_unfinish_partition_count == 0) {
         finish_compact_app(pid.get_app_id());
@@ -244,74 +267,38 @@ bool compact_policy_context::finish_compact_partition(gpid pid,
     return true;
 }
 
-void compact_policy_context::finish_compact_app(int32_t app_id)
+void comapct_policy_executor::finish_compact_app(int32_t app_id)
 {
-    ddebug_f("{}: finish compact for app({})", _record_sig.c_str(), app_id);
+    ddebug_compact_record("finish compact for app({})", app_id);
 
     if (--_progress.unfinish_apps_count == 0) {
         finish_compact_policy();
     }
 }
 
-void compact_policy_context::finish_compact_policy()
+void comapct_policy_executor::finish_compact_policy()
 {
-    ddebug_f("{}: finish compact for policy", _record_sig.c_str());
+    ddebug_compact_record("finish compact for policy");
     _cur_record.end_time = dsn_now_s();
 
+    _policy_ctx->finish_one_execution(_cur_record);
+}
+
+void compact_policy_context::finish_one_execution(const compact_record &record) {
     task_ptr compact_task =
         tasking::create_task(LPC_DEFAULT_CALLBACK,
                              nullptr,
-                             [this]() {
+                             [this, record = std::move(record)]() {
             // store compact record into memory
-            zauto_lock l(_lock);
-            auto iter = _history_records.emplace(_cur_record.id, _cur_record);
-            dassert_f(iter.second,
-                      "add compact record({}.{}) into history list",
-                      _policy.policy_name.c_str(),
-                      _cur_record.id);
-
-            _cur_record.start_time = 0;
-            _cur_record.end_time = 0;
+            {
+                zauto_lock l(_lock);
+                auto iter = _history_records.emplace(record.id, record);
+                dassert_compact_policy(iter.second,
+                                       "add compact record into history list");
+            }
             issue_new_compact();
         });
-    sync_record_to_remote_storage(_cur_record, compact_task, false);
-}
-
-void compact_policy_context::init_progress()
-{
-    _progress.reset();
-
-    // NOTICE: the unfinish_apps_count is initialized with the app-set's size
-    // even if some apps are not available.
-    _progress.unfinish_apps_count = _cur_record.app_ids.size();
-    for (const int32_t &app_id : _cur_record.app_ids) {
-        std::vector<partition_configuration> partitions;
-        if (_compact_service->get_state()->get_partition_config(app_id, partitions)) {
-            _progress.skipped_app[app_id] = false;
-            // NOTICE: only available apps have entry in
-            // app_unfinish_partition_count & gpid_finish
-            _progress.app_unfinish_partition_count[app_id] = partitions.size();
-            for (const auto &pc : partitions) {
-                _progress.gpid_finish[pc.pid] = false;
-            }
-        } else {
-            _progress.skipped_app[app_id] = true;
-            dwarn_f("{}: app({}) is not available",
-                    _policy.policy_name.c_str(),
-                    app_id);
-        }
-    }
-}
-
-void compact_policy_context::init_current_record()
-{
-    _cur_record.id = _cur_record.start_time = static_cast<int64_t>(dsn_now_s());
-    _cur_record.app_ids = _policy.app_ids;
-
-    init_progress();
-    _record_sig = _policy.policy_name
-                   + "@"
-                   + boost::lexical_cast<std::string>(_cur_record.id);
+    sync_record_to_remote_storage(record, compact_task, false);
 }
 
 void compact_policy_context::sync_record_to_remote_storage(const compact_record &record,
@@ -321,23 +308,18 @@ void compact_policy_context::sync_record_to_remote_storage(const compact_record 
     auto callback = [this, record, sync_task, create_new_node](dsn::error_code err) {
         if (dsn::ERR_OK == err ||
             (create_new_node && dsn::ERR_NODE_ALREADY_EXIST == err)) {
-            ddebug_f("{}: synced compact_record({}) to remote storage successfully.",
-                     _policy.policy_name.c_str(),
-                     record.id);
+            ddebug_compact_policy("sync compact_record to remote storage successfully");
             if (sync_task != nullptr) {
                 sync_task->enqueue();
             } else {
-                dwarn_f("{}: empty sync_task", _policy.policy_name.c_str());
+                dwarn_compact_policy("empty sync_task");
             }
         } else if (dsn::ERR_TIMEOUT == err) {
-            derror_f("{}: sync compact info({}) to remote storage got timeout, retry it later",
-                     _policy.policy_name.c_str(),
-                     record.id);
+            derror_compact_policy("sync compact_record to remote storage got timeout, retry it later");
             tasking::enqueue(
                 LPC_DEFAULT_CALLBACK,
                 nullptr,
                 [this, record, sync_task, create_new_node]() {
-                    zauto_lock l(_lock);
                     sync_record_to_remote_storage(std::move(record),
                                                   std::move(sync_task),
                                                   create_new_node);
@@ -345,27 +327,27 @@ void compact_policy_context::sync_record_to_remote_storage(const compact_record 
                 0,
                 _compact_service->get_option().meta_retry_delay);
         } else {
-            dassert_f(false,
-                      "{}: we can't handle this right now, error({})",
-                      _record_sig.c_str(),
-                      err.to_string());
+            dassert_compact_policy(false,
+                                   "we can't handle this right now, error({})",
+                                   err.to_string());
         }
     };
 
     std::string record_path = _compact_service->get_record_path(_policy.policy_name, record.id);
-    dsn::blob record_data = dsn::json::json_forwarder<compact_record_ext>::encode(record);
+    ddebug_compact_policy("record_path={}",
+                          record_path);
+    dsn::blob record_data = dsn::json::json_forwarder<compact_record_json>::encode(record);
     if (create_new_node) {
-        if (_history_records.size() > _policy.history_count_to_keep) {
+        if (_history_records.size() > history_count_to_keep) {
             const compact_record &record = _history_records.begin()->second;
-            ddebug_f("{}: start to gc compact record({})",
-                     _policy.policy_name.c_str(),
-                     record.id);
+            ddebug_compact_policy("start to gc compact record({})",
+                                  record.id);
 
             tasking::create_task(
                 LPC_DEFAULT_CALLBACK,
                 nullptr,
                 [this, record]() {
-                    remove_record_on_remote_storage(record);
+                    remove_record_from_remote_storage(record);
                 })->enqueue();
         }
 
@@ -382,17 +364,6 @@ void compact_policy_context::sync_record_to_remote_storage(const compact_record 
             LPC_DEFAULT_CALLBACK,
             callback,
             nullptr);
-    }
-}
-
-void compact_policy_context::continue_current_compact()
-{
-    for (const int32_t &app_id : _cur_record.app_ids) {
-        if (_progress.app_unfinish_partition_count.count(app_id) != 0) {
-            start_compact_app(app_id);
-        } else {
-            finish_compact_app(app_id);
-        }
     }
 }
 
@@ -427,112 +398,88 @@ void compact_policy_context::retry_issue_new_compact()
         LPC_DEFAULT_CALLBACK,
         nullptr,
         [this]() {
-            zauto_lock l(_lock);
             issue_new_compact();
         },
         0,
-        _compact_service->get_option().issue_new_op_interval);
+        _compact_service->get_option().retry_new_compact_delay);
 }
 
-void compact_policy_context::issue_new_compact()
-{
+void compact_policy_context::issue_new_compact() {
+    zauto_lock l(_lock);
+
     // before issue new compact, we check whether the policy is dropped
     if (!_policy.enable) {
-        ddebug_f("{}: policy is not enable, try it later",
-                 _policy.policy_name.c_str());
+        ddebug_compact_policy("policy is not enable, try it later");
         retry_issue_new_compact();
         return;
     }
 
     if (!should_start_compact()) {
-        ddebug_f("{}: compact time is not arrived, try it later",
-                 _policy.policy_name.c_str());
+        ddebug_compact_policy("compact time is not arrived, try it later");
         retry_issue_new_compact();
         return;
     }
 
-    init_current_record();
-
-    // if all apps are dropped, we don't issue a new compact
-    if (_progress.app_unfinish_partition_count.empty()) {
-        dwarn_f("{}: all apps have been dropped, retry it later",
-                _record_sig.c_str());
-        retry_issue_new_compact();
-        return;
-    }
+    _executor.init(_policy, static_cast<int64_t>(dsn_now_s()));
 
     task_ptr compact_task
         = tasking::create_task(
             LPC_DEFAULT_CALLBACK,
             nullptr,
             [this]() {
-                zauto_lock l(_lock);
-                continue_current_compact();
+                _executor.execute();
             });
-    sync_record_to_remote_storage(_cur_record, compact_task, true);
+    sync_record_to_remote_storage(_executor.get_current_record(), compact_task, true);
 }
 
-void compact_policy_context::start()
-{
-    zauto_lock l(_lock);
-
-    if (_cur_record.start_time == 0) {
-        issue_new_compact();
+void compact_policy_context::start() {
+    if (_executor.on_compacting()) {
+        _executor.execute();
     } else {
-        continue_current_compact();
+        issue_new_compact();
     }
 }
 
-void compact_policy_context::add_record(const compact_record &record)
-{
+void compact_policy_context::add_record(const compact_record &record) {
     zauto_lock l(_lock);
+
+    const compact_record &cur_record = _executor.get_current_record();
     if (record.end_time <= 0) {
-        ddebug_f("{}: encounter an unfinished compact_record({}), start_time({}), continue it later",
-                 _policy.policy_name.c_str(),
-                 record.id,
-                 record.start_time);
-        dassert_f(_cur_record.start_time == 0,
-                  "{}: shouldn't have multiple unfinished compact instance in a policy, {} vs {}",
-                  _policy.policy_name.c_str(),
-                  _cur_record.id,
-                  record.id);
-        dassert_f(_history_records.empty() || record.id > _history_records.rbegin()->first,
-                  "{}: id({}) in history larger than current({})",
-                  _policy.policy_name.c_str(),
-                  _history_records.rbegin()->first,
-                  record.id);
-        _cur_record = record;
-        init_progress();
-        _record_sig = _policy.policy_name
-                       + "@"
-                       + boost::lexical_cast<std::string>(_cur_record.id);
+        ddebug_compact_policy("encounter an unfinished compact_record({}), start_time({}), continue it later",
+                              record.id,
+                              record.start_time);
+        dassert_compact_policy(cur_record.start_time == 0,
+                               "shouldn't have multiple unfinished compact instance in a policy, {} vs {}",
+                               cur_record.id,
+                               record.id);
+        dassert_compact_policy(_history_records.empty() || record.id > _history_records.rbegin()->first,
+                               "id({}) in history larger than current({})",
+                               _history_records.rbegin()->first,
+                               record.id);
+        _executor.init(_policy, record.start_time);
     } else {
-        ddebug_f("{}: add compact history, id({}), start_time({}), end_time({})",
-                 _policy.policy_name.c_str(),
-                 record.id,
-                 record.start_time,
-                 record.end_time);
-        dassert_f(_cur_record.end_time == 0 || record.id < _cur_record.id,
-                  "{}: id({}) in history larger than current({})",
-                  _policy.policy_name.c_str(),
-                  record.id,
-                  _cur_record.id);
+        ddebug_compact_policy("add compact history, id({}), start_time({}), end_time({})",
+                              record.id,
+                              record.start_time,
+                              record.end_time);
+        dassert_compact_policy(cur_record.end_time == 0 || record.id < cur_record.id,
+                               "id({}) in history larger than current({})",
+                               record.id,
+                               cur_record.id);
 
         auto result_pair = _history_records.emplace(record.id, record);
-        dassert_f(result_pair.second,
-                  "{}: conflict compact id({})",
-                  _policy.policy_name.c_str(),
-                  record.id);
+        dassert_compact_policy(result_pair.second,
+                               "conflict compact id({})",
+                               record.id);
     }
 }
 
-std::vector<compact_record> compact_policy_context::get_compact_records()
-{
+std::vector<compact_record> compact_policy_context::get_compact_records() {
     zauto_lock l(_lock);
 
     std::vector<compact_record> records;
-    if (_cur_record.start_time > 0) {
-        records.emplace_back(_cur_record);
+    if (on_compacting()) {
+        records.emplace_back(_executor.get_current_record());
     }
     for (const auto &record : _history_records) {
         records.emplace_back(record.second);
@@ -541,11 +488,8 @@ std::vector<compact_record> compact_policy_context::get_compact_records()
     return records;
 }
 
-bool compact_policy_context::is_under_compacting()
-{
-    zauto_lock l(_lock);
-    return  (_cur_record.start_time > 0 &&
-             _cur_record.end_time <= 0);
+bool compact_policy_context::on_compacting() {
+    return _executor.on_compacting();
 }
 
 void compact_policy_context::set_policy(compact_policy &&policy)
@@ -568,38 +512,34 @@ compact_policy compact_policy_context::get_policy()
     return _policy;
 }
 
-void compact_policy_context::remove_record_on_remote_storage(const compact_record &record)
+void compact_policy_context::remove_record_from_remote_storage(const compact_record &record)
 {
-    ddebug_f("{}: start to gc compact_record: id({}), start_time({}), end_time({})",
-         _policy.policy_name.c_str(),
-         record.id,
-         ::dsn::utils::time_s_to_date_time(record.start_time).c_str(),
-         ::dsn::utils::time_s_to_date_time(record.end_time).c_str());
+    ddebug_compact_policy("start to gc compact_record: id({}), start_time({}), end_time({})",
+                          record.id,
+                          ::dsn::utils::time_s_to_date_time(record.start_time).c_str(),
+                          ::dsn::utils::time_s_to_date_time(record.end_time).c_str());
 
     auto callback = [this, record](dsn::error_code err) {
         if (err == dsn::ERR_OK ||
             err == dsn::ERR_OBJECT_NOT_FOUND) {
-            ddebug_f("{}: remove compact_record on remote storage successfully, record_id({})",
-                     _policy.policy_name.c_str(),
+            ddebug_compact_policy("remove compact_record on remote storage successfully, record_id({})",
                      record.id);
 
             zauto_lock l(_lock);
             _history_records.erase(record.id);
         } else if (err == dsn::ERR_TIMEOUT) {
-            derror_f("{}: remove compact_record on remote storage got timeout, retry it later",
-                     _policy.policy_name.c_str());
+            derror_compact_policy("remove compact_record on remote storage got timeout, retry it later");
             tasking::enqueue(
                 LPC_DEFAULT_CALLBACK,
                 nullptr,
                 [this, record]() {
-                    remove_record_on_remote_storage(record);
+                    remove_record_from_remote_storage(record);
                 },
                 0,
                 _compact_service->get_option().meta_retry_delay);
         } else {
-            dassert_f(false,
-                      "{}: we can't handle this right now, error({})",
-                      _policy.policy_name.c_str(),
+            dassert_compact_policy(false,
+                      "we can't handle this right now, error({})",
                       err.to_string());
         }
     };
@@ -674,7 +614,7 @@ void compact_service::start_sync_policies()
     ddebug("start to sync policies from remote storage");
     dsn::error_code err = sync_policies_from_remote_storage();
     if (err == dsn::ERR_OK) {
-        for (auto &policy_ctx : _policy_cxts) {
+        for (auto &policy_ctx : _policy_ctxs) {
             ddebug_f("policy({}) start", policy_ctx.first.c_str());
             policy_ctx.second->start();
         }
@@ -715,20 +655,20 @@ error_code compact_service::sync_policies_from_remote_storage()
                     dinfo_f("sync a policy record string({}) from remote storage",
                             value.data());
                     ::dsn::json::string_tokenizer tokenizer(value);
-                    compact_record_ext tcompact_record;
+                    compact_record_json tcompact_record;
                     tcompact_record.decode_json_state(tokenizer);
 
                     std::shared_ptr<compact_policy_context> policy_ctx = nullptr;
                     {
                         zauto_lock l(_lock);
-                        auto it = _policy_cxts.find(policy_name);
-                        dassert_f(it != _policy_cxts.end(), "");
+                        auto it = _policy_ctxs.find(policy_name);
+                        dassert_f(it != _policy_ctxs.end(), "");
                         policy_ctx = it->second;
                     }
                     policy_ctx->add_record(tcompact_record);
                 } else {
                     err = ec;
-                    ddebug_f("init compact_record_ext from remote storage failed({})",
+                    ddebug_f("init compact_record_json from remote storage failed({})",
                              ec.to_string());
                 }
             };
@@ -779,7 +719,7 @@ error_code compact_service::sync_policies_from_remote_storage()
                                                                   const dsn::blob &value) {
                     if (ec == dsn::ERR_OK) {
                         ::dsn::json::string_tokenizer tokenizer(value);
-                        compact_policy_ext tpolicy;
+                        compact_policy_json tpolicy;
                         tpolicy.decode_json_state(tokenizer);
                         tpolicy.enable_isset();
                         std::shared_ptr<compact_policy_context> policy_ctx = _factory(this);
@@ -787,7 +727,7 @@ error_code compact_service::sync_policies_from_remote_storage()
 
                         {
                             zauto_lock l(_lock);
-                            _policy_cxts.insert(std::make_pair(policy_name, policy_ctx));
+                            _policy_ctxs.insert(std::make_pair(policy_name, policy_ctx));
                         }
                         parse_history_records(policy_name);
                     } else {
@@ -866,7 +806,7 @@ void compact_service::do_add_policy(add_compact_policy_rpc &add_rpc,
                                     std::shared_ptr<compact_policy_context> policy_ctx)
 {
     const compact_policy &policy = policy_ctx->get_policy();
-    dsn::blob value = json::json_forwarder<compact_policy_ext>::encode(policy);
+    dsn::blob value = json::json_forwarder<compact_policy_json>::encode(policy);
     _meta_svc->get_remote_storage()->create_node(
         get_policy_path(policy.policy_name),
         LPC_DEFAULT_CALLBACK,
@@ -880,7 +820,7 @@ void compact_service::do_add_policy(add_compact_policy_rpc &add_rpc,
 
                 {
                     zauto_lock l(_lock);
-                    _policy_cxts.insert(std::make_pair(policy_name, policy_ctx));
+                    _policy_ctxs.insert(std::make_pair(policy_name, policy_ctx));
                 }
 
                 ddebug_f("policy({}) start", policy_name);
@@ -917,8 +857,8 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
     std::shared_ptr<compact_policy_context> policy_ctx = nullptr;
     {
         zauto_lock (_lock);
-        auto iter = _policy_cxts.find(req_policy.policy_name);
-        if (iter == _policy_cxts.end()) {
+        auto iter = _policy_ctxs.find(req_policy.policy_name);
+        if (iter == _policy_ctxs.end()) {
             dwarn_f("policy_name({}) not found",
                     req_policy.policy_name.c_str());
             response.err = dsn::ERR_INVALID_PARAMETERS;
@@ -973,7 +913,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
                 have_modify_policy = true;
             }
         } else {
-            if (policy_ctx->is_under_compacting()) {
+            if (policy_ctx->on_compacting()) {
                 ddebug_f("policy({}) is under compacting, not allow to disabled",
                          cur_policy.policy_name.c_str());
                 response.err = dsn::ERR_BUSY;
@@ -1034,7 +974,7 @@ void compact_service::modify_policy_on_remote_storage(modify_compact_policy_rpc 
                                                       std::shared_ptr<compact_policy_context> policy_ctx)
 {
     std::string policy_path = get_policy_path(policy.policy_name);
-    dsn::blob value = json::json_forwarder<compact_policy_ext>::encode(policy);
+    dsn::blob value = json::json_forwarder<compact_policy_json>::encode(policy);
     _meta_svc->get_remote_storage()->set_data(
         policy_path,
         value,
@@ -1077,7 +1017,7 @@ void compact_service::query_policy(query_compact_policy_rpc &query_rpc)
     if (policy_names.empty()) {
         // default all the policy
         zauto_lock l(_lock);
-        for (const auto &name_cxt : _policy_cxts) {
+        for (const auto &name_cxt : _policy_ctxs) {
             policy_names.emplace(name_cxt.first);
         }
     }
@@ -1086,8 +1026,8 @@ void compact_service::query_policy(query_compact_policy_rpc &query_rpc)
         std::shared_ptr<compact_policy_context> policy_ctx = nullptr;
         {
             zauto_lock l(_lock);
-            auto iter = _policy_cxts.find(policy_name);
-            if (iter != _policy_cxts.end()) {
+            auto iter = _policy_ctxs.find(policy_name);
+            if (iter != _policy_ctxs.end()) {
                 policy_ctx = iter->second;
             }
         }
@@ -1112,7 +1052,7 @@ void compact_service::query_policy(query_compact_policy_rpc &query_rpc)
 
 bool compact_service::is_valid_policy_name(const std::string &policy_name)
 {
-    return _policy_cxts.find(policy_name) == _policy_cxts.end();
+    return _policy_ctxs.find(policy_name) == _policy_ctxs.end();
 }
 
 std::string compact_service::get_policy_path(const std::string &policy_name)

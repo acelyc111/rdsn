@@ -42,10 +42,10 @@ typedef rpc_holder<configuration_modify_compact_policy_request,
 typedef rpc_holder<configuration_query_compact_policy_request,
                    configuration_query_compact_policy_response> query_compact_policy_rpc;
 
-class compact_record_ext: public compact_record {
+class compact_record_json: public compact_record {
 public:
-    compact_record_ext() = default;
-    compact_record_ext(const compact_record &o): compact_record(o) {}
+    explicit compact_record_json() {}
+    compact_record_json(const compact_record &o): compact_record(o) {}
 
     DEFINE_JSON_SERIALIZATION(id,
                               start_time,
@@ -53,11 +53,11 @@ public:
                               app_ids)
 };
 
-class compact_policy_ext: public compact_policy {
+class compact_policy_json: public compact_policy {
 public:
-    compact_policy_ext() = default;
-    compact_policy_ext(const compact_policy &o): compact_policy(o) {}
-    compact_policy_ext(compact_policy&&o): compact_policy(o) {}
+    explicit compact_policy_json() {}
+    compact_policy_json(const compact_policy &o): compact_policy(o) {}
+    compact_policy_json(compact_policy&&o): compact_policy(o) {}
 
     void enable_isset() {
         __isset.policy_name = true;
@@ -67,8 +67,6 @@ public:
         __isset.app_ids = true;
         __isset.opts = true;
     }
-
-    static const int32_t history_count_to_keep = 7;
 
     DEFINE_JSON_SERIALIZATION(policy_name,
                               enable,
@@ -83,7 +81,7 @@ struct compact_progress {
     std::map<gpid, bool> gpid_finish;
     std::map<app_id, int32_t> app_unfinish_partition_count;
     std::map<app_id, bool> skipped_app;     // if app is dropped when starting a new compact
-                                            // or under compacting, we just skip compact this app
+                                            // or on compacting, we just skip compact this app
 
     void reset() {
         unfinish_apps_count = 0;
@@ -93,11 +91,62 @@ struct compact_progress {
     }
 };
 
+class compact_policy_context;
+class comapct_policy_executor {
+public:
+    explicit comapct_policy_executor(compact_service *svc,
+                                     compact_policy_context *policy_ctx)
+            : _compact_service(svc),
+              _policy_ctx(policy_ctx) {}
+    void init(const compact_policy &policy,
+              int64_t start_time);
+    void execute();
+    bool on_compacting();
+    compact_record get_current_record();
+
+private:
+    void init_progress();
+
+    void start_compact_app(int32_t app_id);
+    bool skip_compact_app(int32_t app_id);
+    void start_compact_partition(gpid pid);
+    void start_compact_primary(gpid pid,
+                               const dsn::rpc_address &replica);
+
+    void on_compact_reply(error_code err,
+                          compact_response &&response,
+                          gpid pid,
+                          const dsn::rpc_address &replica);
+
+    bool finish_compact_partition(gpid pid,
+                                  bool finish,
+                                  const dsn::rpc_address &source);
+    void finish_compact_app(int32_t app_id);
+    void finish_compact_policy();
+
+private:
+    compact_service *_compact_service;
+    compact_policy_context *_policy_ctx;
+    compact_policy _policy;
+
+    dsn::service::zlock _lock;
+    compact_record _cur_record;
+    compact_progress _progress;
+    std::string _record_sig;                // policy_name@record_id, used for logging
+};
+
+// Macros for writing log message prefixed by _record_sig.
+#define dinfo_compact_record(...) dinfo_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
+#define ddebug_compact_record(...) ddebug_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
+#define dwarn_compact_record(...) dwarn_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
+#define derror_compact_record(...) derror_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
+#define dfatal_compact_record(...) dfatal_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
+#define dassert_compact_record(x, ...) dassert_f(x, "[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
+
 class compact_policy_context {
 public:
-    explicit compact_policy_context(compact_service *service)
-            : _compact_service(service) {}
-    ~compact_policy_context() {}
+    explicit compact_policy_context(compact_service *svc)
+            : _compact_service(svc), _executor(svc, this) {}
 
     void set_policy(compact_policy &&p);
     void set_policy(const compact_policy &p);
@@ -107,59 +156,49 @@ public:
     // start a compact task when it's executable
     void start();
 
+    void finish_one_execution(const compact_record &record);
+
 private:
     void issue_new_compact();
-    void continue_current_compact();
     void retry_issue_new_compact();
     bool should_start_compact();
     bool start_in_1hour(int start_sec_of_day);
-    void init_current_record();
-    void init_progress();
-
-    void start_compact_app(int32_t app_id);
-    bool skip_compact_app(int32_t app_id);
-    void start_compact_partition(gpid pid);
-    void start_compact_primary(gpid pid,
-                               const dsn::rpc_address &replica);
-    void on_compact_reply(error_code err,
-                          compact_response &&response,
-                          gpid pid,
-                          const dsn::rpc_address &replica);
-    bool finish_compact_partition(gpid pid,
-                                  bool finish,
-                                  const dsn::rpc_address &source);
-    void finish_compact_app(int32_t app_id);
-    void finish_compact_policy();
 
     void sync_record_to_remote_storage(const compact_record &record,
                                        task_ptr sync_task,
                                        bool create_new_node);
-    void remove_record_on_remote_storage(const compact_record &record);
+    void remove_record_from_remote_storage(const compact_record &record);
 
     void add_record(const compact_record &record);
     std::vector<compact_record> get_compact_records();
-    bool is_under_compacting();
+    bool on_compacting();
     compact_policy get_policy();
 
 private:
+    static const int32_t history_count_to_keep = 7;
+
     friend class compact_service;
     compact_service *_compact_service;
+    comapct_policy_executor _executor;
 
     dsn::service::zlock _lock;
-    compact_policy_ext _policy;
-    compact_record _cur_record;
+    compact_policy _policy;
     std::map<int64_t, compact_record> _history_records;
-    compact_progress _progress;
-
-    std::string _record_sig;                // policy_name@record_id, used for logging
 };
+
+#define dinfo_compact_policy(...) dinfo_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define ddebug_compact_policy(...) ddebug_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define dwarn_compact_policy(...) dwarn_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define derror_compact_policy(...) derror_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define dfatal_compact_policy(...) dfatal_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define dassert_compact_policy(x, ...) dassert_f(x, "[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
 
 class compact_service {
 public:
     struct compact_service_option {
         std::chrono::milliseconds meta_retry_delay = 10000_ms;
-        std::chrono::milliseconds reconfiguration_retry_delay = 15000_ms;
-        std::chrono::milliseconds issue_new_op_interval = 300000_ms;
+        std::chrono::milliseconds update_configuration_delay = 15000_ms;
+        std::chrono::milliseconds retry_new_compact_delay = 300000_ms;
         std::chrono::milliseconds request_compact_period = 10000_ms;
     };
     typedef std::function<std::shared_ptr<compact_policy_context>(compact_service *)> policy_factory;
@@ -169,7 +208,7 @@ public:
                     const policy_factory &factory);
 
     // sync compact policies from remote storage,
-    // and start compact task from each policy
+    // and start compact task for each policy
     void start();
 
     void add_policy(add_compact_policy_rpc &add_rpc);
@@ -193,6 +232,7 @@ private:
                                          std::shared_ptr<compact_policy_context> policy_cxt_ptr);
 
     std::string get_policy_path(const std::string &policy_name);
+
     bool is_valid_policy_name(const std::string &policy_name);
 
 private:
@@ -206,7 +246,7 @@ private:
     compact_service_option _opt;
 
     dsn::service::zlock _lock;
-    std::map<std::string, std::shared_ptr<compact_policy_context>> _policy_cxts;
+    std::map<std::string, std::shared_ptr<compact_policy_context>> _policy_ctxs;
 };
 }
 }
