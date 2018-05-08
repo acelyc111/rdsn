@@ -91,13 +91,13 @@ struct compact_progress {
     }
 };
 
-class compact_policy_context;
+class compact_policy_scheduler;
 class comapct_policy_executor {
 public:
     explicit comapct_policy_executor(compact_service *svc,
-                                     compact_policy_context *policy_ctx)
+                                     compact_policy_scheduler *policy_scheduler)
             : _compact_service(svc),
-              _policy_ctx(policy_ctx) {}
+              _policy_scheduler(policy_scheduler) {}
     void init(const compact_policy &policy,
               int64_t start_time);
     void execute();
@@ -126,7 +126,7 @@ private:
 
 private:
     compact_service *_compact_service;
-    compact_policy_context *_policy_ctx;
+    compact_policy_scheduler *_policy_scheduler;
     compact_policy _policy;
 
     dsn::service::zlock _lock;
@@ -143,9 +143,9 @@ private:
 #define dfatal_compact_record(...) dfatal_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
 #define dassert_compact_record(x, ...) dassert_f(x, "[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
 
-class compact_policy_context {
+class compact_policy_scheduler {
 public:
-    explicit compact_policy_context(compact_service *svc)
+    explicit compact_policy_scheduler(compact_service *svc)
             : _compact_service(svc), _executor(svc, this) {}
 
     void set_policy(compact_policy &&p);
@@ -224,10 +224,10 @@ private:
 
     void create_policy_root(dsn::task_ptr callback);
     void do_add_policy(add_compact_policy_rpc &add_rpc,
-                       std::shared_ptr<compact_policy_context> policy_cxt_ptr);
+                       std::shared_ptr<compact_policy_scheduler> policy_scheduler);
     void modify_policy_on_remote_storage(modify_compact_policy_rpc &modify_rpc,
                                          const compact_policy &policy,
-                                         std::shared_ptr<compact_policy_context> policy_cxt_ptr);
+                                         std::shared_ptr<compact_policy_scheduler> policy_scheduler);
 
     std::string get_policy_path(const std::string &policy_name);
     bool is_valid_policy_name(const std::string &policy_name);
@@ -242,7 +242,7 @@ private:
     compact_service_option _opt;
 
     dsn::service::zlock _lock;
-    std::map<std::string, std::shared_ptr<compact_policy_context>> _policy_ctxs;
+    std::map<std::string, std::shared_ptr<compact_policy_scheduler>> _policy_schedulers;
 };
 }
 }
