@@ -201,11 +201,9 @@ public:
         std::chrono::milliseconds retry_new_compact_delay = 300000_ms;
         std::chrono::milliseconds request_compact_period = 10000_ms;
     };
-    typedef std::function<std::shared_ptr<compact_policy_context>(compact_service *)> policy_factory;
 
     compact_service(meta_service *meta_svc,
-                    const std::string &policy_meta_root,
-                    const policy_factory &factory);
+                    const std::string &policy_meta_root);
 
     // sync compact policies from remote storage,
     // and start compact task for each policy
@@ -232,11 +230,9 @@ private:
                                          std::shared_ptr<compact_policy_context> policy_cxt_ptr);
 
     std::string get_policy_path(const std::string &policy_name);
-
     bool is_valid_policy_name(const std::string &policy_name);
 
 private:
-    policy_factory _factory;
     meta_service *_meta_svc;
     server_state *_state;
 

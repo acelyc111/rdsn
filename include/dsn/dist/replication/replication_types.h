@@ -4866,11 +4866,11 @@ inline std::ostream& operator<<(std::ostream& out, const compact_request& obj)
 }
 
 typedef struct _compact_response__isset {
-  _compact_response__isset() : err(false), id(false), pid(false), finish(false), policy_name(false) {}
+  _compact_response__isset() : err(false), id(false), pid(false), is_finished(false), policy_name(false) {}
   bool err :1;
   bool id :1;
   bool pid :1;
-  bool finish :1;
+  bool is_finished :1;
   bool policy_name :1;
 } _compact_response__isset;
 
@@ -4881,14 +4881,14 @@ class compact_response {
   compact_response(compact_response&&);
   compact_response& operator=(const compact_response&);
   compact_response& operator=(compact_response&&);
-  compact_response() : id(0), finish(0), policy_name() {
+  compact_response() : id(0), is_finished(0), policy_name() {
   }
 
   virtual ~compact_response() throw();
    ::dsn::error_code err;
   int64_t id;
    ::dsn::gpid pid;
-  bool finish;
+  bool is_finished;
   std::string policy_name;
 
   _compact_response__isset __isset;
@@ -4899,7 +4899,7 @@ class compact_response {
 
   void __set_pid(const  ::dsn::gpid& val);
 
-  void __set_finish(const bool val);
+  void __set_is_finished(const bool val);
 
   void __set_policy_name(const std::string& val);
 
@@ -4911,7 +4911,7 @@ class compact_response {
       return false;
     if (!(pid == rhs.pid))
       return false;
-    if (!(finish == rhs.finish))
+    if (!(is_finished == rhs.is_finished))
       return false;
     if (!(policy_name == rhs.policy_name))
       return false;

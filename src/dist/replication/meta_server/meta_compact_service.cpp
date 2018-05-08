@@ -209,7 +209,7 @@ void comapct_policy_executor::on_compact_reply(error_code err,
                                  pid,
                                  primary.to_string(),
                                  response.id);
-        } else if (finish_compact_partition(pid, response.finish, primary)) {
+        } else if (finish_compact_partition(pid, response.is_finished, primary)) {
             return;
         }
     } else {
@@ -555,10 +555,8 @@ void compact_policy_context::remove_record_from_remote_storage(const compact_rec
 }
 
 compact_service::compact_service(meta_service *meta_svc,
-                                 const std::string &policy_root,
-                                 const policy_factory &factory)
-        : _factory(factory),
-          _meta_svc(meta_svc),
+                                 const std::string &policy_root)
+        : _meta_svc(meta_svc),
           _policy_root(policy_root)
 {
     _state = _meta_svc->get_server_state();
@@ -722,7 +720,7 @@ error_code compact_service::sync_policies_from_remote_storage()
                         compact_policy_json tpolicy;
                         tpolicy.decode_json_state(tokenizer);
                         tpolicy.enable_isset();
-                        std::shared_ptr<compact_policy_context> policy_ctx = _factory(this);
+                        std::shared_ptr<compact_policy_context> policy_ctx = std::make_shared<compact_policy_context>(this);
                         policy_ctx->set_policy(std::move(tpolicy));
 
                         {
@@ -785,7 +783,7 @@ void compact_service::add_policy(add_compact_policy_rpc &add_rpc)
         if (!is_valid_policy_name(policy.policy_name)) {
             ddebug_f("policy({}) is already exist", policy.policy_name.c_str());
         } else {
-            policy_ctx = _factory(this);
+            policy_ctx = std::make_shared<compact_policy_context>(this);
             valid_policy = true;
         }
     }

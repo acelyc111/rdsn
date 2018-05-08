@@ -43,7 +43,7 @@ void replica::do_policy_compact(compact_status::type cs,
                  compact_context->name,
                  _compact_status_VALUES_TO_NAMES.at(cs));
         response.err = dsn::ERR_BUSY;
-        response.finish = false;
+        response.is_finished = false;
     } else if (cs == compact_status::COMPACT_STATUS_INVALID) {
         // execute compact task async
         ddebug_f("{}: start check_and_compact", compact_context->name);
@@ -56,24 +56,24 @@ void replica::do_policy_compact(compact_status::type cs,
                 compact_context->finish_compact();
         });
         response.err = dsn::ERR_BUSY;
-        response.finish = false;
+        response.is_finished = false;
     } else if (cs == compact_status::COMPACT_STATUS_COMPACTED) {
         // finished
         response.err = dsn::ERR_OK;
         if (status() == partition_status::PS_SECONDARY) {
             ddebug_f("{}: compact completed",
                      compact_context->name);
-            response.finish = true;
+            response.is_finished = true;
         } else {
             if (compact_context->secondary_status.size() ==
                 _primary_states.membership.max_replica_count - 1) {
                 ddebug_f("{}: primary and secondaries compact completed",
                          compact_context->name);
-                response.finish = true;
+                response.is_finished = true;
             } else {
                 ddebug_f("{}: primary compact completed but secondaries not",
                          compact_context->name);
-                response.finish = false;
+                response.is_finished = false;
             }
         }
     } else {
@@ -125,7 +125,7 @@ void replica::on_policy_compact(const compact_request &request,
                      compact_context->request.id,
                      _compact_status_VALUES_TO_NAMES.at(cs));
             response.err = dsn::ERR_VERSION_OUTDATED;
-            response.finish = false;
+            response.is_finished = false;
             return;
         }
 
@@ -140,7 +140,7 @@ void replica::on_policy_compact(const compact_request &request,
                  new_context->name,
                  enum_to_string(status()));
         response.err = ERR_INVALID_STATE;
-        response.finish = false;
+        response.is_finished = false;
     }
 }
 
@@ -154,7 +154,7 @@ void replica::send_compact_request_to_secondary(const compact_request &request,
                   nullptr,
                   [this, compact_context, secondary](dsn::error_code err,
                                                      compact_response &&resp) {
-                      if (err == dsn::ERR_OK && resp.finish) {
+                      if (err == dsn::ERR_OK && resp.is_finished) {
                           compact_context->secondary_status[secondary] = true;
                       }
                   });

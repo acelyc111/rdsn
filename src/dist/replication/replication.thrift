@@ -566,6 +566,8 @@ struct compact_policy
 {
     1:string                        policy_name;
     2:optional bool                 enable;
+    // the start time of the first compact task to be executed.
+    // seconds of day, eg. 3600 means 1 AM
     3:optional i32                  start_time;
     4:optional i32                  interval_seconds;
     5:optional set<i32>             app_ids;

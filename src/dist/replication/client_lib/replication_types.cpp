@@ -11452,8 +11452,8 @@ void compact_response::__set_pid(const  ::dsn::gpid& val) {
   this->pid = val;
 }
 
-void compact_response::__set_finish(const bool val) {
-  this->finish = val;
+void compact_response::__set_is_finished(const bool val) {
+  this->is_finished = val;
 }
 
 void compact_response::__set_policy_name(const std::string& val) {
@@ -11507,8 +11507,8 @@ uint32_t compact_response::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 4:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->finish);
-          this->__isset.finish = true;
+          xfer += iprot->readBool(this->is_finished);
+          this->__isset.is_finished = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -11550,8 +11550,8 @@ uint32_t compact_response::write(::apache::thrift::protocol::TProtocol* oprot) c
   xfer += this->pid.write(oprot);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("finish", ::apache::thrift::protocol::T_BOOL, 4);
-  xfer += oprot->writeBool(this->finish);
+  xfer += oprot->writeFieldBegin("is_finished", ::apache::thrift::protocol::T_BOOL, 4);
+  xfer += oprot->writeBool(this->is_finished);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldBegin("policy_name", ::apache::thrift::protocol::T_STRING, 5);
@@ -11568,7 +11568,7 @@ void swap(compact_response &a, compact_response &b) {
   swap(a.err, b.err);
   swap(a.id, b.id);
   swap(a.pid, b.pid);
-  swap(a.finish, b.finish);
+  swap(a.is_finished, b.is_finished);
   swap(a.policy_name, b.policy_name);
   swap(a.__isset, b.__isset);
 }
@@ -11577,7 +11577,7 @@ compact_response::compact_response(const compact_response& other523) {
   err = other523.err;
   id = other523.id;
   pid = other523.pid;
-  finish = other523.finish;
+  is_finished = other523.is_finished;
   policy_name = other523.policy_name;
   __isset = other523.__isset;
 }
@@ -11585,7 +11585,7 @@ compact_response::compact_response( compact_response&& other524) {
   err = std::move(other524.err);
   id = std::move(other524.id);
   pid = std::move(other524.pid);
-  finish = std::move(other524.finish);
+  is_finished = std::move(other524.is_finished);
   policy_name = std::move(other524.policy_name);
   __isset = std::move(other524.__isset);
 }
@@ -11593,7 +11593,7 @@ compact_response& compact_response::operator=(const compact_response& other525) 
   err = other525.err;
   id = other525.id;
   pid = other525.pid;
-  finish = other525.finish;
+  is_finished = other525.is_finished;
   policy_name = other525.policy_name;
   __isset = other525.__isset;
   return *this;
@@ -11602,7 +11602,7 @@ compact_response& compact_response::operator=(compact_response&& other526) {
   err = std::move(other526.err);
   id = std::move(other526.id);
   pid = std::move(other526.pid);
-  finish = std::move(other526.finish);
+  is_finished = std::move(other526.is_finished);
   policy_name = std::move(other526.policy_name);
   __isset = std::move(other526.__isset);
   return *this;
@@ -11613,7 +11613,7 @@ void compact_response::printTo(std::ostream& out) const {
   out << "err=" << to_string(err);
   out << ", " << "id=" << to_string(id);
   out << ", " << "pid=" << to_string(pid);
-  out << ", " << "finish=" << to_string(finish);
+  out << ", " << "is_finished=" << to_string(is_finished);
   out << ", " << "policy_name=" << to_string(policy_name);
   out << ")";
 }

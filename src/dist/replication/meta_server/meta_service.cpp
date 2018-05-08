@@ -262,10 +262,9 @@ error_code meta_service::start()
     // init compact_service
     if (!_meta_opts.manual_compact_disabled) {
         ddebug("initialize manual compact handler");
-        _compact_svc = std::make_unique<compact_service>(
+        _compact_svc = make_unique<compact_service>(
             this,
-            meta_options::concat_path_unix_style(_cluster_root, "compact_policy"),
-            [](compact_service *cs) { return std::make_shared<compact_policy_context>(cs); });
+            meta_options::concat_path_unix_style(_cluster_root, "compact_policy"));
     }
 
     // initialize the server_state
