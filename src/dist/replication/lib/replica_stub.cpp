@@ -362,7 +362,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
 
         load_tasks.push_back(tasking::create_task(
             LPC_REPLICATION_INIT_LOAD,
-            this,
+            &_tracker,
             [this, dir, &rps, &rps_lock] {
                 ddebug("process dir %s", dir.c_str());
 
@@ -469,7 +469,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
 
     bool is_log_complete = true;
     for (auto it = rps.begin(); it != rps.end(); ++it) {
-        auto err = it->second->sync_checkpoint();
+        auto err = it->second->background_sync_checkpoint();
         dassert(err == ERR_OK, "sync checkpoint failed, err = %s", err.to_string());
 
         it->second->reset_prepare_list_after_replay();
@@ -539,7 +539,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
     if (false == _options.gc_disabled) {
         _gc_timer_task =
             tasking::enqueue_timer(LPC_GARBAGE_COLLECT_LOGS_AND_REPLICAS,
-                                   this,
+                                   &_tracker,
                                    [this] { on_gc(); },
                                    std::chrono::milliseconds(_options.gc_interval_ms),
                                    0,
@@ -550,7 +550,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
     if (false == _options.disk_stat_disabled) {
         _disk_stat_timer_task = ::dsn::tasking::enqueue_timer(
             LPC_DISK_STAT,
-            this,
+            &_tracker,
             [this]() { on_disk_stat(); },
             std::chrono::seconds(_options.disk_stat_interval_seconds),
             0,
@@ -572,7 +572,7 @@ void replica_stub::initialize(const replication_options &opts, bool clear /* = f
             uint64_t delay = dsn_runtime_init_time_ms() + delay_time_ms - now_time_ms;
             ddebug("delay for %" PRIu64 "ms to make failure detector timeout", delay);
             tasking::enqueue(LPC_REPLICA_SERVER_DELAY_START,
-                             this,
+                             &_tracker,
                              [this]() { this->initialize_start(); },
                              0,
                              std::chrono::milliseconds(delay));
@@ -590,7 +590,7 @@ void replica_stub::initialize_start()
     if (!_options.config_sync_disabled) {
         _config_sync_timer_task =
             tasking::enqueue_timer(LPC_QUERY_CONFIGURATION_ALL,
-                                   this,
+                                   &_tracker,
                                    [this]() {
                                        zauto_lock l(_state_lock);
                                        this->query_configuration_by_node();
@@ -1081,7 +1081,7 @@ void replica_stub::query_configuration_by_node()
 
     rpc_address target(_failure_detector->get_servers());
     _config_query_task = rpc::call(
-        target, msg, this, [this](error_code err, dsn_message_t request, dsn_message_t resp) {
+        target, msg, &_tracker, [this](error_code err, dsn_message_t request, dsn_message_t resp) {
             on_node_query_reply(err, request, resp);
         });
 }
@@ -1093,7 +1093,7 @@ void replica_stub::on_meta_server_connected()
     zauto_lock l(_state_lock);
     if (_state == NS_Disconnected) {
         _state = NS_Connecting;
-        tasking::enqueue(LPC_QUERY_CONFIGURATION_ALL, this, [this]() {
+        tasking::enqueue(LPC_QUERY_CONFIGURATION_ALL, &_tracker, [this]() {
             zauto_lock l(_state_lock);
             this->query_configuration_by_node();
         });
@@ -1130,7 +1130,7 @@ void replica_stub::on_node_query_reply(error_code err,
             ddebug("resend query node partitions request after %d ms for resp.err = ERR_BUSY",
                    delay_ms);
             _config_query_task = tasking::enqueue(LPC_QUERY_CONFIGURATION_ALL,
-                                                  this,
+                                                  &_tracker,
                                                   [this]() {
                                                       zauto_lock l(_state_lock);
                                                       _config_query_task = nullptr;
@@ -1159,7 +1159,7 @@ void replica_stub::on_node_query_reply(error_code err,
         for (auto it = resp.partitions.begin(); it != resp.partitions.end(); ++it) {
             rs.erase(it->config.pid);
             tasking::enqueue(LPC_QUERY_NODE_CONFIGURATION_SCATTER,
-                             this,
+                             &_tracker,
                              std::bind(&replica_stub::on_node_query_reply_scatter, this, this, *it),
                              it->config.pid.thread_hash());
         }
@@ -1168,7 +1168,7 @@ void replica_stub::on_node_query_reply(error_code err,
         for (auto it = rs.begin(); it != rs.end(); ++it) {
             tasking::enqueue(
                 LPC_QUERY_NODE_CONFIGURATION_SCATTER2,
-                this,
+                &_tracker,
                 std::bind(&replica_stub::on_node_query_reply_scatter2, this, this, it->first),
                 it->first.thread_hash());
         }
@@ -1179,7 +1179,7 @@ void replica_stub::on_node_query_reply(error_code err,
                 replica_stub::replica_life_cycle lc = get_replica_life_cycle(rep.pid);
                 if (lc == replica_stub::RL_closed) {
                     tasking::enqueue(LPC_GARBAGE_COLLECT_LOGS_AND_REPLICAS,
-                                     this,
+                                     &_tracker,
                                      std::bind(&replica_stub::on_gc_replica, this, this, rep.pid),
                                      0);
                 }
@@ -1197,7 +1197,7 @@ void replica_stub::set_meta_server_connected_for_test(
 
     for (auto it = resp.partitions.begin(); it != resp.partitions.end(); ++it) {
         tasking::enqueue(LPC_QUERY_NODE_CONFIGURATION_SCATTER,
-                         this,
+                         &_tracker,
                          std::bind(&replica_stub::on_node_query_reply_scatter, this, this, *it),
                          it->config.pid.thread_hash());
     }
@@ -1301,7 +1301,7 @@ void replica_stub::on_meta_server_disconnected()
     for (auto it = rs.begin(); it != rs.end(); ++it) {
         tasking::enqueue(
             LPC_CM_DISCONNECTED_SCATTER,
-            this,
+            &_tracker,
             std::bind(&replica_stub::on_meta_server_disconnected_scatter, this, this, it->first),
             it->first.thread_hash());
     }
@@ -1357,7 +1357,7 @@ void replica_stub::init_gc_for_test()
     dassert(_options.gc_disabled, "");
 
     _gc_timer_task = tasking::enqueue(LPC_GARBAGE_COLLECT_LOGS_AND_REPLICAS,
-                                      this,
+                                      &_tracker,
                                       [this] { on_gc(); },
                                       0,
                                       std::chrono::milliseconds(_options.gc_interval_ms));
@@ -1534,7 +1534,7 @@ void replica_stub::on_gc()
             for (auto it = rs.begin(); it != rs.end(); ++it) {
                 tasking::enqueue(
                     LPC_PER_REPLICA_CHECKPOINT_TIMER,
-                    this,
+                    &_tracker,
                     std::bind(&replica_stub::trigger_checkpoint, this, it->second, true),
                     it->first.thread_hash(),
                     std::chrono::milliseconds(
@@ -1562,7 +1562,7 @@ void replica_stub::on_gc()
                 if (find != rs.end()) {
                     tasking::enqueue(
                         LPC_PER_REPLICA_CHECKPOINT_TIMER,
-                        this,
+                        &_tracker,
                         std::bind(&replica_stub::trigger_checkpoint, this, find->second, true),
                         id.thread_hash(),
                         std::chrono::milliseconds(
@@ -1707,7 +1707,7 @@ void replica_stub::on_disk_stat()
         } else {
             task_ptr task = tasking::enqueue(
                 LPC_OPEN_REPLICA,
-                this,
+                &_tracker,
                 std::bind(&replica_stub::open_replica, this, app, gpid, req, req2));
 
             _opening_replicas[gpid] = task;
@@ -1819,7 +1819,7 @@ void replica_stub::open_replica(const app_info &app,
         }
 
         task_ptr task = tasking::enqueue(LPC_CLOSE_REPLICA,
-                                         this,
+                                         &_tracker,
                                          [=]() { close_replica(r); },
                                          0,
                                          std::chrono::milliseconds(delay_ms));
@@ -1857,7 +1857,7 @@ void replica_stub::notify_replica_state_update(const replica_configuration &conf
         if (_is_long_subscriber) {
             tasking::enqueue(
                 LPC_REPLICA_STATE_CHANGE_NOTIFICATION,
-                this,
+                &_tracker,
                 std::bind(_replica_state_subscriber, _primary_address, config, is_closing));
         } else {
             _replica_state_subscriber(_primary_address, config, is_closing);
@@ -1960,7 +1960,7 @@ void replica_stub::open_service()
         [this](const std::vector<std::string> &args) {
             return exec_command_on_replica(args, true, [this](const replica_ptr &rep) {
                 tasking::enqueue(LPC_PER_REPLICA_CHECKPOINT_TIMER,
-                                 this,
+                                 &_tracker,
                                  std::bind(&replica_stub::trigger_checkpoint, this, rep, true),
                                  rep->get_gpid().thread_hash());
                 return std::string("triggered");
@@ -1994,7 +1994,7 @@ void replica_stub::open_service()
                 if (rep->could_start_manual_compact()) {
                     tasking::enqueue(
                         LPC_MANUAL_COMPACT,
-                        this,
+                        &_tracker,
                         std::bind(&replica_stub::manual_compact, this, rep->get_gpid(), opts));
                     return std::string("started");
                 } else {
@@ -2112,6 +2112,8 @@ replica_stub::exec_command_on_replica(const std::vector<std::string> &args,
 
 void replica_stub::close()
 {
+    _tracker.cancel_outstanding_tasks();
+
     // this replica may not be opened
     // or is already closed by calling tool_app::stop_all_apps()
     // in this case, just return

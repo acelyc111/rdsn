@@ -380,13 +380,16 @@ void replica::close()
             name(),
             enum_to_string(status()));
 
-    if (nullptr != _checkpoint_timer) {
-        _checkpoint_timer->cancel(true);
+    _tracker.cancel_outstanding_tasks();
+
+    if (_checkpoint_timer != nullptr) {
+        dassert(!_checkpoint_timer->cancel(false),
+                "checkpoint timer should already been cancelled");
         _checkpoint_timer = nullptr;
     }
-
     if (_collect_info_timer != nullptr) {
-        _collect_info_timer->cancel(true);
+        dassert(!_collect_info_timer->cancel(false),
+                "collect info timer should already been cancelled");
         _collect_info_timer = nullptr;
     }
 
@@ -413,9 +416,6 @@ void replica::close()
         _private_log = nullptr;
     }
 
-    // please make sure to clear all the perf-counters when close replica,
-    // because a perf-counter created by perf-counter-wrapper can't be shared among different
-    // objects
     if (_app != nullptr) {
         error_code err = _app->close(false);
         if (err != dsn::ERR_OK)

@@ -113,6 +113,8 @@ public:
     void start_service();
     void balancer_run();
 
+    dsn::task_tracker *tracker() { return &_tracker; }
+
 private:
     void register_rpc_handlers();
 
@@ -199,6 +201,8 @@ private:
 
     perf_counter_wrapper _recent_disconnect_count;
     perf_counter_wrapper _unalive_nodes_count;
+
+    dsn::task_tracker _tracker;
 };
 }
 }

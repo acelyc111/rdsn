@@ -247,9 +247,8 @@ private:
     // check timer for gc, checkpointing etc.
     void on_checkpoint_timer();
     void init_checkpoint(bool is_emergency);
-    void background_checkpoint();
-    void background_async_checkpoint(bool is_emergency);
-    error_code sync_checkpoint();
+    error_code background_async_checkpoint(bool is_emergency);
+    error_code background_sync_checkpoint();
     void catch_up_with_private_logs(partition_status::type s);
     void on_checkpoint_completed(error_code err);
     void on_copy_checkpoint_ack(error_code err,
@@ -392,6 +391,8 @@ private:
 
     // perf counters
     perf_counter_wrapper _counter_private_log_size;
+
+    dsn::task_tracker _tracker;
 };
 typedef dsn::ref_ptr<replica> replica_ptr;
 }
