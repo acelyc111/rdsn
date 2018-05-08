@@ -642,7 +642,7 @@ error_code compact_service::sync_policies_from_remote_storage()
     //                           policy_name2/compact_id_1
     //                                       /compact_id_2
     error_code err = dsn::ERR_OK;
-    ::dsn::clientlet tracker(1);
+    dsn::task_tracker tracker;
 
     auto parse_history_records =
         [this, &err, &tracker](const std::string &policy_name) {
@@ -755,7 +755,7 @@ error_code compact_service::sync_policies_from_remote_storage()
         },
         &tracker);
 
-    dsn_task_tracker_wait_all(tracker.tracker());
+    tracker.wait_outstanding_tasks();
     return err;
 }
 

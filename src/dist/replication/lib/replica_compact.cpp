@@ -50,7 +50,7 @@ void replica::do_policy_compact(compact_status::type cs,
         compact_context->start_compact();
         tasking::enqueue(
             LPC_MANUAL_COMPACT,
-            this,
+            nullptr,
             [this, compact_context, opts]() {
                 check_and_compact(opts);
                 compact_context->finish_compact();
