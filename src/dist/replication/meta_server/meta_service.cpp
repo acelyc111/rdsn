@@ -720,17 +720,16 @@ void meta_service::on_add_compact_policy(add_compact_policy_rpc add_rpc)
     auto &response = add_rpc.response();
     RPC_CHECK_STATUS(add_rpc.dsn_request(), response);
 
-    if (_compact_svc == nullptr) {
-        derror("meta doesn't enable compact service");
-        response.err = ERR_SERVICE_NOT_ACTIVE;
-    } else {
-        tasking::enqueue(
+    if (!check_compaction_enabled(response)) {
+        return;
+    }
+
+    tasking::enqueue(
             LPC_DEFAULT_CALLBACK,
-            nullptr,
+            &_tracker,
             [this, add_rpc = std::move(add_rpc)]() mutable {
                 _compact_svc->add_policy(add_rpc);
             });
-    }
 }
 
 void meta_service::on_modify_compact_policy(modify_compact_policy_rpc modify_rpc)
@@ -738,17 +737,16 @@ void meta_service::on_modify_compact_policy(modify_compact_policy_rpc modify_rpc
     auto &response = modify_rpc.response();
     RPC_CHECK_STATUS(modify_rpc.dsn_request(), response);
 
-    if (_compact_svc == nullptr) {
-        derror("meta doesn't enable compact service");
-        response.err = ERR_SERVICE_NOT_ACTIVE;
-    } else {
-        tasking::enqueue(
+    if (!check_compaction_enabled(response)) {
+        return;
+    }
+
+    tasking::enqueue(
             LPC_DEFAULT_CALLBACK,
-            nullptr,
+            &_tracker,
             [this, modify_rpc = std::move(modify_rpc)]() mutable {
                 _compact_svc->modify_policy(modify_rpc);
             });
-    }
 }
 
 void meta_service::on_query_compact_policy(query_compact_policy_rpc query_rpc)
@@ -756,17 +754,16 @@ void meta_service::on_query_compact_policy(query_compact_policy_rpc query_rpc)
     auto &response = query_rpc.response();
     RPC_CHECK_STATUS(query_rpc.dsn_request(), response);
 
-    if (_compact_svc == nullptr) {
-        derror("meta doesn't enable compact service");
-        response.err = ERR_SERVICE_NOT_ACTIVE;
-    } else {
-        tasking::enqueue(
+    if (!check_compaction_enabled(response)) {
+        return;
+    }
+
+    tasking::enqueue(
             LPC_DEFAULT_CALLBACK,
-            nullptr,
+            &_tracker,
             [this, query_rpc = std::move(query_rpc)]() mutable {
                 _compact_svc->query_policy(query_rpc);
             });
-    }
 }
 
 void meta_service::update_app_env(app_env_rpc env_rpc)

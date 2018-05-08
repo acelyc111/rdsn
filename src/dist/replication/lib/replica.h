@@ -297,11 +297,11 @@ private:
     void update_restore_progress();
 
     void send_compact_request_to_secondary(const compact_request &request,
-                                           compact_context_ptr compact_context);
+                                           compact_context_ptr context_ptr);
     void check_and_compact(const std::map<std::string, std::string> &opts);
 
     void do_policy_compact(compact_status::type compact_status,
-                           compact_context_ptr compact_context,
+                           compact_context_ptr context_ptr,
                            const std::map<std::string, std::string> &opts,
                            compact_response &response);
     bool could_start_manual_compact();

@@ -44,7 +44,7 @@
 #include "dist/replication/client_lib/replication_common.h"
 #include "dist/replication/meta_server/meta_options.h"
 #include "dist/replication/meta_server/meta_backup_service.h"
-#include "dist/replication/meta_server/meta_compact_service.h"
+#include "dist/replication/meta_server/compact/meta_compact_service.h"
 #include "dist/replication/client_lib/block_service_manager.h"
 
 class meta_service_test_app;
@@ -165,6 +165,17 @@ private:
     int check_leader(dsn_message_t req);
     error_code remote_storage_initialize();
     bool check_freeze() const;
+
+    template <typename TResponse>
+    bool check_compaction_enabled(TResponse& response) {
+        if (_compact_svc == nullptr) {
+            derror("meta doesn't enable compact service");
+            response.err = ERR_SERVICE_NOT_ACTIVE;
+            return false;
+        }
+
+        return true;
+    }
 
 private:
     friend class replication_checker;

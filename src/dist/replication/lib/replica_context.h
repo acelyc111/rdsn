@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include <dsn/dist/fmt_logging.h>
 #include <dsn/dist/block_service.h>
 #include <dsn/cpp/json_helper.h>
 
@@ -521,15 +522,8 @@ class compact_context : public ref_counter {
 public:
     explicit compact_context(const compact_request &req)
         : request(req),
-          _status(compact_status::COMPACT_STATUS_INVALID)
-    {
-        std::stringstream ss;
-        ss << "compact("
-           << request.policy_name << "."
-           << request.id << "."
-           << request.pid.get_app_id() << "."
-           << request.pid.get_partition_index() << "." << ")";
-        name = ss.str();
+          _status(compact_status::COMPACT_STATUS_INVALID) {
+        name = fmt::format("compact({}.{}.{})", request.policy_name, request.id, request.pid);
     }
 
     void start_compact()

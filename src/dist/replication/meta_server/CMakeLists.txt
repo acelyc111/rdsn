@@ -1,8 +1,12 @@
 set(MY_PROJ_NAME dsn_meta_server)
 
+set(MANUAL_COMPACT_SRC compact/meta_compact_service.cpp
+                       compact/comapct_policy_executor.cpp
+                       compact/policy_deadline_detector.cpp)
+
 # Source files under CURRENT project directory will be automatically included.
 # You can manually set MY_PROJ_SRC to include source files under other directories.
-set(MY_PROJ_SRC "")
+set(MY_PROJ_SRC ${MANUAL_COMPACT_SRC})
 
 # Search mode for source files under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search
