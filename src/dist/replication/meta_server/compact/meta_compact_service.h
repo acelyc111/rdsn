@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "../meta_data.h"
+#include "dist/replication/meta_server/meta_data.h"
 #include "policy_deadline_checker.h"
 
 namespace dsn {
@@ -36,16 +36,19 @@ class meta_service;
 class server_state;
 
 typedef rpc_holder<configuration_add_compact_policy_request,
-                   configuration_add_compact_policy_response> add_compact_policy_rpc;
+                   configuration_add_compact_policy_response>
+    add_compact_policy_rpc;
 typedef rpc_holder<configuration_modify_compact_policy_request,
-                   configuration_modify_compact_policy_response> modify_compact_policy_rpc;
+                   configuration_modify_compact_policy_response>
+    modify_compact_policy_rpc;
 typedef rpc_holder<configuration_query_compact_policy_request,
-                   configuration_query_compact_policy_response> query_compact_policy_rpc;
+                   configuration_query_compact_policy_response>
+    query_compact_policy_rpc;
 
-class compact_service {
+class compact_service
+{
 public:
-    compact_service(meta_service *meta_svc,
-                    const std::string &policy_meta_root);
+    compact_service(meta_service *meta_svc, const std::string &policy_meta_root);
     ~compact_service() { _tracker.cancel_outstanding_tasks(); }
 
     // sync compact policies from remote storage,
@@ -90,5 +93,5 @@ private:
     std::map<std::string, std::shared_ptr<policy_deadline_checker>> _policy_schedulers;
 };
 
-}   // namespace replication
-}   // namespace dsn
+} // namespace replication
+} // namespace dsn

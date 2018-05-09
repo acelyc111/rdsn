@@ -28,8 +28,8 @@
 
 #include <cstdint>
 #include <map>
-#include "dsn/tool-api/gpid.h"
-#include "dsn/dist/replication/replication_other_types.h"
+#include <dsn/tool-api/gpid.h>
+#include <dsn/dist/replication/replication_other_types.h>
 
 namespace dsn {
 namespace replication {
@@ -37,14 +37,16 @@ namespace replication {
 class compact_service;
 class policy_deadline_checker;
 
-struct compact_progress {
+struct compact_progress
+{
     uint32_t unfinished_apps_count = 0;
     std::map<gpid, bool> gpid_finish;
     std::map<app_id, int32_t> app_unfinished_partition_count;
-    std::map<app_id, bool> skipped_app;     // if app is dropped when starting a new compact
-                                            // or on compacting, we just skip compact this app
+    std::map<app_id, bool> skipped_app; // if app is dropped when starting a new compact
+                                        // or on compacting, we just skip compact this app
 
-    void reset() {
+    void reset()
+    {
         unfinished_apps_count = 0;
         gpid_finish.clear();
         app_unfinished_partition_count.clear();
@@ -52,16 +54,16 @@ struct compact_progress {
     }
 };
 
-class compact_policy_worker {
+class compact_policy_worker
+{
 public:
-    compact_policy_worker(compact_service *svc,
-                            policy_deadline_checker *policy_scheduler)
-            : _compact_service(svc),
-              _policy_scheduler(policy_scheduler) {}
+    compact_policy_worker(compact_service *svc, policy_deadline_checker *policy_scheduler)
+        : _compact_service(svc), _policy_scheduler(policy_scheduler)
+    {
+    }
     ~compact_policy_worker() { _tracker.cancel_outstanding_tasks(); }
 
-    void init(const compact_policy &policy,
-              int64_t start_time);
+    void init(const compact_policy &policy, int64_t start_time);
     void execute();
     bool on_compacting();
     compact_record get_current_record();
@@ -72,17 +74,14 @@ private:
     void start_compact_app(int32_t app_id);
     bool skip_compact_app(int32_t app_id);
     void start_compact_partition(gpid pid);
-    void start_compact_primary(gpid pid,
-                               const dsn::rpc_address &replica);
+    void start_compact_primary(gpid pid, const dsn::rpc_address &replica);
 
     void on_compact_reply(error_code err,
                           compact_response &&response,
                           gpid pid,
                           const dsn::rpc_address &replica);
 
-    bool finish_compact_partition(gpid pid,
-                                  bool finish,
-                                  const dsn::rpc_address &source);
+    bool finish_compact_partition(gpid pid, bool finish, const dsn::rpc_address &source);
     void finish_compact_app(int32_t app_id);
     void finish_compact_policy();
 
@@ -95,7 +94,7 @@ private:
     dsn::service::zlock _lock;
     compact_record _cur_record;
     compact_progress _progress;
-    std::string _record_sig;                // policy_name@record_id, used for logging
+    std::string _record_sig; // policy_name@record_id, used for logging
 };
 
 // Macros for writing log message prefixed by _record_sig.
@@ -104,7 +103,8 @@ private:
 #define dwarn_compact_record(...) dwarn_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
 #define derror_compact_record(...) derror_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
 #define dfatal_compact_record(...) dfatal_f("[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
-#define dassert_compact_record(x, ...) dassert_f(x, "[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
+#define dassert_compact_record(x, ...)                                                             \
+    dassert_f(x, "[{}] {}", _record_sig, fmt::format(__VA_ARGS__));
 
-}   // namespace replication
-}   // namespace dsn
+} // namespace replication
+} // namespace dsn

@@ -33,10 +33,13 @@ namespace replication {
 
 class compact_service;
 
-class policy_deadline_checker {
+class policy_deadline_checker
+{
 public:
-    policy_deadline_checker(compact_service *svc, compact_policy&& policy)
-            : _compact_service(svc), _executor(svc, this), _policy(std::move(policy)) {}
+    policy_deadline_checker(compact_service *svc, compact_policy &&policy)
+        : _compact_service(svc), _executor(svc, this), _policy(std::move(policy))
+    {
+    }
     ~policy_deadline_checker() { _tracker.cancel_outstanding_tasks(); }
 
     // continue to execute an unfinished compact task if needed,
@@ -53,8 +56,7 @@ private:
     void retry_issue_new_compact();
     bool should_start_compact();
 
-    void restore_current_record(task_ptr sync_task,
-                                bool create_new_node);
+    void restore_current_record(task_ptr sync_task, bool create_new_node);
     void remove_record(const compact_record &record);
 
     void add_record(const compact_record &record);
@@ -77,11 +79,15 @@ private:
 };
 
 #define dinfo_compact_policy(...) dinfo_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
-#define ddebug_compact_policy(...) ddebug_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define ddebug_compact_policy(...)                                                                 \
+    ddebug_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
 #define dwarn_compact_policy(...) dwarn_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
-#define derror_compact_policy(...) derror_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
-#define dfatal_compact_policy(...) dfatal_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
-#define dassert_compact_policy(x, ...) dassert_f(x, "[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define derror_compact_policy(...)                                                                 \
+    derror_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define dfatal_compact_policy(...)                                                                 \
+    dfatal_f("[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
+#define dassert_compact_policy(x, ...)                                                             \
+    dassert_f(x, "[{}] {}", _policy.policy_name, fmt::format(__VA_ARGS__));
 
-}   // namespace replication
-}   // namespace dsn
+} // namespace replication
+} // namespace dsn

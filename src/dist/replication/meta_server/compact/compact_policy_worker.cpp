@@ -25,30 +25,28 @@
  */
 
 #include "compact_policy_worker.h"
+#include "meta_compact_service.h"
+#include "dist/replication/meta_server/server_state.h"
 
 #include <boost/lexical_cast.hpp>
-
 #include <dsn/dist/fmt_logging.h>
-#include "meta_compact_service.h"
-#include "../server_state.h"
 
 namespace dsn {
 namespace replication {
 
 using namespace dsn::service;
 
-void compact_policy_worker::init(const compact_policy &policy,
-                                   int64_t start_time) {
+void compact_policy_worker::init(const compact_policy &policy, int64_t start_time)
+{
     _policy = policy;
     _cur_record.id = _cur_record.start_time = start_time;
     _cur_record.app_ids = _policy.app_ids;
-    _record_sig = _policy.policy_name
-                  + "@"
-                  + std::to_string(_cur_record.id);
+    _record_sig = _policy.policy_name + "@" + std::to_string(_cur_record.id);
     init_progress();
 }
 
-void compact_policy_worker::execute() {
+void compact_policy_worker::execute()
+{
     for (const int32_t &app_id : _cur_record.app_ids) {
         if (_progress.app_unfinished_partition_count.count(app_id) != 0) {
             start_compact_app(app_id);
@@ -58,20 +56,19 @@ void compact_policy_worker::execute() {
     }
 }
 
-bool compact_policy_worker::on_compacting() {
-    return _cur_record.start_time > 0 &&
-           _cur_record.end_time <= 0;
+bool compact_policy_worker::on_compacting()
+{
+    return _cur_record.start_time > 0 && _cur_record.end_time <= 0;
 }
 
-compact_record compact_policy_worker::get_current_record() {
-    return _cur_record;
-}
+compact_record compact_policy_worker::get_current_record() { return _cur_record; }
 
-void compact_policy_worker::init_progress() {
+void compact_policy_worker::init_progress()
+{
     zauto_lock l(_lock);
 
     _progress.reset();
-    _progress.unfinished_apps_count = _cur_record.app_ids.size();    // all apps
+    _progress.unfinished_apps_count = _cur_record.app_ids.size(); // all apps
     for (const int32_t &app_id : _cur_record.app_ids) {
         std::vector<partition_configuration> partitions;
         if (_compact_service->get_service_state()->get_partition_config(app_id, partitions)) {
@@ -89,7 +86,8 @@ void compact_policy_worker::init_progress() {
     }
 }
 
-void compact_policy_worker::start_compact_app(int32_t app_id) {
+void compact_policy_worker::start_compact_app(int32_t app_id)
+{
     if (skip_compact_app(app_id)) {
         ddebug_compact_record("skip to compact app({})", app_id);
         return;
@@ -100,18 +98,16 @@ void compact_policy_worker::start_compact_app(int32_t app_id) {
                            "can't find app({}) in policy",
                            app_id);
 
-    ddebug_compact_record("start to compact app({}), partition_count={}",
-                          app_id,
-                          iter->second);
+    ddebug_compact_record("start to compact app({}), partition_count={}", app_id, iter->second);
     for (int32_t i = 0; i < iter->second; ++i) {
         start_compact_partition(gpid(app_id, i));
     }
 }
 
-bool compact_policy_worker::skip_compact_app(int32_t app_id) {
+bool compact_policy_worker::skip_compact_app(int32_t app_id)
+{
     if (!_compact_service->get_service_state()->is_app_available(app_id)) {
-        dwarn_compact_record("app({}) is not available, just ignore it",
-                             app_id);
+        dwarn_compact_record("app({}) is not available, just ignore it", app_id);
         auto iter = _progress.app_unfinished_partition_count.find(app_id);
         dassert_compact_record(iter != _progress.app_unfinished_partition_count.end(),
                                "can't find app({}) in policy",
@@ -119,9 +115,7 @@ bool compact_policy_worker::skip_compact_app(int32_t app_id) {
 
         _progress.skipped_app[app_id] = true;
         for (int32_t pidx = 0; pidx < iter->second; ++pidx) {
-            finish_compact_partition(gpid(app_id, pidx),
-                                     true,
-                                     dsn::rpc_address());
+            finish_compact_partition(gpid(app_id, pidx), true, dsn::rpc_address());
         }
         return true;
     }
@@ -135,62 +129,50 @@ void compact_policy_worker::start_compact_partition(gpid pid)
 
     dsn::rpc_address primary;
     if (!_compact_service->get_service_state()->get_primary(pid, primary)) {
-        dwarn_compact_record("app({}) is not available, just ignore it",
-                             pid.get_app_id());
+        dwarn_compact_record("app({}) is not available, just ignore it", pid.get_app_id());
 
         _progress.skipped_app[pid.get_app_id()] = true;
-        finish_compact_partition(pid,
-                                 true,
-                                 dsn::rpc_address());
+        finish_compact_partition(pid, true, dsn::rpc_address());
         return;
     }
 
     if (primary.is_invalid()) {
-        dwarn_compact_record("gpid({})'s replica is invalid now, retry this partition later",
-                             pid);
-        tasking::enqueue(
-            LPC_DEFAULT_CALLBACK,
-            &_tracker,
-            [this, pid]() {
-                start_compact_partition(pid);
-            },
-            0,
-            15000_ms);
+        dwarn_compact_record("gpid({})'s replica is invalid now, retry this partition later", pid);
+        tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                         &_tracker,
+                         [this, pid]() { start_compact_partition(pid); },
+                         0,
+                         15000_ms);
     } else {
         start_compact_primary(pid, primary);
     }
 }
 
-void compact_policy_worker::start_compact_primary(gpid pid,
-                                                    const dsn::rpc_address &primary) {
+void compact_policy_worker::start_compact_primary(gpid pid, const dsn::rpc_address &primary)
+{
     compact_request req;
     req.id = _cur_record.id;
     req.pid = pid;
     req.policy_name = _policy.policy_name;
     req.opts = _policy.opts;
-    dsn_message_t request = dsn_msg_create_request(RPC_POLICY_COMPACT,
-                                                   0,
-                                                   pid.thread_hash());
+    dsn_message_t request = dsn_msg_create_request(RPC_POLICY_COMPACT, 0, pid.thread_hash());
     dsn::marshall(request, req);
     rpc::call(primary,
               request,
               &_tracker,
-              [this, pid, primary](error_code err,
-                     compact_response &&response) {
+              [this, pid, primary](error_code err, compact_response &&response) {
                   on_compact_reply(err, std::move(response), pid, primary);
               });
-    ddebug_compact_record("send compact_request to {}@{}",
-                          pid,
-                          primary.to_string());
+    ddebug_compact_record("send compact_request to {}@{}", pid, primary.to_string());
 }
 
 void compact_policy_worker::on_compact_reply(error_code err,
-                                              compact_response &&response,
-                                              gpid pid,
-                                              const dsn::rpc_address &primary) {
+                                             compact_response &&response,
+                                             gpid pid,
+                                             const dsn::rpc_address &primary)
+{
     dwarn_compact_record("on_compact_reply, pid({})", pid);
-    if (err == dsn::ERR_OK &&
-        response.err == dsn::ERR_OK) {
+    if (err == dsn::ERR_OK && response.err == dsn::ERR_OK) {
         dassert_compact_record(response.policy_name == _policy.policy_name,
                                "policy name({}) doesn't match, {}@{}",
                                response.policy_name.c_str(),
@@ -208,10 +190,8 @@ void compact_policy_worker::on_compact_reply(error_code err,
                                response.id);
 
         if (response.id < _cur_record.id) {
-            dwarn_compact_record("{}@{} got a lower id({}), ignore it",
-                                 pid,
-                                 primary.to_string(),
-                                 response.id);
+            dwarn_compact_record(
+                "{}@{} got a lower id({}), ignore it", pid, primary.to_string(), response.id);
         } else if (finish_compact_partition(pid, response.is_finished, primary)) {
             return;
         }
@@ -224,40 +204,34 @@ void compact_policy_worker::on_compact_reply(error_code err,
     }
 
     // start another turn of compact no matter we encounter error or not finished
-    tasking::enqueue(
-        LPC_DEFAULT_CALLBACK,
-        &_tracker,
-        [this, pid, primary]() {
-            start_compact_primary(pid, primary);
-        },
-        0,
-        10000_ms);
+    tasking::enqueue(LPC_DEFAULT_CALLBACK,
+                     &_tracker,
+                     [this, pid, primary]() { start_compact_primary(pid, primary); },
+                     0,
+                     10000_ms);
 }
 
 bool compact_policy_worker::finish_compact_partition(gpid pid,
-                                                      bool finish,
-                                                      const dsn::rpc_address &source) {
+                                                     bool finish,
+                                                     const dsn::rpc_address &source)
+{
     zauto_lock l(_lock);
     if (_progress.gpid_finish[pid]) {
-        dwarn_compact_record("pid({}) has finished, ignore the response from {}",
-                             pid,
-                             source.to_string());
+        dwarn_compact_record(
+            "pid({}) has finished, ignore the response from {}", pid, source.to_string());
         return true;
     }
 
     if (!finish) {
-        ddebug_compact_record("compaction on {}@{} is not finish",
-                             pid,
-                             source.to_string());
+        ddebug_compact_record("compaction on {}@{} is not finish", pid, source.to_string());
         return false;
     }
 
     _progress.gpid_finish[pid] = true;
-    ddebug_compact_record("compaction on {}@{} has finished",
-                         pid,
-                         source.to_string());
+    ddebug_compact_record("compaction on {}@{} has finished", pid, source.to_string());
 
-    auto app_unfinish_partition_count = --_progress.app_unfinished_partition_count[pid.get_app_id()];
+    auto app_unfinish_partition_count =
+        --_progress.app_unfinished_partition_count[pid.get_app_id()];
     ddebug_compact_record("finish compact for gpid({}), {} partitions left on app_id({})",
                           pid,
                           app_unfinish_partition_count,
@@ -287,5 +261,5 @@ void compact_policy_worker::finish_compact_policy()
     _policy_scheduler->on_finish();
 }
 
-}   // namespace replication
-}   // namespace dsn
+} // namespace replication
+} // namespace dsn

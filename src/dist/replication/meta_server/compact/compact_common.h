@@ -26,29 +26,29 @@
 
 #pragma once
 
-#include "dsn/cpp/json_helper.h"
+#include <dsn/cpp/json_helper.h>
 
 namespace dsn {
 namespace replication {
 
-class compact_record_json: public compact_record {
+class compact_record_json : public compact_record
+{
 public:
     explicit compact_record_json() {}
-    explicit compact_record_json(const compact_record &o): compact_record(o) {}
+    explicit compact_record_json(const compact_record &o) : compact_record(o) {}
 
-    DEFINE_JSON_SERIALIZATION(id,
-                              start_time,
-                              end_time,
-                              app_ids)
+    DEFINE_JSON_SERIALIZATION(id, start_time, end_time, app_ids)
 };
 
-class compact_policy_json: public compact_policy {
+class compact_policy_json : public compact_policy
+{
 public:
     explicit compact_policy_json() {}
-    explicit compact_policy_json(const compact_policy &o): compact_policy(o) {}
-    explicit compact_policy_json(compact_policy&&o): compact_policy(o) {}
+    explicit compact_policy_json(const compact_policy &o) : compact_policy(o) {}
+    explicit compact_policy_json(compact_policy &&o) : compact_policy(o) {}
 
-    void enable_isset() {
+    void enable_isset()
+    {
         __isset.policy_name = true;
         __isset.enable = true;
         __isset.start_time = true;
@@ -57,13 +57,8 @@ public:
         __isset.opts = true;
     }
 
-    DEFINE_JSON_SERIALIZATION(policy_name,
-                              enable,
-                              start_time,
-                              interval_seconds,
-                              app_ids,
-                              opts)
+    DEFINE_JSON_SERIALIZATION(policy_name, enable, start_time, interval_seconds, app_ids, opts)
 };
 
-}   // namespace replication
-}   // namespace dsn
+} // namespace replication
+} // namespace dsn
