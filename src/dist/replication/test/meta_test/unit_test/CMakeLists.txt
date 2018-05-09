@@ -4,8 +4,8 @@ set(MY_PROJ_NAME dsn.meta.test)
 # You can manually set MY_PROJ_SRC to include source files under other directories.
 set(MY_PROJ_SRC ../misc/misc.cpp
                 ../../../meta_server/compact/meta_compact_service.cpp
-                ../../../meta_server/compact/comapct_policy_executor.cpp
-                ../../../meta_server/compact/policy_deadline_detector.cpp)
+                ../../../meta_server/compact/compact_policy_worker.cpp
+                ../../../meta_server/compact/policy_deadline_checker.cpp)
 
 # Search mode for source files under CURRENT project directory?
 # "GLOB_RECURSE" for recursive search

@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-#include "policy_deadline_detector.h"
+#include "policy_deadline_checker.h"
 #include <dsn/dist/fmt_logging.h>
 
 #include "compact_common.h"
@@ -33,11 +33,12 @@
 namespace dsn {
 namespace replication {
 
-void compact_policy_scheduler::on_finish(const compact_record &record) {
+void policy_deadline_checker::on_finish() {
     task_ptr compact_task =
         tasking::create_task(LPC_DEFAULT_CALLBACK,
                              &_tracker,
-                             [this, record = std::move(record)]() {
+                             [this]() {
+            const compact_record &record = _executor.get_current_record();
             // store compact record into memory
             {
                 zauto_lock l(_lock);
@@ -47,14 +48,13 @@ void compact_policy_scheduler::on_finish(const compact_record &record) {
             }
             issue_new_compact();
         });
-    sync_record_to_remote_storage(record, compact_task, false);
+    restore_current_record(compact_task, false);
 }
 
-void compact_policy_scheduler::sync_record_to_remote_storage(const compact_record &record,
-                                                           task_ptr sync_task,
-                                                           bool create_new_node)
+void policy_deadline_checker::restore_current_record(task_ptr sync_task,
+                                                      bool create_new_node)
 {
-    auto callback = [this, record, sync_task, create_new_node](dsn::error_code err) {
+    auto callback = [this, sync_task, create_new_node](dsn::error_code err) {
         if (dsn::ERR_OK == err ||
             (create_new_node && dsn::ERR_NODE_ALREADY_EXIST == err)) {
             ddebug_compact_policy("sync compact_record to remote storage successfully");
@@ -68,13 +68,11 @@ void compact_policy_scheduler::sync_record_to_remote_storage(const compact_recor
             tasking::enqueue(
                 LPC_DEFAULT_CALLBACK,
                 &_tracker,
-                [this, record, sync_task, create_new_node]() {
-                    sync_record_to_remote_storage(std::move(record),
-                                                  std::move(sync_task),
-                                                  create_new_node);
+                [this, sync_task, create_new_node]() {
+                    restore_current_record(sync_task, create_new_node);
                 },
                 0,
-                rs_retry_delay);
+                10000_ms);
         } else {
             dassert_compact_policy(false,
                                    "we can't handle this right now, error({})",
@@ -82,21 +80,20 @@ void compact_policy_scheduler::sync_record_to_remote_storage(const compact_recor
         }
     };
 
+    const compact_record &record = _executor.get_current_record();
     std::string record_path = _compact_service->get_record_path(_policy.policy_name, record.id);
-    ddebug_compact_policy("record_path={}",
-                          record_path);
+    ddebug_compact_policy("record_path={}", record_path);
     dsn::blob record_data = dsn::json::json_forwarder<compact_record_json>::encode(compact_record_json(record));
     if (create_new_node) {
         if (_history_records.size() > history_count_to_keep) {
-            const compact_record &record = _history_records.begin()->second;
-            ddebug_compact_policy("start to gc compact record({})",
-                                  record.id);
+            const compact_record &oldest_record = _history_records.begin()->second;
+            ddebug_compact_policy("start to gc compact record({})", oldest_record.id);
 
             tasking::create_task(
                 LPC_DEFAULT_CALLBACK,
                 &_tracker,
-                [this, record]() {
-                    remove_record_from_remote_storage(record);
+                [this, oldest_record]() {
+                    remove_record(oldest_record);
                 })->enqueue();
         }
 
@@ -116,7 +113,7 @@ void compact_policy_scheduler::sync_record_to_remote_storage(const compact_recor
     }
 }
 
-bool compact_policy_scheduler::start_in_1hour(int start_time)
+bool policy_deadline_checker::has_started_in_1hour(int start_time)
 {
     dassert(0 <= start_time && start_time < 86400, "");
     int now = ::dsn::utils::sec_of_day();
@@ -124,24 +121,24 @@ bool compact_policy_scheduler::start_in_1hour(int start_time)
            (start_time > now && now + 86400 - start_time <= 3600);
 }
 
-bool compact_policy_scheduler::should_start_compact()
+bool policy_deadline_checker::should_start_compact()
 {
-    uint64_t last_compact_start_time = 0;
+    int64_t last_compact_start_time = 0;
     if (!_history_records.empty()) {
         last_compact_start_time = _history_records.rbegin()->second.start_time;
     }
 
     if (last_compact_start_time == 0) {
         //  the first time to compact
-        return start_in_1hour(_policy.start_time);
+        return has_started_in_1hour(_policy.start_time);
     } else {
-        uint64_t next_compact_time =
+        int64_t next_compact_time =
             last_compact_start_time + _policy.interval_seconds;
         return next_compact_time <= dsn_now_s();
     }
 }
 
-void compact_policy_scheduler::retry_issue_new_compact()
+void policy_deadline_checker::retry_issue_new_compact()
 {
     tasking::enqueue(
         LPC_DEFAULT_CALLBACK,
@@ -150,10 +147,10 @@ void compact_policy_scheduler::retry_issue_new_compact()
             issue_new_compact();
         },
         0,
-        retry_new_compact_delay);
+        300000_ms);
 }
 
-void compact_policy_scheduler::issue_new_compact() {
+void policy_deadline_checker::issue_new_compact() {
     zauto_lock l(_lock);
 
     // before issue new compact, we check whether the policy is dropped
@@ -178,10 +175,10 @@ void compact_policy_scheduler::issue_new_compact() {
             [this]() {
                 _executor.execute();
             });
-    sync_record_to_remote_storage(_executor.get_current_record(), compact_task, true);
+    restore_current_record(compact_task, true);
 }
 
-void compact_policy_scheduler::start() {
+void policy_deadline_checker::start() {
     if (_executor.on_compacting()) {
         _executor.execute();
     } else {
@@ -189,7 +186,7 @@ void compact_policy_scheduler::start() {
     }
 }
 
-void compact_policy_scheduler::add_record(const compact_record &record) {
+void policy_deadline_checker::add_record(const compact_record &record) {
     zauto_lock l(_lock);
 
     const compact_record &cur_record = _executor.get_current_record();
@@ -223,7 +220,7 @@ void compact_policy_scheduler::add_record(const compact_record &record) {
     }
 }
 
-std::vector<compact_record> compact_policy_scheduler::get_compact_records() {
+std::vector<compact_record> policy_deadline_checker::get_compact_records() {
     zauto_lock l(_lock);
 
     std::vector<compact_record> records;
@@ -237,24 +234,24 @@ std::vector<compact_record> compact_policy_scheduler::get_compact_records() {
     return records;
 }
 
-bool compact_policy_scheduler::on_compacting() {
+bool policy_deadline_checker::on_compacting() {
     return _executor.on_compacting();
 }
 
-void compact_policy_scheduler::set_policy(const compact_policy &policy)
+void policy_deadline_checker::set_policy(const compact_policy &policy)
 {
     zauto_lock l(_lock);
 
     _policy = policy;
 }
 
-compact_policy compact_policy_scheduler::get_policy()
+compact_policy policy_deadline_checker::get_policy()
 {
     zauto_lock l(_lock);
     return _policy;
 }
 
-void compact_policy_scheduler::remove_record_from_remote_storage(const compact_record &record)
+void policy_deadline_checker::remove_record(const compact_record &record)
 {
     ddebug_compact_policy("start to gc compact_record: id({}), start_time({}), end_time({})",
                           record.id,
@@ -275,10 +272,10 @@ void compact_policy_scheduler::remove_record_from_remote_storage(const compact_r
                 LPC_DEFAULT_CALLBACK,
                 &_tracker,
                 [this, record]() {
-                    remove_record_from_remote_storage(record);
+                    remove_record(record);
                 },
                 0,
-                rs_retry_delay);
+                10000_ms);
         } else {
             dassert_compact_policy(false,
                       "we can't handle this right now, error({})",

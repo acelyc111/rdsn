@@ -27,7 +27,7 @@
 #pragma once
 
 #include "../meta_data.h"
-#include "policy_deadline_detector.h"
+#include "policy_deadline_checker.h"
 
 namespace dsn {
 namespace replication {
@@ -45,7 +45,7 @@ typedef rpc_holder<configuration_query_compact_policy_request,
 class compact_service {
 public:
     compact_service(meta_service *meta_svc,
-                    const std::string &policy_meta_root);
+                    dsn::string_view policy_meta_root);
     ~compact_service() { _tracker.cancel_outstanding_tasks(); }
 
     // sync compact policies from remote storage,
@@ -62,10 +62,10 @@ private:
 
     void create_policy_root(dsn::task_ptr callback);
     void do_add_policy(add_compact_policy_rpc &add_rpc,
-                       std::shared_ptr<compact_policy_scheduler> policy_scheduler);
+                       std::shared_ptr<policy_deadline_checker> policy_scheduler);
     void modify_policy_on_remote_storage(modify_compact_policy_rpc &modify_rpc,
                                          const compact_policy &policy,
-                                         std::shared_ptr<compact_policy_scheduler> policy_scheduler);
+                                         std::shared_ptr<policy_deadline_checker> policy_scheduler);
 
     bool is_valid_policy_name(const std::string &policy_name);
 
@@ -77,8 +77,8 @@ private:
 private:
     static constexpr std::chrono::milliseconds rs_retry_delay = 10000_ms;
 
-    friend class comapct_policy_executor;
-    friend class compact_policy_scheduler;
+    friend class compact_policy_worker;
+    friend class policy_deadline_checker;
     meta_service *_meta_svc;
     server_state *_svc_state;
     dsn::task_tracker _tracker;
@@ -87,7 +87,7 @@ private:
     std::string _policy_root;
 
     dsn::service::zlock _lock;
-    std::map<std::string, std::shared_ptr<compact_policy_scheduler>> _policy_schedulers;
+    std::map<std::string, std::shared_ptr<policy_deadline_checker>> _policy_schedulers;
 };
 
 }   // namespace replication

@@ -1052,14 +1052,14 @@ dsn::error_code replication_ddl_client::enable_backup_policy(const std::string &
     }
 }
 
-dsn::error_code replication_ddl_client::add_compact_policy(const std::string &policy_name,
+dsn::error_code replication_ddl_client::add_compact_policy(dsn::string_view policy_name,
                                                            const std::set<int32_t> &app_ids,
                                                            int32_t interval_seconds,
                                                            int32_t start_time,
                                                            const std::map<std::string, std::string> &opts) {
     std::shared_ptr<configuration_add_compact_policy_request> req =
         std::make_shared<configuration_add_compact_policy_request>();
-    req->policy.__set_policy_name(policy_name);
+    req->policy.__set_policy_name(static_cast<std::string>(policy_name));
     req->policy.__set_app_ids(app_ids);
     req->policy.__set_interval_seconds(interval_seconds);
     req->policy.__set_start_time(start_time);
@@ -1090,15 +1090,15 @@ dsn::error_code replication_ddl_client::add_compact_policy(const std::string &po
 }
 
 dsn::error_code
-replication_ddl_client::do_modify_compact_policy(const std::string &policy_name,
+replication_ddl_client::do_modify_compact_policy(dsn::string_view policy_name,
                                                  const std::set<int32_t>* app_ids,
-                                                 int32_t* interval_seconds,
-                                                 int32_t* start_time,
-                                                 bool* enable,
+                                                 const int32_t* interval_seconds,
+                                                 const int32_t* start_time,
+                                                 const bool* enable,
                                                  const std::map<std::string, std::string>* opts) {
     std::shared_ptr<configuration_modify_compact_policy_request> req =
         std::make_shared<configuration_modify_compact_policy_request>();
-        req->policy.policy_name = policy_name;
+        req->policy.policy_name = static_cast<std::string>(policy_name);
     if (app_ids != nullptr && !app_ids->empty()) {
         req->policy.__set_app_ids(*app_ids);
     }
@@ -1138,7 +1138,7 @@ replication_ddl_client::do_modify_compact_policy(const std::string &policy_name,
     }
 }
 
-dsn::error_code replication_ddl_client::modify_compact_policy(const std::string &policy_name,
+dsn::error_code replication_ddl_client::modify_compact_policy(dsn::string_view policy_name,
                                                               const std::set<int32_t> &app_ids,
                                                               int32_t interval_seconds,
                                                               int32_t start_time,
@@ -1151,7 +1151,7 @@ dsn::error_code replication_ddl_client::modify_compact_policy(const std::string 
                                     &opts);
 }
 
-dsn::error_code replication_ddl_client::switch_compact_policy(const std::string &policy_name, bool enable)
+dsn::error_code replication_ddl_client::switch_compact_policy(dsn::string_view policy_name, bool enable)
 {
     return do_modify_compact_policy(policy_name,
                                     nullptr,

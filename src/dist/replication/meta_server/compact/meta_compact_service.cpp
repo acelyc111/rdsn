@@ -32,15 +32,13 @@
 #include "dist/replication/meta_server/meta_service.h"
 #include "dist/replication/meta_server/server_state.h"
 
-#include "policy_deadline_detector.h"
-
 namespace dsn {
 namespace replication {
 
 compact_service::compact_service(meta_service *meta_svc,
-                                 const std::string &policy_root)
+                                 dsn::string_view policy_root)
         : _meta_svc(meta_svc),
-          _policy_root(policy_root)
+          _policy_root(static_cast<std::string>(policy_root))
 {
     _svc_state = _meta_svc->get_server_state();
 }
@@ -124,10 +122,9 @@ error_code compact_service::sync_policies_from_remote_storage()
     //                           policy_name2/compact_id_1
     //                                       /compact_id_2
     error_code err = dsn::ERR_OK;
-    dsn::task_tracker tracker;
 
     auto parse_history_records =
-        [this, &err, &tracker](const std::string &policy_name) {
+        [this, &err](const std::string &policy_name) {
             auto add_history_record =
                 [this, &err, policy_name](error_code ec,
                                           const dsn::blob &value) {
@@ -138,14 +135,14 @@ error_code compact_service::sync_policies_from_remote_storage()
                     compact_record_json tcompact_record;
                     tcompact_record.decode_json_state(tokenizer);
 
-                    std::shared_ptr<compact_policy_scheduler> policy_scheduler = nullptr;
+                    std::shared_ptr<policy_deadline_checker> policy_scheduler = nullptr;
                     {
                         zauto_lock l(_lock);
                         auto it = _policy_schedulers.find(policy_name);
                         dassert_f(it != _policy_schedulers.end(), "");
                         policy_scheduler = it->second;
                     }
-                    policy_scheduler->add_record(tcompact_record);
+                    policy_scheduler->add_record(compact_record(tcompact_record));
                 } else {
                     err = ec;
                     ddebug_f("init compact_record_json from remote storage failed({})",
@@ -157,12 +154,12 @@ error_code compact_service::sync_policies_from_remote_storage()
             _meta_svc->get_remote_storage()->get_children(
                 specified_policy_path,
                 LPC_DEFAULT_CALLBACK,
-                [this, &err, &tracker, policy_name, add_history_record](error_code ec,
-                                                                        const std::vector<std::string> &record_ids) {
+                [this, &err, policy_name, add_history_record](error_code ec,
+                                                              const std::vector<std::string> &record_ids) {
                     if (ec == dsn::ERR_OK) {
                         if (!record_ids.empty()) {
                             for (const auto &record_id : record_ids) {
-                                int64_t id = boost::lexical_cast<int64_t>(record_id);
+                                auto id = boost::lexical_cast<int64_t>(record_id);
                                 std::string record_path = get_record_path(policy_name, id);
                                 ddebug_f("start to acquire record({}.{})",
                                          policy_name.c_str(),
@@ -170,8 +167,8 @@ error_code compact_service::sync_policies_from_remote_storage()
                                 _meta_svc->get_remote_storage()->get_data(
                                     record_path,
                                     TASK_CODE_EXEC_INLINED,
-                                    std::move(add_history_record),
-                                    &tracker);
+                                    add_history_record,
+                                    &_tracker);
                             }
                         } else {
                             ddebug_f("policy({}) has not started a compact process",
@@ -184,11 +181,11 @@ error_code compact_service::sync_policies_from_remote_storage()
                                  ec.to_string());
                     }
                 },
-                &tracker);
+                &_tracker);
     };
 
     auto parse_one_policy =
-        [this, &err, &tracker, &parse_history_records](const std::string &policy_name) {
+        [this, &err, &parse_history_records](const std::string &policy_name) {
             ddebug_f("start to acquire the context of policy({})",
                      policy_name.c_str());
             auto policy_path = get_policy_path(policy_name);
@@ -202,7 +199,7 @@ error_code compact_service::sync_policies_from_remote_storage()
                         compact_policy_json tpolicy;
                         tpolicy.decode_json_state(tokenizer);
                         tpolicy.enable_isset();
-                        auto policy_scheduler = std::make_shared<compact_policy_scheduler>(this, compact_policy(tpolicy));
+                        auto policy_scheduler = std::make_shared<policy_deadline_checker>(this, compact_policy(tpolicy));
 
                         {
                             zauto_lock l(_lock);
@@ -216,13 +213,13 @@ error_code compact_service::sync_policies_from_remote_storage()
                                  ec.to_string());
                     }
                 },
-                &tracker);
+                &_tracker);
         };
 
     _meta_svc->get_remote_storage()->get_children(
         _policy_root,
         LPC_DEFAULT_CALLBACK,
-        [&err, &tracker, &parse_one_policy](error_code ec,
+        [&err, &parse_one_policy](error_code ec,
                                             const std::vector<std::string> &policy_names) {
             if (ec == dsn::ERR_OK) {
                 for (const auto &policy_name : policy_names) {
@@ -234,9 +231,7 @@ error_code compact_service::sync_policies_from_remote_storage()
                          ec.to_string());
             }
         },
-        &tracker);
-
-    tracker.wait_outstanding_tasks();
+        &_tracker);
     return err;
 }
 
@@ -271,7 +266,7 @@ void compact_service::add_policy(add_compact_policy_rpc &add_rpc)
         ddebug_f("add compact policy({})", policy.policy_name.c_str());
         compact_policy tmp(policy);
         tmp.__set_app_ids(app_ids);
-        auto policy_scheduler = std::make_shared<compact_policy_scheduler>(this, std::move(tmp));
+        auto policy_scheduler = std::make_shared<policy_deadline_checker>(this, std::move(tmp));
         do_add_policy(add_rpc, policy_scheduler);
     } else {
         add_rpc.response().err = dsn::ERR_INVALID_PARAMETERS;
@@ -279,7 +274,7 @@ void compact_service::add_policy(add_compact_policy_rpc &add_rpc)
 }
 
 void compact_service::do_add_policy(add_compact_policy_rpc &add_rpc,
-                                    std::shared_ptr<compact_policy_scheduler> policy_scheduler)
+                                    std::shared_ptr<policy_deadline_checker> policy_scheduler)
 {
     const compact_policy &policy = policy_scheduler->get_policy();
     dsn::blob value = json::json_forwarder<compact_policy_json>::encode(compact_policy_json(policy));
@@ -330,7 +325,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
     response.err = dsn::ERR_OK;
 
     const compact_policy &req_policy = request.policy;
-    std::shared_ptr<compact_policy_scheduler> policy_scheduler = nullptr;
+    std::shared_ptr<policy_deadline_checker> policy_scheduler = nullptr;
     {
         zauto_lock (_lock);
         auto iter = _policy_schedulers.find(req_policy.policy_name);
@@ -447,7 +442,7 @@ void compact_service::modify_policy(modify_compact_policy_rpc &modify_rpc)
 
 void compact_service::modify_policy_on_remote_storage(modify_compact_policy_rpc &modify_rpc,
                                                       const compact_policy &policy,
-                                                      std::shared_ptr<compact_policy_scheduler> policy_scheduler)
+                                                      std::shared_ptr<policy_deadline_checker> policy_scheduler)
 {
     std::string policy_path = get_policy_path(policy.policy_name);
     dsn::blob value = json::json_forwarder<compact_policy_json>::encode(compact_policy_json(policy));
@@ -455,7 +450,7 @@ void compact_service::modify_policy_on_remote_storage(modify_compact_policy_rpc 
         policy_path,
         value,
         LPC_DEFAULT_CALLBACK,
-        [this, modify_rpc, policy, policy_scheduler](error_code err) {
+        [this, modify_rpc = std::move(modify_rpc), policy, policy_scheduler](error_code err) mutable {
             if (err == dsn::ERR_OK) {
                 ddebug_f("modify compact policy({}) to remote storage succeed",
                          policy.policy_name.c_str());
@@ -499,7 +494,7 @@ void compact_service::query_policy(query_compact_policy_rpc &query_rpc)
     }
 
     for (const auto &policy_name : policy_names) {
-        std::shared_ptr<compact_policy_scheduler> policy_scheduler = nullptr;
+        std::shared_ptr<policy_deadline_checker> policy_scheduler = nullptr;
         {
             zauto_lock l(_lock);
             auto iter = _policy_schedulers.find(policy_name);

@@ -39,6 +39,7 @@
 #include <map>
 #include <dsn/dist/replication.h>
 #include <dsn/tool-api/task_tracker.h>
+#include <dsn/utility/string_view.h>
 
 namespace dsn {
 namespace replication {
@@ -157,13 +158,13 @@ public:
                                          int32_t backup_history_count_to_keep = 0,
                                          const std::string &start_time = std::string());
 
-    dsn::error_code add_compact_policy(const std::string &policy_name,
+    dsn::error_code add_compact_policy(dsn::string_view policy_name,
                                        const std::set<int32_t> &app_ids,
                                        int32_t interval_seconds,
                                        int32_t start_time,
                                        const std::map<std::string, std::string> &opts);
 
-    dsn::error_code modify_compact_policy(const std::string &policy_name,
+    dsn::error_code modify_compact_policy(dsn::string_view policy_name,
                                           const std::set<int32_t> &app_ids,
                                           int32_t interval_seconds,
                                           int32_t start_time,
@@ -172,7 +173,7 @@ public:
     dsn::error_code query_compact_policy(const std::set<std::string> &policy_names,
                                          std::vector<compact_policy_records>* policy_records = nullptr);
 
-    dsn::error_code switch_compact_policy(const std::string &policy_name, bool enable);
+    dsn::error_code switch_compact_policy(dsn::string_view policy_name, bool enable);
 
     dsn::error_code set_app_envs(const std::string &app_name,
                                  const std::vector<std::string> &keys,
@@ -193,11 +194,11 @@ private:
                           dsn_message_t request,
                           dsn_message_t resp);
 
-    dsn::error_code do_modify_compact_policy(const std::string &policy_name,
+    dsn::error_code do_modify_compact_policy(dsn::string_view policy_name,
                                              const std::set<int32_t>* app_ids,
-                                             int32_t* interval_seconds,
-                                             int32_t* start_time,
-                                             bool* enable,
+                                             const int32_t* interval_seconds,
+                                             const int32_t* start_time,
+                                             const bool* enable,
                                              const std::map<std::string, std::string>* opts);
 
     template <typename TRequest>

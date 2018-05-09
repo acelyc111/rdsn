@@ -153,18 +153,10 @@ private:
     void on_report_restore_status(dsn_message_t req);
     void on_query_restore_status(dsn_message_t req);
 
+    // manual compact
     void on_add_compact_policy(add_compact_policy_rpc add_rpc);
     void on_modify_compact_policy(modify_compact_policy_rpc modify_rpc);
     void on_query_compact_policy(query_compact_policy_rpc query_rpc);
-
-    // common routines
-    // ret:
-    //   1. the meta is leader
-    //   0. meta isn't leader, and rpc-msg can forward to others
-    //  -1. meta isn't leader, and rpc-msg can't forward to others
-    int check_leader(dsn_message_t req);
-    error_code remote_storage_initialize();
-    bool check_freeze() const;
 
     template <typename TResponse>
     bool check_compaction_enabled(TResponse& response) {
@@ -176,6 +168,15 @@ private:
 
         return true;
     }
+
+    // common routines
+    // ret:
+    //   1. the meta is leader
+    //   0. meta isn't leader, and rpc-msg can forward to others
+    //  -1. meta isn't leader, and rpc-msg can't forward to others
+    int check_leader(dsn_message_t req);
+    error_code remote_storage_initialize();
+    bool check_freeze() const;
 
 private:
     friend class replication_checker;

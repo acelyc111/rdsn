@@ -35,7 +35,7 @@ namespace dsn {
 namespace replication {
 
 class compact_service;
-class compact_policy_scheduler;
+class policy_deadline_checker;
 
 struct compact_progress {
     uint32_t unfinished_apps_count = 0;
@@ -52,13 +52,13 @@ struct compact_progress {
     }
 };
 
-class comapct_policy_executor {
+class compact_policy_worker {
 public:
-    comapct_policy_executor(compact_service *svc,
-                            compact_policy_scheduler *policy_scheduler)
+    compact_policy_worker(compact_service *svc,
+                            policy_deadline_checker *policy_scheduler)
             : _compact_service(svc),
               _policy_scheduler(policy_scheduler) {}
-    ~comapct_policy_executor() { _tracker.cancel_outstanding_tasks(); }
+    ~compact_policy_worker() { _tracker.cancel_outstanding_tasks(); }
 
     void init(const compact_policy &policy,
               int64_t start_time);
@@ -87,11 +87,8 @@ private:
     void finish_compact_policy();
 
 private:
-    static constexpr std::chrono::milliseconds update_configuration_delay = 15000_ms;
-    static constexpr std::chrono::milliseconds request_compact_period = 10000_ms;
-
     compact_service *_compact_service;
-    compact_policy_scheduler *_policy_scheduler;
+    policy_deadline_checker *_policy_scheduler;
     compact_policy _policy;
     dsn::task_tracker _tracker;
 

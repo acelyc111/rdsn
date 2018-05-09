@@ -24,11 +24,10 @@
  * THE SOFTWARE.
  */
 
-#include "comapct_policy_executor.h"
+#include "compact_policy_worker.h"
 
 #include <boost/lexical_cast.hpp>
 
-#include "dsn/cpp/zlocks.h"
 #include <dsn/dist/fmt_logging.h>
 #include "meta_compact_service.h"
 #include "../server_state.h"
@@ -38,7 +37,7 @@ namespace replication {
 
 using namespace dsn::service;
 
-void comapct_policy_executor::init(const compact_policy &policy,
+void compact_policy_worker::init(const compact_policy &policy,
                                    int64_t start_time) {
     _policy = policy;
     _cur_record.id = _cur_record.start_time = start_time;
@@ -49,7 +48,7 @@ void comapct_policy_executor::init(const compact_policy &policy,
     init_progress();
 }
 
-void comapct_policy_executor::execute() {
+void compact_policy_worker::execute() {
     for (const int32_t &app_id : _cur_record.app_ids) {
         if (_progress.app_unfinished_partition_count.count(app_id) != 0) {
             start_compact_app(app_id);
@@ -59,16 +58,16 @@ void comapct_policy_executor::execute() {
     }
 }
 
-bool comapct_policy_executor::on_compacting() {
+bool compact_policy_worker::on_compacting() {
     return _cur_record.start_time > 0 &&
            _cur_record.end_time <= 0;
 }
 
-compact_record comapct_policy_executor::get_current_record() {
+compact_record compact_policy_worker::get_current_record() {
     return _cur_record;
 }
 
-void comapct_policy_executor::init_progress() {
+void compact_policy_worker::init_progress() {
     zauto_lock l(_lock);
 
     _progress.reset();
@@ -90,7 +89,7 @@ void comapct_policy_executor::init_progress() {
     }
 }
 
-void comapct_policy_executor::start_compact_app(int32_t app_id) {
+void compact_policy_worker::start_compact_app(int32_t app_id) {
     if (skip_compact_app(app_id)) {
         ddebug_compact_record("skip to compact app({})", app_id);
         return;
@@ -109,7 +108,7 @@ void comapct_policy_executor::start_compact_app(int32_t app_id) {
     }
 }
 
-bool comapct_policy_executor::skip_compact_app(int32_t app_id) {
+bool compact_policy_worker::skip_compact_app(int32_t app_id) {
     if (!_compact_service->get_service_state()->is_app_available(app_id)) {
         dwarn_compact_record("app({}) is not available, just ignore it",
                              app_id);
@@ -130,7 +129,7 @@ bool comapct_policy_executor::skip_compact_app(int32_t app_id) {
     return false;
 }
 
-void comapct_policy_executor::start_compact_partition(gpid pid)
+void compact_policy_worker::start_compact_partition(gpid pid)
 {
     ddebug_compact_record("start to compact gpid({})", pid);
 
@@ -156,13 +155,13 @@ void comapct_policy_executor::start_compact_partition(gpid pid)
                 start_compact_partition(pid);
             },
             0,
-            update_configuration_delay);
+            15000_ms);
     } else {
         start_compact_primary(pid, primary);
     }
 }
 
-void comapct_policy_executor::start_compact_primary(gpid pid,
+void compact_policy_worker::start_compact_primary(gpid pid,
                                                     const dsn::rpc_address &primary) {
     compact_request req;
     req.id = _cur_record.id;
@@ -185,7 +184,7 @@ void comapct_policy_executor::start_compact_primary(gpid pid,
                           primary.to_string());
 }
 
-void comapct_policy_executor::on_compact_reply(error_code err,
+void compact_policy_worker::on_compact_reply(error_code err,
                                               compact_response &&response,
                                               gpid pid,
                                               const dsn::rpc_address &primary) {
@@ -232,10 +231,10 @@ void comapct_policy_executor::on_compact_reply(error_code err,
             start_compact_primary(pid, primary);
         },
         0,
-        request_compact_period);
+        10000_ms);
 }
 
-bool comapct_policy_executor::finish_compact_partition(gpid pid,
+bool compact_policy_worker::finish_compact_partition(gpid pid,
                                                       bool finish,
                                                       const dsn::rpc_address &source) {
     zauto_lock l(_lock);
@@ -271,7 +270,7 @@ bool comapct_policy_executor::finish_compact_partition(gpid pid,
     return true;
 }
 
-void comapct_policy_executor::finish_compact_app(int32_t app_id)
+void compact_policy_worker::finish_compact_app(int32_t app_id)
 {
     ddebug_compact_record("finish compact for app({})", app_id);
 
@@ -280,12 +279,12 @@ void comapct_policy_executor::finish_compact_app(int32_t app_id)
     }
 }
 
-void comapct_policy_executor::finish_compact_policy()
+void compact_policy_worker::finish_compact_policy()
 {
     ddebug_compact_record("finish compact for policy");
     _cur_record.end_time = dsn_now_s();
 
-    _policy_scheduler->on_finish(_cur_record);
+    _policy_scheduler->on_finish();
 }
 
 }   // namespace replication

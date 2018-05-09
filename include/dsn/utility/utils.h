@@ -37,6 +37,7 @@
 
 #include <functional>
 #include <memory>
+#include "string_view.h"
 
 #define TIME_MS_MAX 0xffffffff
 
@@ -64,7 +65,7 @@ void time_ms_to_date_time(uint64_t ts_ms,
 
 int sec_of_day();       // how many seconds past in a day
 
-int hm_of_day_to_sec(const std::string &hm);    // hh:mm (range in [00:00, 23:59]) to seconds
+int hm_of_day_to_sec(dsn::string_view hm);      // hh:mm (range in [00:00, 23:59]) to seconds
 std::string sec_of_day_to_hm(int sec);          // seconds to hh:mm, which will range in [00:00, 23:59]
 
 uint64_t get_current_physical_time_ns();

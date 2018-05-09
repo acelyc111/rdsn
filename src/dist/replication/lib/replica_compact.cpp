@@ -26,7 +26,6 @@
 
 #include "replica.h"
 
-#include <dsn/dist/fmt_logging.h>
 #include <dsn/dist/replication/replication_app_base.h>
 
 namespace dsn {
@@ -189,7 +188,7 @@ void replica::manual_compact(const std::map<std::string, std::string> &opts)
         uint64_t start = dsn_now_ms();
         _manual_compact_start_time_ms.store(start);
         _app->manual_compact(opts);
-        uint64_t finish = _app->last_compact_finish_time().count();
+        uint64_t finish = static_cast<uint64_t>(_app->last_compact_finish_time().count());
         ddebug_replica("finish to execute manual compaction, time_used = {}ms",
                        finish - start);
         _manual_compact_last_finish_time_ms.store(finish);

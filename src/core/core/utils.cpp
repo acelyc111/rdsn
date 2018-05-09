@@ -151,11 +151,11 @@ int sec_of_day()
            tms.tm_sec;
 }
 
-int hm_of_day_to_sec(const std::string &hm)
+int hm_of_day_to_sec(dsn::string_view hm)
 {
     int32_t sec = -1;
     int hour = 0, min = 0;
-    if (::sscanf(hm.c_str(), "%d:%d", &hour, &min) == 2 &&
+    if (::sscanf(hm.data(), "%d:%d", &hour, &min) == 2 &&
         (0 <= hour && hour <= 23) &&
         (0 <= min && min <= 59)) {
         sec = 3600 * hour + 60 * min;

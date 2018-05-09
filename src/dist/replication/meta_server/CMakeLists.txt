@@ -1,8 +1,8 @@
 set(MY_PROJ_NAME dsn_meta_server)
 
 set(MANUAL_COMPACT_SRC compact/meta_compact_service.cpp
-                       compact/comapct_policy_executor.cpp
-                       compact/policy_deadline_detector.cpp)
+                       compact/compact_policy_worker.cpp
+                       compact/policy_deadline_checker.cpp)
 
 # Source files under CURRENT project directory will be automatically included.
 # You can manually set MY_PROJ_SRC to include source files under other directories.
