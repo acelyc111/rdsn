@@ -36,9 +36,9 @@ namespace dsn {
 namespace replication {
 
 compact_service::compact_service(meta_service *meta_svc,
-                                 dsn::string_view policy_root)
+                                 const std::string &policy_root)
         : _meta_svc(meta_svc),
-          _policy_root(static_cast<std::string>(policy_root))
+          _policy_root(policy_root)
 {
     _svc_state = _meta_svc->get_server_state();
 }

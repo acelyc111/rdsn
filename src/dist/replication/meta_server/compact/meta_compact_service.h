@@ -45,7 +45,7 @@ typedef rpc_holder<configuration_query_compact_policy_request,
 class compact_service {
 public:
     compact_service(meta_service *meta_svc,
-                    dsn::string_view policy_meta_root);
+                    const std::string &policy_meta_root);
     ~compact_service() { _tracker.cancel_outstanding_tasks(); }
 
     // sync compact policies from remote storage,

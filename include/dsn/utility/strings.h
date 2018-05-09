@@ -43,11 +43,11 @@ std::string sequence_container_to_string(const T &o,
                                          dsn::string_view item_splitter) {
     std::ostringstream ss;
     int i = 0;
-    for (auto &itor : o) {
+    for (auto &iter : o) {
         if (i > 0) {
-            ss << item_splitter;
+            ss << item_splitter.data();
         }
-        ss << itor;
+        ss << iter;
         i++;
     }
 
