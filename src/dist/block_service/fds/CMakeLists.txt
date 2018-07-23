@@ -18,4 +18,6 @@ set(MY_PROJ_LIB_PATH "")
 #Extra files that will be installed
 set(MY_BINPLACES "")
 
+add_compile_options("-Wno-delete-non-virtual-dtor")
+
 dsn_add_static_library()
