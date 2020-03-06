@@ -201,19 +201,19 @@ check_and_download "${LIBEVENT_PKG}"\
     "${LIBEVENT_NAME}"
 exit_if_fail $?
 
-# poco 1.7.8
-# from: https://codeload.github.com/pocoproject/poco/tar.gz/poco-1.7.8-release
-POCO_NAME=poco-poco-1.7.8-release
+# poco 1.10.1
+# from: https://github.com/pocoproject/poco/archive/poco-1.10.1-release.tar.gz
+POCO_NAME=poco-1.10.1-release
 POCO_PKG=${POCO_NAME}.tar.gz
 check_and_download "${POCO_PKG}"\
     "${OSS_URL_PREFIX}/${POCO_PKG}"\
-    "4dbf02e14b9f20940ca0e8c70d8f6036"\
+    "3fe8cb2d27832a5a765f9a6e51dacf64"\
     "${POCO_NAME}"
 exit_if_fail $?
 
 # fds
 if [ ! -d $TP_SRC/fds ]; then
-    git clone https://github.com/XiaoMi/galaxy-fds-sdk-cpp.git
+    git clone git@github.com:XiaoMi/galaxy-fds-sdk-cpp.git
     if [ $? != 0 ]; then
         echo "ERROR: download fds wrong"
         exit 2

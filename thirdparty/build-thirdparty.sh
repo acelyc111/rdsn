@@ -75,16 +75,16 @@ else
 fi
 
 # gperftools
-if [ ! -f $TP_OUTPUT/lib/libtcmalloc.so ]; then
-    cd $TP_SRC/gperftools-2.7
-    ./configure --prefix=$TP_OUTPUT --enable-static=no --enable-frame-pointers=yes
-    make -j8 && make install
-    res=$?
-    cd $TP_DIR
-    exit_if_fail "gperftools" $res
-else
-    echo "skip build gperftools"
-fi
+#if [ ! -f $TP_OUTPUT/lib/libtcmalloc.so ]; then
+#    cd $TP_SRC/gperftools-2.7
+#    ./configure --prefix=$TP_OUTPUT --enable-static=no --enable-frame-pointers=yes
+#    make -j8 && make install
+#    res=$?
+#    cd $TP_DIR
+#    exit_if_fail "gperftools" $res
+#else
+#    echo "skip build gperftools"
+#fi
 
 # build rapidjson
 if [ ! -d $TP_OUTPUT/include/rapidjson ]; then
@@ -92,40 +92,40 @@ if [ ! -d $TP_OUTPUT/include/rapidjson ]; then
 fi
 
 # build thrift
-if [ ! -d $TP_OUTPUT/include/thrift ]; then
-    mkdir -p $TP_BUILD/thrift-0.9.3
-    cd $TP_BUILD/thrift-0.9.3
-    CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=release\
-        -DWITH_JAVA=OFF\
-        -DWITH_PYTHON=OFF\
-        -DWITH_C_GLIB=OFF\
-        -DWITH_CPP=ON\
-        -DBUILD_TESTING=OFF\
-        -DBUILD_EXAMPLES=OFF\
-        -DWITH_QT5=OFF\
-        -DWITH_QT4=OFF\
-        -DWITH_OPENSSL=OFF\
-        -DBUILD_COMPILER=ON\
-        -DBUILD_TUTORIALS=OFF\
-        -DWITH_LIBEVENT=OFF\
-        -DCMAKE_INSTALL_PREFIX=$TP_OUTPUT\
-        -DCMAKE_POSITION_INDEPENDENT_CODE=ON\
-        -DWITH_SHARED_LIB=OFF"
-
-    if [ "x"$BOOST_ROOT != "x" ]; then
-        CMAKE_FLAGS="$CMAKE_FLAGS -DBOOST_ROOT=$BOOST_ROOT"
-    fi
-
-    echo $CMAKE_FLAGS
-    cmake $TP_SRC/thrift-0.9.3 $CMAKE_FLAGS
-
-    make -j8 && make install
-    res=$?
-    cd $TP_DIR
-    exit_if_fail "thrift" $res
-else
-    echo "skip build thrift"
-fi
+#if [ ! -d $TP_OUTPUT/include/thrift ]; then
+#    mkdir -p $TP_BUILD/thrift-0.9.3
+#    cd $TP_BUILD/thrift-0.9.3
+#    CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=release\
+#        -DWITH_JAVA=OFF\
+#        -DWITH_PYTHON=OFF\
+#        -DWITH_C_GLIB=OFF\
+#        -DWITH_CPP=ON\
+#        -DBUILD_TESTING=OFF\
+#        -DBUILD_EXAMPLES=OFF\
+#        -DWITH_QT5=OFF\
+#        -DWITH_QT4=OFF\
+#        -DWITH_OPENSSL=OFF\
+#        -DBUILD_COMPILER=ON\
+#        -DBUILD_TUTORIALS=OFF\
+#        -DWITH_LIBEVENT=OFF\
+#        -DCMAKE_INSTALL_PREFIX=$TP_OUTPUT\
+#        -DCMAKE_POSITION_INDEPENDENT_CODE=ON\
+#        -DWITH_SHARED_LIB=OFF"
+#
+#    if [ "x"$BOOST_ROOT != "x" ]; then
+#        CMAKE_FLAGS="$CMAKE_FLAGS -DBOOST_ROOT=$BOOST_ROOT"
+#    fi
+#
+#    echo $CMAKE_FLAGS
+#    cmake $TP_SRC/thrift-0.9.3 $CMAKE_FLAGS
+#
+#    make -j8 && make install
+#    res=$?
+#    cd $TP_DIR
+#    exit_if_fail "thrift" $res
+#else
+#    echo "skip build thrift"
+#fi
 
 # build zookeeper c client
 if [ ! -d $TP_OUTPUT/include/zookeeper ]; then
@@ -166,8 +166,8 @@ fi
 
 # build poco
 if [ ! -d $TP_OUTPUT/include/Poco ]; then
-    mkdir -p $TP_BUILD/poco-1.7.8-release
-    cd $TP_BUILD/poco-1.7.8-release
+    mkdir -p $TP_BUILD/poco-1.10.1-release
+    cd $TP_BUILD/poco-1.10.1-release
     CMAKE_FLAGS="
     -DENABLE_MONGODB=OFF\
     -DENABLE_PDF=OFF\
@@ -181,6 +181,7 @@ if [ ! -d $TP_OUTPUT/include/Poco ]; then
     -DENABLE_CPPPARSER=OFF\
     -DENABLE_POCODOC=OFF\
     -DENABLE_PAGECOMPILER=OFF\
+    -DENABLE_NETSSL=ON\
     -DENABLE_PAGECOMPILER_FILE2PAGE=OFF\
     -DCMAKE_INSTALL_PREFIX=$TP_OUTPUT\
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON"
@@ -191,7 +192,7 @@ if [ ! -d $TP_OUTPUT/include/Poco ]; then
     fi
 
     echo $CMAKE_FLAGS
-    cmake $TP_SRC/poco-poco-1.7.8-release $CMAKE_FLAGS
+    cmake $TP_SRC/poco-poco-1.10.1-release $CMAKE_FLAGS -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
     make -j8 && make install
     res=$?
     cd $TP_DIR
