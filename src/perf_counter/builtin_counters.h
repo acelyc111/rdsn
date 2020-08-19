@@ -15,7 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include <dsn/perf_counter/perf_counter_wrapper.h>
+#include <dsn/metrics.h>
+#include <dsn/utility/singleton.h>
 
 namespace dsn {
 class builtin_counters : public dsn::utils::singleton<builtin_counters>
@@ -26,7 +27,7 @@ public:
     void update_counters();
 
 private:
-    dsn::perf_counter_wrapper _memused_virt;
-    dsn::perf_counter_wrapper _memused_res;
+    gauge_ptr _memused_virt;
+    gauge_ptr _memused_res;
 };
-}
+} // namespace dsn
