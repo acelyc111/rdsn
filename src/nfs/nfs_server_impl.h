@@ -30,6 +30,7 @@
 #include <iostream>
 #include <dsn/cpp/serverlet.h>
 #include <dsn/utility/flags.h>
+#include <dsn/metrics.h>
 
 #include "nfs_code_definition.h"
 #include "nfs_types.h"
@@ -122,8 +123,8 @@ private:
 
     ::dsn::task_ptr _file_close_timer;
 
-    perf_counter_wrapper _recent_copy_data_size;
-    perf_counter_wrapper _recent_copy_fail_count;
+    counter_ptr _recent_copy_data_size;
+    counter_ptr _recent_copy_fail_count;
 
     dsn::task_tracker _tracker;
 };
