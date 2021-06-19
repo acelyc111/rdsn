@@ -27,10 +27,21 @@
 //
 // Example:
 //
-// ```cpp
+// header file
+// class rocksdb_store {
+//     ref_ptr<metric_entity> _table_entity;
+//     ref_ptr<counter_t> _rocksdb_get_count;
+//     ref_ptr<histogram_t> _rocksdb_get_latency;
+// }
+//
+// cpp file
 // #include <dsn/metrics.h>
 //
 // METRIC_DEFINE_entity(table);
+// METRIC_DEFINE_counter(table,
+//                       rocksdb_get_count,
+//                       kRequests,
+//                       "Count of rocksdb get requests");
 // METRIC_DEFINE_histogram(table,
 //                         rocksdb_get_latency,
 //                         kNanoseconds,
@@ -45,16 +56,21 @@
 //
 // rocksdb_store::on_get(get_rpc rpc)
 // {
+//     ...
 //     _rocksdb_get_latency->set(latency);
+//     _rocksdb_get_count->increment();
 // }
-// ```
 
-// Defines an instance of metric_entity.
-// Each instance owns its unique set of metrics.
+// Defines a metric entity prototype.
+// Multiple instances of this metric entity prototype can be created, each instance owns its unique
+// set of metrics.
 // Apart from the name, each entity can be attached with several key-value attributes,
 // for the convenience to search for metrics with the specific attribute.
 #define METRIC_DEFINE_entity(name) dsn::metric_entity_prototype METRIC_ENTITY_##name(#name)
 
+// Defines gauge/histogram/counter/meter metric prototype.
+// Multiple instances of this metric prototype can be created, each instance bounds to its own
+// metric entity prototype instance.
 #define METRIC_DEFINE_gauge(entity, name, unit, desc)                                              \
     dsn::gauge_prototype METRIC_##name(dsn::metric_ctor_args{#entity, #name, unit, desc})
 
@@ -174,7 +190,7 @@ template <typename MetricType>
 class metric_prototype
 {
 public:
-    explicit metric_prototype(metric_ctor_args args) : _args(args) {}
+    explicit metric_prototype(const metric_ctor_args& args) : _args(args) {}
 
     // Creates a metric based on the instance of metric_entity.
     ref_ptr<MetricType> instantiate(const ref_ptr<metric_entity> &entity)
@@ -209,11 +225,11 @@ public:
         std::unordered_map<std::string, std::string> attributes;
     };
 
-    // Appends one or more snapshots to `snapshots`.
+    // Take a snapshot and append to `sink`.
     // Not thread-safe.
     virtual void take_snapshot(metric_data_sink *sink) const = 0;
 
-    explicit metric_t(metric_ctor_args args) : _args(args) {}
+    explicit metric_t(const metric_ctor_args& args) : _args(args) {}
 
 protected:
     metric_ctor_args _args;
