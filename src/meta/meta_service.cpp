@@ -104,27 +104,27 @@ bool meta_service::check_freeze() const
 }
 
 template <typename TRpcHolder>
-int meta_service::check_leader(TRpcHolder rpc, rpc_address *forward_address)
+meta_leader_state meta_service::check_leader(TRpcHolder rpc, rpc_address *forward_address)
 {
     dsn::rpc_address leader;
     if (!_failure_detector->get_leader(&leader)) {
         if (!rpc.dsn_request()->header->context.u.is_forward_supported) {
             if (forward_address != nullptr)
                 *forward_address = leader;
-            return -1;
+            return meta_leader_state::kNonLeaderAndNotForwardable;
         }
 
         dinfo("leader address: %s", leader.to_string());
         if (!leader.is_invalid()) {
             rpc.forward(leader);
-            return 0;
+            return meta_leader_state::kNonLeaderAndForwardable;
         } else {
             if (forward_address != nullptr)
                 forward_address->set_invalid();
-            return -1;
+            return meta_leader_state::kNonLeaderAndNotForwardable;
         }
     }
-    return 1;
+    return meta_leader_state::kLeader;
 }
 
 template <typename TRpcHolder>
@@ -136,11 +136,12 @@ bool meta_service::check_status(TRpcHolder rpc, rpc_address *forward_address)
         return false;
     }
 
-    int result = check_leader(rpc, forward_address);
-    if (result == 0)
+    meta_leader_state result = check_leader(rpc, forward_address);
+    if (result == meta_leader_state::kNonLeaderAndForwardable) {
         return false;
-    if (result == -1 || !_started) {
-        if (result == -1) {
+    }
+    if (result == meta_leader_state::kNonLeaderAndNotForwardable || !_started) {
+        if (result == meta_leader_state::kNonLeaderAndNotForwardable) {
             rpc.response().err = ERR_FORWARD_TO_OTHERS;
         } else if (_recovering) {
             rpc.response().err = ERR_UNDER_RECOVERY;
@@ -164,12 +165,12 @@ bool meta_service::check_status_with_msg(message_ex *req, TRespType &response_st
         return false;
     }
 
-    int result = check_leader(req, nullptr);
-    if (result == 0) {
+    meta_leader_state result = check_leader(req, nullptr);
+    if (result == meta_leader_state::kNonLeaderAndForwardable) {
         return false;
     }
-    if (result == -1 || !_started) {
-        if (result == -1) {
+    if (result == meta_leader_state::kNonLeaderAndNotForwardable || !_started) {
+        if (result == meta_leader_state::kNonLeaderAndNotForwardable) {
             response_struct.err = ERR_FORWARD_TO_OTHERS;
         } else if (_recovering) {
             response_struct.err = ERR_UNDER_RECOVERY;
@@ -504,27 +505,27 @@ void meta_service::register_rpc_handlers()
         RPC_CM_QUERY_BACKUP_STATUS, "query_backup_status", &meta_service::on_query_backup_status);
 }
 
-int meta_service::check_leader(dsn::message_ex *req, dsn::rpc_address *forward_address)
+meta_leader_state meta_service::check_leader(dsn::message_ex *req, dsn::rpc_address *forward_address)
 {
     dsn::rpc_address leader;
     if (!_failure_detector->get_leader(&leader)) {
         if (!req->header->context.u.is_forward_supported) {
             if (forward_address != nullptr)
                 *forward_address = leader;
-            return -1;
+            return meta_leader_state::kNonLeaderAndNotForwardable;
         }
 
         dinfo("leader address: %s", leader.to_string());
         if (!leader.is_invalid()) {
             dsn_rpc_forward(req, leader);
-            return 0;
+            return meta_leader_state::kNonLeaderAndForwardable;
         } else {
             if (forward_address != nullptr)
                 forward_address->set_invalid();
-            return -1;
+            return meta_leader_state::kNonLeaderAndNotForwardable;
         }
     }
-    return 1;
+    return meta_leader_state::kLeader;
 }
 
 // table operations
@@ -770,13 +771,13 @@ void meta_service::on_start_recovery(configuration_recovery_rpc rpc)
 {
     configuration_recovery_response &response = rpc.response();
     ddebug("got start recovery request, start to do recovery");
-    int result = check_leader(rpc, nullptr);
+    meta_leader_state result = check_leader(rpc, nullptr);
     // request has been forwarded to others
-    if (result == 0) {
+    if (result == meta_leader_state::kNonLeaderAndForwardable) {
         return;
     }
 
-    if (result == -1) {
+    if (result == meta_leader_state::kNonLeaderAndNotForwardable) {
         response.err = ERR_FORWARD_TO_OTHERS;
     } else {
         zauto_write_lock l(_meta_lock);

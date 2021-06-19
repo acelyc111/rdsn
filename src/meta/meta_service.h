@@ -199,15 +199,15 @@ private:
     void on_control_bulk_load(control_bulk_load_rpc rpc);
     void on_query_bulk_load_status(query_bulk_load_rpc rpc);
 
-    // common routines
-    // ret:
-    //   1. the meta is leader
-    //   0. meta isn't leader, and rpc-msg can forward to others
-    //  -1. meta isn't leader, and rpc-msg can't forward to others
-    // if return -1 and `forward_address' != nullptr, then return leader by `forward_address'.
-    int check_leader(dsn::message_ex *req, dsn::rpc_address *forward_address);
+    enum class meta_leader_state {
+        kNonLeaderAndNotForwardable = -1,
+        kNonLeaderAndForwardable = 0,
+        kLeader = 1
+    };
+    // Assign `forward_address` the leader's address in case of `kNonLeaderAndNotForwardable` and `forward_address` is not nullptr.
+    meta_leader_state check_leader(dsn::message_ex *req, dsn::rpc_address *forward_address);
     template <typename TRpcHolder>
-    int check_leader(TRpcHolder rpc, /*out*/ rpc_address *forward_address);
+    meta_leader_state check_leader(TRpcHolder rpc, /*out*/ rpc_address *forward_address);
     // ret:
     //    false: check failed
     //    true:  check succeed
