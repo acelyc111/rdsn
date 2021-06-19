@@ -106,6 +106,7 @@ public:
     explicit impl(metric_ctor_args args) : _value("", "", args.name.data(), COUNTER_TYPE_NUMBER, "")
     {
     }
+    // TODO(yingchun): the first 2 parameters are always empty string, we should remove them later.
     perf_counter_number_atomic _value;
 };
 
