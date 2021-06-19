@@ -46,15 +46,16 @@ public:
     {
         std::lock_guard<std::mutex> guard(_mtx);
         for (auto it = _entities_map.begin(); it != _entities_map.end();) {
-            auto next_it = std::next(it);
             sink->iterate_entity(*it->second);
             it->second->collect_metrics(sink);
             if (it->second->num_metrics() == 0 && it->second->get_count() == 1) {
                 // This entity has no metrics and either has no more external references,
                 // so we can remove it.
-                _entities_map.erase(it);
+                // TODO(yingchun): explictly deregister the entity when the object binded to destructed
+                it = _entities_map.erase(it);
+            } else {
+                ++it;
             }
-            it = next_it;
         }
     }
 
@@ -78,7 +79,7 @@ METRIC_DEFINE_entity(server);
 ref_ptr<metric_entity> metric_entity_prototype::instantiate(const std::string &id,
                                                             metric_entity::attrs_map_t attrs)
 {
-    dassert(attrs.find("entity") == attrs.end(), "attribute \"entity\" is reserved");
+    dassert_f(attrs.find("entity") == attrs.end(), "{}'s attribute \"entity\" is reserved", id);
     attrs["entity"] = _name;
     ref_ptr<metric_entity> entity(new metric_entity(id, std::move(attrs)));
     metric_registry::instance().register_entity(id, entity);

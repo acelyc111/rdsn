@@ -274,7 +274,7 @@ private:
 };
 
 // Typical usages:
-// - QPS (Query Per Seconds).
+// - QPS (Query Per Second).
 class meter_t : public metric_t
 {
 public:
